@@ -152,14 +152,15 @@ int graph_operations::writeGraphWeighted(graph_access & G, const std::string & f
 
 int graph_operations::writeGraphWeighted_to_csv(graph_access & G, const std::string & filename) {
         std::ofstream f(filename.c_str());
-        f << G.number_of_nodes() <<  " " <<  G.number_of_edges()/2 <<  " 10" <<  std::endl;
+        f << "source;target" <<  std::endl;
+        // f << G.number_of_nodes() <<  " " <<  G.number_of_edges()/2 <<  " 10" 
 
         forall_nodes(G, node) {
-                f <<  G.getNodeWeight(node) ;
+                // f <<  G.getNodeWeight(node) ;
                 forall_out_edges(G, e, node) {
-                        f << " " <<   (G.getEdgeTarget(e)+1);
+                        f << node << ";" << G.getEdgeTarget(e) << std::endl;
                 } endfor
-                f <<  "\n";
+                // f <<  "\n";
         } endfor
 
         f.close();
