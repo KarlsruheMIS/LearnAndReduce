@@ -27,11 +27,9 @@ class graph_operations {
     template <typename Graph>
     void print_G(Graph &G);
 
-    template <typename Graph>
-    int writeGraphWeighted(Graph &G, const std::string& filename);
+    int writeGraphWeighted(graph_access &G, const std::string& filename);
 
-    template <typename Graph>
-    int writeGraphWeighted_to_csv(Graph &G, const std::string& filename);
+    int writeGraphWeighted_to_csv(graph_access &G, const std::string& filename);
 
 };
 template <typename Graph, typename vec>
@@ -136,7 +134,6 @@ bool graph_operations::is_free(Graph &G, NodeID node) {
     return true;
 }
 
-template<typename Graph>
 int graph_operations::writeGraphWeighted(graph_access & G, const std::string & filename) {
         std::ofstream f(filename.c_str());
         f << G.number_of_nodes() <<  " " <<  G.number_of_edges()/2 <<  " 10" <<  std::endl;
@@ -153,7 +150,6 @@ int graph_operations::writeGraphWeighted(graph_access & G, const std::string & f
         return 0;
 }
 
-template<typename Graph>
 int graph_operations::writeGraphWeighted_to_csv(graph_access & G, const std::string & filename) {
         std::ofstream f(filename.c_str());
         f << G.number_of_nodes() <<  " " <<  G.number_of_edges()/2 <<  " 10" <<  std::endl;

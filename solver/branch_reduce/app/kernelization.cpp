@@ -92,7 +92,7 @@ int main(int argn, char **argv) {
     // std::cout << time << "," << reducer.get_current_is_weight() << std::endl;
 
     if (config.write_kernel && g.number_of_nodes() > 0)
-        go::writeGraphWeighted(g, config.kernel_filename);
-        go::writeGraphWeighted_to_csv(g, config.kernel_csv_filename);
+        go.writeGraphWeighted(g, config.kernel_filename);
+        go.writeGraphWeighted_to_csv(g, config.kernel_csv_filename);
     return 0;
 }
