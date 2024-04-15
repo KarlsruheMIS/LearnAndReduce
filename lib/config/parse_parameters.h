@@ -74,6 +74,7 @@ class ReductionArguments : public BaseArguments {
             reduction_time_limit= arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
             reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, all_decreasing]). Default: decreasing (not using increasing reductions).");
             kernel_filename     = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
+            kernel_csv_filename = arg_str0(NULL, "kernel_csv", NULL, "Path to store resulting kernel in csv format.");
 	        disable_reduction   = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
 	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
 
@@ -124,6 +125,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_dbl * reduction_time_limit;
         struct arg_str * reduction_config;
         struct arg_str * kernel_filename;
+        struct arg_str * kernel_csv_filename;
         struct arg_lit * print_reduction_info;
         struct arg_lit * disable_reduction;
         struct arg_lit * disable_neighborhood;
@@ -238,6 +240,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         weight_source,
         print_reduction_info,
         kernel_filename,
+        kernel_csv_filename,
         reduction_config,
         reduction_time_limit,
         reduction_style,
@@ -412,7 +415,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     } else {
         config.write_kernel= false;
     }
-
+    if (kernel_csv_filename->count > 0) {
+        config.kernel_csv_filename = kernel_csv_filename->sval[0];
+    }
     if (struction_degree->count > 0) {
         config.struction_degree = struction_degree->ival[0];
     }

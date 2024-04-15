@@ -26,8 +26,14 @@ class graph_operations {
 
     template <typename Graph>
     void print_G(Graph &G);
-};
 
+    template <typename Graph>
+    int writeGraphWeighted(Graph &G, const std::string& filename);
+
+    template <typename Graph>
+    int writeGraphWeighted_to_csv(Graph &G, const std::string& filename);
+
+};
 template <typename Graph, typename vec>
 void graph_operations::induce_subgraph(Graph& G, Graph& sub_G, const vec& nodes, vec& reverse_mapping) {
 
@@ -108,7 +114,12 @@ void graph_operations::assign_weights(Graph& G, const C& mis_config) {
 		forall_nodes(G, node) {
 			G.setNodeWeight(node, 1);
 		} endfor
-
+	} else if (mis_config.weight_source == Config::Weight_Source::SMALL_UNIFORM) {
+		std::default_random_engine generator(mis_config.seed);
+  		std::uniform_int_distribution<NodeWeight> distribution(2,20);
+		forall_nodes(G, node) {
+			G.setNodeWeight(node, distribution(generator));
+		} endfor
 	}
 }
 
@@ -123,5 +134,39 @@ bool graph_operations::is_free(Graph &G, NodeID node) {
         }
     } endfor
     return true;
+}
+
+template<typename Graph>
+int graph_operations::writeGraphWeighted(graph_access & G, const std::string & filename) {
+        std::ofstream f(filename.c_str());
+        f << G.number_of_nodes() <<  " " <<  G.number_of_edges()/2 <<  " 10" <<  std::endl;
+
+        forall_nodes(G, node) {
+                f <<  G.getNodeWeight(node) ;
+                forall_out_edges(G, e, node) {
+                        f << " " <<   (G.getEdgeTarget(e)+1);
+                } endfor
+                f <<  "\n";
+        } endfor
+
+        f.close();
+        return 0;
+}
+
+template<typename Graph>
+int graph_operations::writeGraphWeighted_to_csv(graph_access & G, const std::string & filename) {
+        std::ofstream f(filename.c_str());
+        f << G.number_of_nodes() <<  " " <<  G.number_of_edges()/2 <<  " 10" <<  std::endl;
+
+        forall_nodes(G, node) {
+                f <<  G.getNodeWeight(node) ;
+                forall_out_edges(G, e, node) {
+                        f << " " <<   (G.getEdgeTarget(e)+1);
+                } endfor
+                f <<  "\n";
+        } endfor
+
+        f.close();
+        return 0;
 }
 

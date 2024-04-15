@@ -22,6 +22,7 @@ struct ReductionConfig : public Config {
 
     // Name of the kernel file.
     std::string kernel_filename;
+    std::string kernel_csv_filename;
     // disable single reductions
     bool disable_fold1=false;
     bool disable_fold2=false;
