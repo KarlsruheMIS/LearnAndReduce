@@ -30,6 +30,7 @@ class graph_operations {
     int writeGraphWeighted(graph_access &G, const std::string& filename);
 
     int writeGraphWeighted_to_csv(graph_access &G, const std::string& filename);
+    int writeWeights_to_csv(graph_access &G, const std::string& filename);
 
 };
 template <typename Graph, typename vec>
@@ -167,3 +168,14 @@ int graph_operations::writeGraphWeighted_to_csv(graph_access & G, const std::str
         return 0;
 }
 
+int graph_operations::writeWeights_to_csv(graph_access & G, const std::string & filename) {
+        std::ofstream f(filename.c_str());
+        f << "id;node_weight" <<  std::endl;
+
+        forall_nodes(G, node) {
+            f << node << ";" << G.getNodeWeight(node) << std::endl;
+        } endfor
+
+        f.close();
+        return 0;
+}
