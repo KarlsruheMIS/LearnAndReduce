@@ -99,11 +99,6 @@ int main(int argn, char **argv) {
               << reducer.timeout << ","
               << reducer.min_kernel << "," << reducer.max_min_kernel_comp << "," << reducer.kernelization_time << std::endl;
 #endif
-// #ifdef OUTPUT_WEIGHT_CONVERGENCE
-    // if (!reducer.timeout) {
-    //         std::cout << "%optimal" << std::endl;
-    // }
-// #endif
 
     return 0;
 }

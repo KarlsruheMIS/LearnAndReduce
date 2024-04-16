@@ -15,7 +15,7 @@
 
 // Configuration for the calculation 
 struct Config {
-    enum Weight_Source {FILE, HYBRID, UNIFORM, GEOMETRIC, UNIT};
+    enum Weight_Source {FILE, HYBRID, SMALL_UNIFORM, UNIFORM, GEOMETRIC, UNIT};
     enum Key_Type {RANDOM, DEGREE, INCREASE, APPROXIMATE_INCREASE};
 
     // Name of the graph file.
@@ -62,6 +62,8 @@ struct Config {
             weight_source = Weight_Source::UNIT;
         } else if (strCompare(source, "uniform")) {
             weight_source = Weight_Source::UNIFORM;
+        } else if (strCompare(source, "small_uniform")) {
+            weight_source = Weight_Source::SMALL_UNIFORM;
         } else if (strCompare(source, "geometric")) {
             weight_source = Weight_Source::GEOMETRIC;
         }
