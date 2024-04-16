@@ -831,7 +831,12 @@ void branch_and_reduce_algorithm::undo_blow_up() {
     while (status.remaining_nodes > min_kernel) {
         NodeID node = status.modified_stack.back();
         status.modified_stack.pop_back();
-
+		if (node == MODIFIED_TOKEN) { // for reductions that do not reduce but only modify the graph
+			auto type = status.folded_stack.back();
+			status.folded_stack.pop_back();
+			status.transformations[local_transformation_map[type]]->restore(this);
+			continue;
+		}
         if (status.node_status[node] == IS_status::folded) {
             auto type = status.folded_stack.back();
             status.folded_stack.pop_back();
