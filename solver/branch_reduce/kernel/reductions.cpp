@@ -88,6 +88,8 @@ bool general_reduction::try_neighborhood_reduction(NodeID v, branch_and_reduce_a
     return false;
 }
 NodeWeight general_reduction::solve_induced_subgraph_from_set(graph_access& graph, ReductionConfig &config, branch_and_reduce_algorithm* br_alg, sized_vector<NodeID>& nodes_vec, const fast_set& nodes_set, sized_vector<NodeID>& reverse_mapping, bool apply_solution) {
+    if (nodes_vec.size() == 0) return 0;
+    if (nodes_vec.size() == 1) return br_alg->status.weights[nodes_vec[0]];
     br_alg->build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
     return solve_graph(graph, config, apply_solution);
 }
@@ -109,6 +111,7 @@ NodeWeight general_reduction::solve_graph(graph_access& graph, ReductionConfig &
         return solution;
     }
     branch_and_reduce_algorithm solver(graph, config, true);
+	solver.ch.disable_cout();
     if (!solver.run_branch_reduce()) {
         std::cerr << "%br_call time out" << std::endl;
         return 0;
@@ -116,6 +119,7 @@ NodeWeight general_reduction::solve_graph(graph_access& graph, ReductionConfig &
     if (apply_solution) {
         solver.apply_branch_reduce_solution(graph);
     }
+	solver.ch.enable_cout();
     return solver.get_current_is_weight();
 }
 bool general_reduction::is_reduced(NodeID v, branch_and_reduce_algorithm* br_alg) {
@@ -124,41 +128,55 @@ bool general_reduction::is_reduced(NodeID v, branch_and_reduce_algorithm* br_alg
 
 bool neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_neighborhood) return false;
-    br_alg->reduction_timer.restart();
+    size_t oldn = br_alg->status.remaining_nodes;
 
-    auto& status = br_alg->status;
-	size_t oldn = status.remaining_nodes;
-
-	for_each_changed_vertex(br_alg, [this, &br_alg, &status](NodeID v) {
-        NodeWeight neighbor_weights = this->get_neighborhood_weight(v, br_alg);
-        try_neighborhood_reduction(v, br_alg, neighbor_weights);
+	for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
     });
 
-    reduced_nodes += (oldn - status.remaining_nodes);
+	return oldn != br_alg->status.remaining_nodes;
+}
+bool neighborhood_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_neighborhood) return false;
+    br_alg->reduction_timer.restart();
+    size_t oldn = br_alg->status.remaining_nodes;
+
+    NodeWeight neighbor_weights = this->get_neighborhood_weight(v, br_alg);
+    try_neighborhood_reduction(v, br_alg, neighbor_weights);
+
+    reduced_nodes += (oldn - br_alg->status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
-	return oldn != status.remaining_nodes;
+	return oldn != br_alg->status.remaining_nodes;
 }
 
 bool fold1_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_fold1) return false;
-    br_alg->reduction_timer.restart();
-
 	auto& status = br_alg->status;
 	size_t oldn = status.remaining_nodes;
-	size_t oldw = status.reduction_offset;
 
-	for_each_changed_vertex(br_alg, [this, &br_alg, &status](NodeID v) {
-        if (br_alg->deg(v) == 0) br_alg->set(v, IS_status::included);
-        if (br_alg->deg(v) == 1) 
-        {
-            NodeID neighbor = status.graph[v][0];
-            assert(status.node_status[neighbor] == IS_status::not_set);
-            if (status.weights[neighbor] > status.weights[v]) 
-                   this->fold(br_alg, {v, neighbor});
-            else 
-                   br_alg->set(v, IS_status::included, true);
-        }
+	for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
     });
+
+	return oldn != status.remaining_nodes;
+}
+bool fold1_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_fold1) return false;
+    br_alg->reduction_timer.restart();
+	auto& status = br_alg->status;
+	size_t oldn = status.remaining_nodes;
+    assert(status.node_status[v] == IS_status::not_set);
+
+    if (br_alg->deg(v) == 0) 
+        br_alg->set(v, IS_status::included);
+    else if (br_alg->deg(v) == 1) 
+    {
+        NodeID neighbor = status.graph[v][0];
+        if (status.weights[neighbor] > status.weights[v]) 
+            fold(br_alg, {v, neighbor});
+        else 
+            br_alg->set(v, IS_status::included, true);
+    }
 
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -168,7 +186,7 @@ void fold1_reduction::fold(branch_and_reduce_algorithm* br_alg, const fold_nodes
 
     auto& status = br_alg->status;
 
-	restore_vec.push_back({nodes, status.weights[nodes.deg1_node], status.graph[nodes.fold_node]});
+	restore_vec.push_back({nodes, status.weights[nodes.deg1_node]});
     br_alg->set(nodes.deg1_node, IS_status::folded);
 
     status.reduction_offset += status.weights[nodes.deg1_node];
@@ -212,7 +230,6 @@ void fold1_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 
 bool fold2_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_fold2) return false;
-    br_alg->reduction_timer.restart();
 
 	auto& status = br_alg->status;
 	size_t oldn = status.remaining_nodes;
@@ -220,47 +237,63 @@ bool fold2_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 
 	for_each_changed_vertex(br_alg, [this, &br_alg, &status](NodeID v) {
 		if (br_alg->deg(v) != 2) return;
-
-        // set bigger and smaller neighbor
-        NodeID bigger  = status.graph[v][0];
-        NodeID smaller = status.graph[v][1];
-        if (try_neighborhood_reduction(v, br_alg, status.weights[bigger] + status.weights[smaller])) return;
-        if (status.weights[bigger] < status.weights[smaller]) {
-            smaller = status.graph[v][0];
-            bigger  = status.graph[v][1];
-        }
-
-        // check triangle condition
-		bool triangle = false;
-        for (NodeID neighbor : status.graph[smaller]) {
-            if (neighbor == bigger)
-            { 
-                triangle = true;
-                if (br_alg->config.disable_triangle) return;
-                break;
-            }
-        }
-        
-        if (triangle && status.weights[bigger] <= status.weights[v]) {
-              br_alg->set(v, IS_status::included);
-        } else if (triangle && status.weights[bigger] > status.weights[v] && status.weights[smaller] <= status.weights[v]) {
-            this->fold_triangle_mid_weight(br_alg, {v, {bigger, smaller}});
-        } else if (triangle) {
-            this->fold_triangle_min_weight(br_alg, {v, {bigger, smaller}});
-        } else if (status.weights[v] >= status.weights[bigger]) {
-            if (br_alg->config.disable_v_shape_max) return;
-            this->fold_v_shape_max_weight(br_alg, {v, {bigger, smaller}});
-        } else if (status.weights[v] >= status.weights[smaller]) 
-        {
-            if (br_alg->config.disable_v_shape_mid) return;
-            this->fold_v_shape_mid_weight(br_alg, {v, {bigger, smaller}});
-        } else {
-            assert(status.weights[v] < status.weights[smaller] && "v is not the smallest");
-            if (br_alg->config.disable_v_shape_min) return;
-            this->fold_v_shape_min_weight(br_alg, {v, {bigger, smaller}});
-        }
-
+        reduce_vertex(br_alg, v);
 	});
+    
+	return oldn != status.remaining_nodes || oldw != status.reduction_offset;
+}
+bool fold2_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_fold2) return false;
+	if (br_alg->deg(v) != 2) return false;
+    br_alg->reduction_timer.restart();
+
+	auto& status = br_alg->status;
+	size_t oldn = status.remaining_nodes;
+	size_t oldw = status.reduction_offset;
+
+    // set bigger and smaller neighbor
+    NodeID bigger  = status.graph[v][0];
+    NodeID smaller = status.graph[v][1];
+    if (try_neighborhood_reduction(v, br_alg, status.weights[bigger] + status.weights[smaller])) {
+        reduced_nodes += (oldn - status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != status.remaining_nodes;
+    }
+    if (status.weights[bigger] < status.weights[smaller]) {
+        smaller = status.graph[v][0];
+        bigger  = status.graph[v][1];
+    }
+
+    // check triangle condition
+	bool triangle = false;
+    for (NodeID neighbor : status.graph[smaller]) {
+        if (neighbor == bigger)
+        { 
+            triangle = true;
+            if (br_alg->config.disable_triangle) return false;
+            break;
+        }
+    }
+    
+    if (triangle && status.weights[bigger] <= status.weights[v]) {
+          br_alg->set(v, IS_status::included);
+    } else if (triangle && status.weights[bigger] > status.weights[v] && status.weights[smaller] <= status.weights[v]) {
+        this->fold_triangle_mid_weight(br_alg, {v, {bigger, smaller}});
+    } else if (triangle) {
+        this->fold_triangle_min_weight(br_alg, {v, {bigger, smaller}});
+    } else if (status.weights[v] >= status.weights[bigger]) {
+        if (br_alg->config.disable_v_shape_max) return false;
+        this->fold_v_shape_max_weight(br_alg, {v, {bigger, smaller}});
+    } else if (status.weights[v] >= status.weights[smaller]) 
+    {
+        if (br_alg->config.disable_v_shape_mid) return false;
+        this->fold_v_shape_mid_weight(br_alg, {v, {bigger, smaller}});
+    } else {
+        assert(status.weights[v] < status.weights[smaller] && "v is not the smallest");
+        if (br_alg->config.disable_v_shape_min) return false;
+        // if (br_alg->blowing_up) return;
+        this->fold_v_shape_min_weight(br_alg, {v, {bigger, smaller}});
+    }
 
     if (v_shape_min_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
         assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
@@ -276,6 +309,7 @@ bool fold2_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
 	return oldn != status.remaining_nodes || oldw != status.reduction_offset;
+    // return status.node_status[v] != IS_status::not_set;
 }
 void fold2_reduction::fold_triangle_mid_weight(branch_and_reduce_algorithm* br_alg, const fold_nodes& nodes) {
 	auto& status = br_alg->status;
@@ -590,36 +624,46 @@ void fold2_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 
 bool single_edge_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_basic_se) return false;
+
+	auto& status = br_alg->status;
+	size_t oldn = status.remaining_nodes;
+
+    NodeWeight partial_neighbor_sum = 0;
+	for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
+	});
+
+	return oldn != status.remaining_nodes;
+}
+bool single_edge_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_basic_se) return false;
     br_alg->reduction_timer.restart();
 
 	auto& status = br_alg->status;
 	auto& neighbors = br_alg->set_1;
 	size_t oldn = status.remaining_nodes;
-	size_t oldw = status.reduction_offset;
 
     NodeWeight partial_neighbor_sum = 0;
-	for_each_changed_vertex(br_alg, [&](NodeID v) {
-        this->get_neighborhood_set(v, br_alg, neighbors);
+    this->get_neighborhood_set(v, br_alg, neighbors);
 
-        for (NodeID neighbor : status.graph[v]) {
-            if (status.weights[v] <= status.weights[neighbor]) { // otherwise not applicable to this edge
-                // compute w(N(neighbor)\N(v))
-                NodeWeight partial_neighbor_sum = 0;
-                for (NodeID second_neighbor : status.graph[neighbor]) {
-                    if (status.node_status[second_neighbor] == IS_status::not_set && neighbors.add(second_neighbor)) {
-                        partial_neighbor_sum += status.weights[second_neighbor];
-                        neighbors.remove(second_neighbor);
-                    }
-                }
-             
-                // note: weight of v is in partial_neighbor_sum included
-                if (partial_neighbor_sum <= status.weights[neighbor]) { 
-                    br_alg->set(v, IS_status::excluded);
-                    break;
+    for (NodeID neighbor : status.graph[v]) {
+        if (status.weights[v] <= status.weights[neighbor]) { // otherwise not applicable to this edge
+            // compute w(N(neighbor)\N(v))
+            NodeWeight partial_neighbor_sum = 0;
+            for (NodeID second_neighbor : status.graph[neighbor]) {
+                if (status.node_status[second_neighbor] == IS_status::not_set && neighbors.add(second_neighbor)) {
+                    partial_neighbor_sum += status.weights[second_neighbor];
+                    neighbors.remove(second_neighbor);
                 }
             }
+         
+            // note: weight of v is in partial_neighbor_sum included
+            if (partial_neighbor_sum <= status.weights[neighbor]) { 
+                br_alg->set(v, IS_status::excluded);
+                break;
+            }
         }
-	});
+    }
 
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -628,53 +672,70 @@ bool single_edge_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 
 bool extended_single_edge_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_extended_se) return false;
+
+	auto& status = br_alg->status;
+	size_t oldn = status.remaining_nodes;
+
+	for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
+	});
+
+    reduced_nodes += (oldn - status.remaining_nodes);
+    reduction_time += br_alg->reduction_timer.elapsed();
+	return oldn != status.remaining_nodes;
+}
+bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_extended_se) return false;
     br_alg->reduction_timer.restart();
 
 	auto& status = br_alg->status;
 	size_t oldn = status.remaining_nodes;
-	size_t oldw = status.reduction_offset;
-    NodeWeight max_neighbor_weight = 0;
 	auto& neighbors = br_alg->set_1;
 	auto& checked = br_alg->set_2;
 
-	for_each_changed_vertex(br_alg, [&](NodeID v) {
-            checked.clear();
+    checked.clear();
 
-            NodeWeight neighbors_weight = this->get_neighborhood_weight(v, br_alg);
-            if (this->try_neighborhood_reduction(v, br_alg, neighbors_weight)) return;
-            this->get_neighborhood_set(v, br_alg, neighbors);
-            NodeID max_neighbor = this->get_max_weight_neighbor(v, br_alg);
-			NodeWeight max_neighbor_weight = status.weights[max_neighbor];
+    NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
+    if (try_neighborhood_reduction(v, br_alg, neighbors_weight)) {
+        reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != br_alg->status.remaining_nodes;
+    } 
+    get_neighborhood_set(v, br_alg, neighbors);
+    NodeID max_neighbor = get_max_weight_neighbor(v, br_alg);
+    NodeWeight max_neighbor_weight = status.weights[max_neighbor];
             
-            while (status.weights[v] >= neighbors_weight - max_neighbor_weight) {
-
-            
-                for (NodeID neighbor : status.graph[max_neighbor]) {
-                    if (neighbor == v)  continue; 
-                    if (status.node_status[neighbor] == IS_status::not_set) {
-                        // exclude neighborhood intersection and update neighborhood
-                        if (neighbors.get(neighbor)) { 
-                            br_alg->set(neighbor, IS_status::excluded);
-                            neighbors.remove(neighbor);
-                            neighbors_weight -= status.weights[neighbor];
-                        }
-                    }
-                }
-
-                if (this->try_neighborhood_reduction(v, br_alg, neighbors_weight)) return;
-
-                // check if different edge satisfies reduction
-                checked.add(max_neighbor);
-                max_neighbor_weight = 0;
-                for (NodeID neighbor : status.graph[v]) {
-                    if (checked.get(neighbor)) continue;
-                    if (max_neighbor_weight < status.weights[neighbor]) { 
-                        max_neighbor_weight = status.weights[neighbor];
-                        max_neighbor = neighbor;
-                    }
+    while (status.weights[v] >= neighbors_weight - max_neighbor_weight) {
+    
+        for (NodeID neighbor : status.graph[max_neighbor]) {
+            if (neighbor == v)  continue; 
+            if (status.node_status[neighbor] == IS_status::not_set) {
+                // exclude neighborhood intersection and update neighborhood
+                if (neighbors.get(neighbor)) { 
+                    br_alg->set(neighbor, IS_status::excluded);
+                    neighbors.remove(neighbor);
+                    neighbors_weight -= status.weights[neighbor];
                 }
             }
-	});
+        }
+
+        if (try_neighborhood_reduction(v, br_alg, neighbors_weight)) { 
+            reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+            reduction_time += br_alg->reduction_timer.elapsed();
+            return oldn != br_alg->status.remaining_nodes;
+        } 
+
+        // check if different edge satisfies reduction
+        checked.add(max_neighbor);
+        max_neighbor_weight = 0;
+        for (NodeID neighbor : status.graph[v]) {
+            if (checked.get(neighbor)) continue;
+            if (max_neighbor_weight < status.weights[neighbor]) { 
+                max_neighbor_weight = status.weights[neighbor];
+                max_neighbor = neighbor;
+            }
+        }
+    }
 
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -682,6 +743,17 @@ bool extended_single_edge_reduction::reduce(branch_and_reduce_algorithm* br_alg)
 }
 
 bool domination_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
+    if(br_alg->config.disable_domination) return false;
+	auto& status = br_alg->status;
+	size_t oldn = status.remaining_nodes;
+
+    for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
+    });
+
+	return oldn != status.remaining_nodes;
+}
+bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
     // special case of single edge reduction (only used in original versions)
     if(br_alg->config.disable_domination) return false;
     br_alg->reduction_timer.restart();
@@ -689,39 +761,35 @@ bool domination_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 	auto& neighbors = br_alg->set_1;
 	size_t oldn = status.remaining_nodes;
 
-    for_each_changed_vertex(br_alg, [&](NodeID v) {
-        size_t neighbors_count = 0;
-        bool is_subset;
+    size_t neighbors_count = 0;
+    bool is_subset;
 
-        neighbors.clear();
-        neighbors.add(v);
-        for (NodeID neighbor : status.graph[v]) {
-            neighbors.add(neighbor);
-            neighbors_count++;
-        }
+    neighbors.clear();
+    neighbors.add(v);
+    for (NodeID neighbor : status.graph[v]) {
+        neighbors.add(neighbor);
+        neighbors_count++;
+    }
 
+    for (NodeID neighbor : status.graph[v]) {
+        if (br_alg->deg(neighbor) > neighbors_count)
+            continue;
 
-        for (NodeID neighbor : status.graph[v]) {
-            if (br_alg->deg(neighbor) > neighbors_count)
-                continue;
+        is_subset = true;
 
-            is_subset = true;
-
-            for (NodeID neighbor2 : status.graph[neighbor]) {
-                if (!neighbors.get(neighbor2)) {
-                    is_subset = false;
-                    break;
-                }
-            }
-
-            if (is_subset && status.weights[neighbor] >= status.weights[v]) {
-                br_alg->set(v, IS_status::excluded);
+        for (NodeID neighbor2 : status.graph[neighbor]) {
+            if (!neighbors.get(neighbor2)) {
+                is_subset = false;
                 break;
             }
         }
-    });
 
-
+        if (is_subset && status.weights[neighbor] >= status.weights[v]) {
+            br_alg->set(v, IS_status::excluded);
+            break;
+        }
+    }
+    
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
 	return oldn != status.remaining_nodes;
@@ -763,18 +831,6 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     while (find_cut_vertex(br_alg, cut_v, cut_component, unreduced_mapping, tested_cut_vertices) && br_alg->config.reduction_time_limit > br_alg->t.elapsed())    {
         assert(cut_component.size() <= config.cut_vertex_max_component_size && "ERROR: cut_vertex_reduction::reduce: component size too large");
         if (cut_component.size() <= 1) continue; //fold1
-        // std::cout << "cut_vertex: " << cut_v << " component size: " << cut_component.size()<< std::endl;
-        // check if component is correct
-        // #ifdef DEBUG
-        // fast_set cut_component_set_test(status.n);
-        // cut_component_set_test.add(cut_v);
-        // for (NodeID node : cut_component) { cut_component_set_test.add(node); }
-        // for (NodeID node : cut_component) { 
-        //     for (NodeID neighbor : status.graph[node]) {
-        //         assert(cut_component_set_test.get(neighbor) && "ERROR: cut_vertex_reduction::reduce: cut_component not correct");
-        //     }
-        // }
-        // #endif
 
         cut_component_set.clear();
         get_neighborhood_set(cut_v, br_alg, cut_v_neighbor_set);
@@ -785,10 +841,10 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         // graph including neighborhood of cut_v
         config.time_limit = std::min(config.reduction_time_limit*0.1, 0.5*br_alg->config.reduction_time_limit - br_alg->t.elapsed());
         reverse_mapping.assign(status.n, status.n);
-        br_alg->ch.disable_cout();
+        // br_alg->ch.disable_cout();
         NodeWeight large_cutMWIS_weight = solve_induced_subgraph_from_set(cut_graph, config, br_alg, cut_component, cut_component_set, reverse_mapping, true);
         if (large_cutMWIS_weight == 0) continue;
-        br_alg->ch.enable_cout();
+        // br_alg->ch.enable_cout();
 
         // save solution for later reduce
         cut_v_excluded_e.clear();
@@ -810,9 +866,9 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
             cut_graph.setPartitionIndex(reverse_mapping[neighbor], 0);
         } 
         config.time_limit = std::min(config.reduction_time_limit*0.1, br_alg->config.reduction_time_limit - br_alg->t.elapsed());
-        br_alg->ch.disable_cout();
+        // br_alg->ch.disable_cout();
         NodeWeight small_cutMWIS_weight = solve_graph(cut_graph, config, true);
-        br_alg->ch.enable_cout();
+        // br_alg->ch.enable_cout();
         if (small_cutMWIS_weight == 0) continue;
         if (status.weights[cut_v] + small_cutMWIS_weight <= large_cutMWIS_weight) // cut_vertex is excluded -> directly apply
         {
@@ -841,23 +897,104 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
                 }
             }
 
-        // #ifdef DEBUG // check vectors are correct
-        //print info
-        // std::cout << "v_cut: " << cut_v << " neighbors: "  ; for (NodeID node : status.graph[cut_v]) { std::cout << node << " "; } std::cout << std::endl;
-        // std::cout << "cut_comp: " ; for (NodeID node : cut_component) { std::cout << node << " "; } std::cout <<std::endl;
-        // std::cout << "cut_v_excluded_i: " << cut_v_excluded_i.size() << " : "; for (NodeID node : cut_v_excluded_i) { std::cout << node << " "; } std::cout << std::endl;
-        // std::cout << "cut_v_excluded_e: " << cut_v_excluded_e.size() << " : "; for (NodeID node : cut_v_excluded_e) { std::cout << node << " "; } std::cout << std::endl;
-        // std::cout << "cut_v_included_i: " << cut_v_included_i.size() << " : "; for (NodeID node : cut_v_included_i) { std::cout << node << " "; } std::cout << std::endl;
-        // std::cout << "cut_v_included_e: " << cut_v_included_e.size() << " : "; for (NodeID node : cut_v_included_e) { std::cout << node << " "; } std::cout << std::endl;
-        // std::cout << "large_cutMWIS_weight: " << large_cutMWIS_weight ;
-        // std::cout << " small_cutMWIS_weight: " << small_cutMWIS_weight ;
-        // std::cout << " cut_v weight: " << status.weights[cut_v] << std::endl;
 
-        // fast_set cut_v_neighbors(status.n);
-        // for (NodeID node : status.graph[cut_v]) { cut_v_neighbors.add(node); }
-        // for (NodeID node : cut_v_included_i) { assert(!cut_v_neighbors.get(node) && "ERROR: cut_v_neighbors must be excluded in this case"); }
-        // for (NodeID node : cut_v_excluded_i) { assert(cut_v != node && "ERROR: cut_v must be excluded in this case"); }
-        // #endif
+            fold_data data = {cut_v, status.weights[cut_v], large_cutMWIS_weight, small_cutMWIS_weight, cut_component};
+            fold(br_alg, data, cut_v_included_i, cut_v_included_e, cut_v_excluded_i, cut_v_excluded_e);
+        }
+    }
+
+    reduced_nodes += (oldn - status.remaining_nodes);
+    reduction_time += br_alg->reduction_timer.elapsed();
+    br_alg->config.disable_cut_vertex = true; // only test whole graph once
+	return oldn != status.remaining_nodes;
+}
+bool cut_vertex_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->blowing_up) return false;
+    if (br_alg->config.disable_cut_vertex) return false;
+    br_alg->reduction_timer.restart();
+	auto& status = br_alg->status;
+    auto& cut_component = br_alg->buffers[0];
+    auto& reverse_mapping = br_alg->buffers[1];
+    auto& cut_component_set = br_alg->set_1;
+    auto& cut_v_neighbor_set = br_alg->double_set; // since set_2 used in later iterative function call
+    auto config = br_alg->config;
+    graph_access cut_graph;
+	size_t oldn = status.remaining_nodes;
+    NodeID cut_v;
+    sized_vector<NodeID> cut_v_included_i(config.cut_vertex_max_component_size);
+    sized_vector<NodeID> cut_v_included_e(config.cut_vertex_max_component_size);
+    sized_vector<NodeID> cut_v_excluded_i(config.cut_vertex_max_component_size);
+    sized_vector<NodeID> cut_v_excluded_e(config.cut_vertex_max_component_size);
+
+    if (check_components(br_alg, v, cut_v, cut_component)) {
+        assert(cut_component.size() <= config.cut_vertex_max_component_size && "ERROR: cut_vertex_reduction::reduce: component size too large");
+        if (cut_component.size() <= 1) return false; //fold1
+
+        cut_component_set.clear();
+        get_neighborhood_set(cut_v, br_alg, cut_v_neighbor_set);
+        for (auto neighbor : cut_component) {
+            cut_component_set.add(neighbor);
+        }
+        // graph including neighborhood of cut_v
+        config.time_limit = std::min(config.reduction_time_limit*0.1, 0.5*br_alg->config.reduction_time_limit - br_alg->t.elapsed());
+        reverse_mapping.assign(status.n, status.n);
+        // br_alg->ch.disable_cout();
+        NodeWeight large_cutMWIS_weight = solve_induced_subgraph_from_set(cut_graph, config, br_alg, cut_component, cut_component_set, reverse_mapping, true);
+        if (large_cutMWIS_weight == 0) return false;
+        // br_alg->ch.enable_cout();
+
+        // save solution for later reduce
+        cut_v_excluded_e.clear();
+        cut_v_excluded_i.clear();
+        cut_v_excluded_e.push_back(cut_v);
+        for (NodeID node : cut_component)
+        {
+            assert(reverse_mapping[node] != status.n && "ERROR: cut_vertex_reduction::reduce: node not in reverse_mapping");
+            if (cut_graph.getPartitionIndex(reverse_mapping[node]) == 1) cut_v_excluded_i.push_back(node);
+            else cut_v_excluded_e.push_back(node);
+        }
+
+
+        // set weight of neighborhood of cut_v to 0, ie solve G-N(cut_v)
+        for (NodeID neighbor : status.graph[cut_v])
+        {
+            if (reverse_mapping[neighbor] == status.n) continue;
+            cut_graph.setNodeWeight(reverse_mapping[neighbor], 0);
+            cut_graph.setPartitionIndex(reverse_mapping[neighbor], 0);
+        } 
+        config.time_limit = std::min(config.reduction_time_limit*0.1, br_alg->config.reduction_time_limit - br_alg->t.elapsed());
+        // br_alg->ch.disable_cout();
+        NodeWeight small_cutMWIS_weight = solve_graph(cut_graph, config, true);
+        // br_alg->ch.enable_cout();
+        if (small_cutMWIS_weight == 0) return false;
+        if (status.weights[cut_v] + small_cutMWIS_weight <= large_cutMWIS_weight) // cut_vertex is excluded -> directly apply
+        {
+            for (NodeID node : cut_v_excluded_i)
+            {
+                br_alg->set(node, IS_status::included);
+            }
+
+        } else {
+            cut_v_included_e.clear();
+            cut_v_included_i.clear();
+            cut_v_included_i.push_back(cut_v);
+            
+            for (NodeID node : cut_component)
+            {
+                if (cut_v_neighbor_set.get(node)) 
+                {
+                    cut_v_included_e.push_back(node);
+                    continue;
+                }
+                assert(reverse_mapping[node] != status.n && "ERROR: cut_vertex_reduction::reduce: node not in reverse_mapping");
+                if (cut_graph.getPartitionIndex(reverse_mapping[node]) == 1) {
+                    cut_v_included_i.push_back(node);
+                } else {
+                    cut_v_included_e.push_back(node);
+                }
+            }
+
+
             fold_data data = {cut_v, status.weights[cut_v], large_cutMWIS_weight, small_cutMWIS_weight, cut_component};
             fold(br_alg, data, cut_v_included_i, cut_v_included_e, cut_v_excluded_i, cut_v_excluded_e);
         }
@@ -1094,7 +1231,19 @@ void cut_vertex_reduction::apply(branch_and_reduce_algorithm* br_alg) {
     }
 }
 
+
 bool clique_neighborhood_reduction_fast::reduce(branch_and_reduce_algorithm* br_alg) {
+    if (br_alg->config.disable_clique_neighborhood_fast) return false;
+	auto& status = br_alg->status;
+	size_t oldn = status.remaining_nodes;
+
+    for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
+	});
+
+	return oldn != status.remaining_nodes;
+}
+bool clique_neighborhood_reduction_fast::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
     if (br_alg->config.disable_clique_neighborhood_fast) return false;
     br_alg->reduction_timer.restart();
 	auto& status = br_alg->status;
@@ -1102,42 +1251,43 @@ bool clique_neighborhood_reduction_fast::reduce(branch_and_reduce_algorithm* br_
     auto& neighbors = br_alg->buffers[0];
     auto& neighborhood = br_alg->set_1;
 
-    for_each_changed_vertex(br_alg, [&](NodeID v) {
-        NodeWeight neighbor_weights = get_neighborhood_weight(v, br_alg);
-        if (this->try_neighborhood_reduction(v, br_alg, neighbor_weights)) return;
-        this->get_neighborhood_vector(v, br_alg, neighbors);
-        this->get_neighborhood_set(v, br_alg, neighborhood);
+    NodeWeight neighbor_weights = get_neighborhood_weight(v, br_alg);
+    if (this->try_neighborhood_reduction(v, br_alg, neighbor_weights)) {
+        reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != br_alg->status.remaining_nodes;
+    } 
+    this->get_neighborhood_vector(v, br_alg, neighbors);
+    this->get_neighborhood_set(v, br_alg, neighborhood);
 
-        std::sort(neighbors.begin(), neighbors.end(), [&status](const NodeID lhs, const NodeID rhs) { return status.weights[lhs] > status.weights[rhs]; });
+    std::sort(neighbors.begin(), neighbors.end(), [&status](const NodeID lhs, const NodeID rhs) { return status.weights[lhs] > status.weights[rhs]; });
 
-        bool is_reducible = false;
+    bool is_reducible = false;
 
-        for (size_t i = 0; i < neighbors.size() && !is_reducible; i++) {
-            NodeID neighbor1 = neighbors[i];
+    for (size_t i = 0; i < neighbors.size() && !is_reducible; i++) {
+        NodeID neighbor1 = neighbors[i];
 
-            if (!neighborhood.get(neighbor1)) continue;
+        if (!neighborhood.get(neighbor1)) continue;
 
-            for (NodeID neighbor2 : status.graph[neighbor1]) {
-                if (neighbor2 != neighbor1 && neighborhood.get(neighbor2)) {
-                    // triangle [v, neighbor1, neighbor2] found
-                    neighbor_weights -= std::min(status.weights[neighbor1], status.weights[neighbor2]);
-                    neighborhood.remove(neighbor1);
-                    neighborhood.remove(neighbor2);
+        for (NodeID neighbor2 : status.graph[neighbor1]) {
+            if (neighbor2 != neighbor1 && neighborhood.get(neighbor2)) {
+                // triangle [v, neighbor1, neighbor2] found
+                neighbor_weights -= std::min(status.weights[neighbor1], status.weights[neighbor2]);
+                neighborhood.remove(neighbor1);
+                neighborhood.remove(neighbor2);
 
-                    if (status.weights[v] >= neighbor_weights) {
-                        is_reducible = true;
-                    }
-
-                    break;
+                if (status.weights[v] >= neighbor_weights) {
+                    is_reducible = true;
                 }
+
+                break;
             }
         }
+    }
 
-        if (is_reducible) {
-            br_alg->set(v, IS_status::included);
-        }
-
-	});
+    if (is_reducible) {
+        br_alg->set(v, IS_status::included);
+    }
 
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -1146,17 +1296,25 @@ bool clique_neighborhood_reduction_fast::reduce(branch_and_reduce_algorithm* br_
 
 bool clique_neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_clique_neighborhood) return false;
-    br_alg->reduction_timer.restart();
-	this->br_alg = br_alg;
 	auto& status = br_alg->status;
 	size_t oldn = status.remaining_nodes;
 
     for_each_changed_vertex(br_alg, [&](NodeID v) {
-        // if (br_alg->deg(v) > 10) return;
-        if (partition_into_cliques(v)) {
-			br_alg->set(v, IS_status::included);
-		}
+        reduce_vertex(br_alg, v);
 	});
+
+	return oldn != status.remaining_nodes;
+}
+bool clique_neighborhood_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_clique_neighborhood) return false;
+    br_alg->reduction_timer.restart();
+	auto& status = br_alg->status;
+	size_t oldn = status.remaining_nodes;
+
+    if (partition_into_cliques(v)) 
+    {
+		br_alg->set(v, IS_status::included);
+    }
 
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -1333,6 +1491,17 @@ bool critical_set_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 
 bool clique_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_clique) return false;
+	auto& status = br_alg->status;
+	size_t oldn = status.remaining_nodes;
+
+    for_each_changed_vertex(br_alg, [&](NodeID node) {
+        reduce_vertex(br_alg, node);
+    });
+
+	return oldn != status.remaining_nodes;
+}
+bool clique_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_clique) return false;
     br_alg->reduction_timer.restart();
 	auto& status = br_alg->status;
 	auto& set_1 = br_alg->set_1;
@@ -1341,75 +1510,74 @@ bool clique_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 	std::vector<NodeID> non_isolated;
 	size_t oldn = status.remaining_nodes;
 
-    for_each_changed_vertex(br_alg, [&](NodeID node) {
-        get_neighborhood_set(node, br_alg, set_1);
-        get_neighborhood_vector(node, br_alg, neighbors);
-        set_1.add(node);
+    get_neighborhood_set(v, br_alg, set_1);
+    get_neighborhood_vector(v, br_alg, neighbors);
+    set_1.add(v);
 
-        // check if clique
-        non_isolated.clear();
-        isolated.clear();
-        isolated.push_back(node);
+    // check if clique
+    non_isolated.clear();
+    isolated.clear();
+    isolated.push_back(v);
 
-        size_t max_isolated_idx = 0;
-        weighted_node max_isolated{ node, status.weights[node] };
-        weighted_node max_non_isolated{ 0, 0 };
+    size_t max_isolated_idx = 0;
+    weighted_node max_isolated{ v, status.weights[v] };
+    weighted_node max_non_isolated{ 0, 0 };
 
-        for (auto neighbor : neighbors) {
-            size_t count = 0;
-            bool is_isolated = true;
+    for (auto neighbor : neighbors) {
+        size_t count = 0;
+        bool is_isolated = true;
 
-            for (NodeID neighbor_2nd : status.graph[neighbor]) {
-                if (set_1.get(neighbor_2nd)) count++;
-                else is_isolated = false;
-            }
-
-            if (is_isolated) {
-                isolated.push_back(neighbor);
-                if (status.weights[neighbor] > max_isolated.weight) {
-                    max_isolated = { neighbor, status.weights[neighbor] };
-                    max_isolated_idx = isolated.size() - 1;
-                }
-            }
-            else {
-                non_isolated.push_back(neighbor);
-                if (status.weights[neighbor] > max_non_isolated.weight) {
-                    max_non_isolated = { neighbor, status.weights[neighbor] };
-                }
-            }
-
-            if (count != neighbors.size()) return;
+        for (NodeID neighbor_2nd : status.graph[neighbor]) {
+            if (set_1.get(neighbor_2nd)) count++;
+            else is_isolated = false;
         }
 
-        // one of "isolated" members has highest weight of clique: Add to IS
-        // also handles completely isolated cliques
-        if (max_isolated.weight >= max_non_isolated.weight) {
-            br_alg->set(max_isolated.node, IS_status::included);
-            return;
+        if (is_isolated) {
+            isolated.push_back(neighbor);
+            if (status.weights[neighbor] > max_isolated.weight) {
+                max_isolated = { neighbor, status.weights[neighbor] };
+                max_isolated_idx = isolated.size() - 1;
+            }
+        }
+        else {
+            non_isolated.push_back(neighbor);
+            if (status.weights[neighbor] > max_non_isolated.weight) {
+                max_non_isolated = { neighbor, status.weights[neighbor] };
+            }
         }
 
+        if (count != neighbors.size()) return false;
+    }
 
-        // remove all nodes from the clique which have a smaller or eqaul weight than "max_isolated" -> we can always pick "max_isolated" over them
-        isolated[max_isolated_idx] = isolated.back();
-        isolated.pop_back();
+    // one of "isolated" members has highest weight of clique: Add to IS
+    // also handles completely isolated cliques
+    if (max_isolated.weight >= max_non_isolated.weight) {
+        br_alg->set(max_isolated.node, IS_status::included);
+        reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != br_alg->status.remaining_nodes;
+    } 
 
-        for (auto neighbor : isolated) {
+
+    // remove all nodes from the clique which have a smaller or eqaul weight than "max_isolated" -> we can always pick "max_isolated" over them
+    isolated[max_isolated_idx] = isolated.back();
+    isolated.pop_back();
+
+    for (auto neighbor : isolated) {
+        br_alg->set(neighbor, IS_status::excluded);
+    }
+
+    for (size_t i = 0; i < non_isolated.size(); i++) {
+        NodeID neighbor = non_isolated[i];
+        if (status.weights[neighbor] <= max_isolated.weight) {
             br_alg->set(neighbor, IS_status::excluded);
+            non_isolated[i] = non_isolated.back();
+            non_isolated.pop_back();
+            i--;
         }
+    }
 
-        for (size_t i = 0; i < non_isolated.size(); i++) {
-            NodeID neighbor = non_isolated[i];
-            if (status.weights[neighbor] <= max_isolated.weight) {
-                br_alg->set(neighbor, IS_status::excluded);
-                non_isolated[i] = non_isolated.back();
-                non_isolated.pop_back();
-                i--;
-            }
-        }
-
-        fold(br_alg, std::move(max_isolated), std::move(non_isolated));
-    });
-
+    fold(br_alg, std::move(max_isolated), std::move(non_isolated));
 
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -1472,27 +1640,35 @@ void clique_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 bool funnel_reduction::reduce(branch_and_reduce_algorithm* br_alg)
 {
     if (br_alg->config.disable_funnel) return false;
+	size_t oldn = br_alg->status.remaining_nodes;
+
+    for_each_changed_vertex(br_alg, [&](NodeID node) {
+        reduce_vertex(br_alg, node);
+    });
+
+	return oldn != br_alg->status.remaining_nodes;
+}
+bool funnel_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v)
+{
+    if (br_alg->config.disable_funnel) return false;
     br_alg->reduction_timer.restart();
 	auto& weights = br_alg->status.weights;
-	auto& graph = br_alg->status.graph;
 	auto& remaining_n = br_alg->status.remaining_nodes;
 	auto& funnel_set = br_alg->set_1;
 	auto& neighbors = br_alg->buffers[0];
 	size_t oldn = remaining_n;
     NodeID funnel_neighbor = br_alg->status.n;
 
-    for_each_changed_vertex(br_alg, [&](NodeID node) {
-        get_neighborhood_vector(node, br_alg, neighbors);
-        funnel_set.clear();
-        if (std::any_of(neighbors.begin(), neighbors.end(), [&](NodeID neighbor) { return weights[neighbor] >= weights[node]; })) {
-            get_neighborhood_set(node, br_alg, funnel_set);
-            funnel_set.add(node);
+    get_neighborhood_vector(v, br_alg, neighbors);
+    funnel_set.clear();
+    if (std::any_of(neighbors.begin(), neighbors.end(), [&](NodeID neighbor) { return weights[neighbor] >= weights[v]; })) {
+        get_neighborhood_set(v, br_alg, funnel_set);
+        funnel_set.add(v);
 
-            if (is_funnel(node, funnel_neighbor, br_alg, funnel_set, neighbors)) {
-                fold({node, funnel_neighbor}, funnel_set, br_alg);
-            }
+        if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, neighbors)) {
+            fold({v, funnel_neighbor}, funnel_set, br_alg);
         }
-    });
+    }
 
     reduced_nodes += (oldn - remaining_n);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -1670,56 +1846,68 @@ void funnel_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 
 bool twin_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_twin) return false;
+	size_t oldn = br_alg->status.remaining_nodes;
+
+    for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
+    });
+
+	return oldn != br_alg->status.remaining_nodes;
+}
+bool twin_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_twin) return false;
     br_alg->reduction_timer.restart();
 	auto& status = br_alg->status;
 	auto& neighbors = br_alg->buffers[0];
 	auto& twin_candidates_set = br_alg->set_1;
 	auto& tmp_set = br_alg->set_2;
+
 	size_t oldn = status.remaining_nodes;
 	NodeID twin;
+    NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
+    if (this->try_neighborhood_reduction(v, br_alg, neighbors_weight)) 
+    {
+        reduced_nodes += (oldn - status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != status.remaining_nodes;
+    }
+    get_neighborhood_vector(v, br_alg, neighbors);
 
-    for_each_changed_vertex(br_alg, [&](NodeID v) {
-        NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
-        if (this->try_neighborhood_reduction(v, br_alg, neighbors_weight)) return;
-        get_neighborhood_vector(v, br_alg, neighbors);
+    twin_candidates_set.clear();
+    bool candidates_empty = true;
 
-        twin_candidates_set.clear();
-        bool candidates_empty = true;
+    for (NodeID neighbor : status.graph[neighbors[0]]) {
+        if (neighbor != v && br_alg->deg(neighbor) == neighbors.size()) {
+            twin_candidates_set.add(neighbor);
+            candidates_empty = false;
+            twin = neighbor;
+        }
+    }
 
-        for (NodeID neighbor : status.graph[neighbors[0]]) {
-            if (neighbor != v && br_alg->deg(neighbor) == neighbors.size()) {
-                twin_candidates_set.add(neighbor);
+    for (size_t i = 1; i < neighbors.size() && !candidates_empty; i++) {
+        NodeID neighbor = neighbors[i];
+        tmp_set.clear();
+        candidates_empty = true;
+
+        for (NodeID candidate : status.graph[neighbor]) {
+            if (twin_candidates_set.get(candidate)) {
+                tmp_set.add(candidate);
                 candidates_empty = false;
-                twin = neighbor;
+                twin = candidate;
             }
         }
 
-        for (size_t i = 1; i < neighbors.size() && !candidates_empty; i++) {
-            NodeID neighbor = neighbors[i];
-            tmp_set.clear();
-            candidates_empty = true;
+        std::swap(twin_candidates_set, tmp_set);
+    }
 
-            for (NodeID candidate : status.graph[neighbor]) {
-                if (twin_candidates_set.get(candidate)) {
-                    tmp_set.add(candidate);
-                    candidates_empty = false;
-                    twin = candidate;
-                }
-            }
+    if (candidates_empty) return false;
 
-            std::swap(twin_candidates_set, tmp_set);
-        }
-
-        if (candidates_empty) return;
-
-        if (status.weights[v] + status.weights[twin] >= neighbors_weight) {
-            br_alg->set(v, IS_status::included);
-            br_alg->set(twin, IS_status::included);
-        } else {
-            fold(br_alg, v, twin);
-        }
-    });
-
+    if (status.weights[v] + status.weights[twin] >= neighbors_weight) {
+        br_alg->set(v, IS_status::included);
+        br_alg->set(twin, IS_status::included);
+    } else {
+        fold(br_alg, v, twin);
+    }
 
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -1764,6 +1952,19 @@ void twin_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 bool heavy_set_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     auto config = br_alg->config;
     if (config.disable_heavy_set) return false;
+
+	auto& status = br_alg->status;
+    size_t oldn = status.remaining_nodes;
+
+    for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
+    });
+
+	return oldn != status.remaining_nodes;
+}
+bool heavy_set_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    auto config = br_alg->config;
+    if (config.disable_heavy_set) return false;
     br_alg->reduction_timer.restart();
 
 	auto& status = br_alg->status;
@@ -1779,137 +1980,145 @@ bool heavy_set_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     fast_set second_heavy_vertex_neighbors_set(status.n);
 	graph_access subgraph;
 
-    br_alg->ch.disable_cout();
-    for_each_changed_vertex(br_alg, [&](NodeID v) {
-        NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
-        if (this->try_neighborhood_reduction(v, br_alg, neighbors_weight)) return;
-        NodeID heavy_vertex = get_max_weight_neighbor(v, br_alg);
-        if (heavy_vertex == v) return;
-		::NodeWeight heavy_vertex_weight = status.weights[heavy_vertex];
+    // br_alg->ch.disable_cout();
+    NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
+    if (this->try_neighborhood_reduction(v, br_alg, neighbors_weight)) {
+        reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != br_alg->status.remaining_nodes;
+    }
+    NodeID heavy_vertex = get_max_weight_neighbor(v, br_alg);
+    if (heavy_vertex == v) return false;
+    ::NodeWeight heavy_vertex_weight = status.weights[heavy_vertex];
 
-		for (NodeID neighbor : status.graph[v]) {
-            if (br_alg->deg(neighbor) > config.heavy_set) return; //subgraph too large
-		}
+	for (NodeID neighbor : status.graph[v]) {
+        if (br_alg->deg(neighbor) > config.heavy_set) 
+            return false; //subgraph too large
+	}
 
-        get_neighborhood_set(heavy_vertex, br_alg, heavy_vertex_neighbors_set);
-        get_neighborhood_set(heavy_vertex, br_alg, build_graph_neighbors_set);
-        get_neighborhood_vector(heavy_vertex, br_alg, build_graph_neighbors);
+    get_neighborhood_set(heavy_vertex, br_alg, heavy_vertex_neighbors_set);
+    get_neighborhood_set(heavy_vertex, br_alg, build_graph_neighbors_set);
+    get_neighborhood_vector(heavy_vertex, br_alg, build_graph_neighbors);
 
-		//find second heavy vertex (not adjacent to heavy vertex)
-        NodeID second_heavy_vertex = v;
-		::NodeWeight second_heavy_vertex_weight = 0;
-		for (NodeID neighbor : status.graph[v]) {
-	        if (status.node_status[neighbor] == IS_status::not_set) {
-                if (neighbor == heavy_vertex) continue; // look for different nodes
-                if (heavy_vertex_neighbors_set.get(neighbor)) continue; // look for non adjacent nodes
-                if (br_alg->deg(neighbor) + br_alg->deg(heavy_vertex) > config.disable_heavy_set) continue; //subgraph too large
+	//find second heavy vertex (not adjacent to heavy vertex)
+    NodeID second_heavy_vertex = v;
+    ::NodeWeight second_heavy_vertex_weight = 0;
+	for (NodeID neighbor : status.graph[v]) {
+	    if (status.node_status[neighbor] == IS_status::not_set) {
+            if (neighbor == heavy_vertex) continue; // look for different nodes
+            if (heavy_vertex_neighbors_set.get(neighbor)) continue; // look for non adjacent nodes
+            if (br_alg->deg(neighbor) + br_alg->deg(heavy_vertex) > config.disable_heavy_set) continue; //subgraph too large
 
-    		    if (status.weights[neighbor] > second_heavy_vertex_weight) {
-			    	second_heavy_vertex_weight = status.weights[neighbor];
-                    second_heavy_vertex = neighbor;
-                }
+   		    if (status.weights[neighbor] > second_heavy_vertex_weight) {
+		    	second_heavy_vertex_weight = status.weights[neighbor];
+                second_heavy_vertex = neighbor;
             }
         }
+    }
 
-        if (second_heavy_vertex_weight == 0) return;
-		second_heavy_vertex_neighbors_set.clear();
+    if (second_heavy_vertex_weight == 0) return;
+	second_heavy_vertex_neighbors_set.clear();
 
-		for (NodeID neighbor : status.graph[second_heavy_vertex])
-		{
-		 	if (status.node_status[neighbor] != IS_status::not_set) continue;
-		    second_heavy_vertex_neighbors_set.add(neighbor);
-		    build_graph_neighbors.push_back(neighbor);
-		    build_graph_neighbors_set.add(neighbor);
-        }
+	for (NodeID neighbor : status.graph[second_heavy_vertex])
+	{
+		if (status.node_status[neighbor] != IS_status::not_set) continue;
+	    second_heavy_vertex_neighbors_set.add(neighbor);
+	    build_graph_neighbors.push_back(neighbor);
+	    build_graph_neighbors_set.add(neighbor);
+    }
 
-        //build neighborhood graph 
-		config.time_limit = 8.0 / 10.0;
-        bool only_check_single = false;
+    //build neighborhood graph 
+	config.time_limit = 8.0 / 10.0;
+    bool only_check_single = false;
 
-        //check different cases on the neighborhood graph:
-		// case 1)
-        // compute MWIS in N(heavy_vertex) \cup N(second_heavy_vertex):
-        ::NodeWeight MWIS_weight_case1 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, build_graph_neighbors_set, reverse_mapping);
+    //check different cases on the neighborhood graph:
+	// case 1)
+    // compute MWIS in N(heavy_vertex) \cup N(second_heavy_vertex):
+    ::NodeWeight MWIS_weight_case1 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, build_graph_neighbors_set, reverse_mapping);
 
-        if (second_heavy_vertex_weight >= MWIS_weight_case1) {
-            br_alg->set(heavy_vertex, IS_status::included);
-            br_alg->set(second_heavy_vertex, IS_status::included);
-			return;
-        } else if (heavy_vertex_weight + second_heavy_vertex_weight < MWIS_weight_case1)
-            only_check_single = true;
+    if (second_heavy_vertex_weight >= MWIS_weight_case1) {
+        br_alg->set(heavy_vertex, IS_status::included);
+        br_alg->set(second_heavy_vertex, IS_status::included);
+        reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != br_alg->status.remaining_nodes;
+    } else if (heavy_vertex_weight + second_heavy_vertex_weight < MWIS_weight_case1) {
+        only_check_single = true;
+    }
 
 
-		// case 2)
-        // compute MWIS in N(heavy_vertex): 
-        // first set graph to N(heavy_vertex)
+	// case 2)
+    // compute MWIS in N(heavy_vertex): 
+    // first set graph to N(heavy_vertex)
+    build_graph_neighbors.clear();
+	std::for_each(status.graph[heavy_vertex].begin(), status.graph[heavy_vertex].end(), [&](NodeID neighbor) {
+		if (status.node_status[neighbor] == IS_status::not_set) {
+			build_graph_neighbors.push_back(neighbor);
+		}
+	});
+    ::NodeWeight MWIS_weight_case2 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, heavy_vertex_neighbors_set, reverse_mapping);
+
+    if (heavy_vertex_weight >= MWIS_weight_case2) {
+        br_alg->set(heavy_vertex, IS_status::included);
+        only_check_single = true;
+    }
+
+    if (!only_check_single) {
+        // case 3)
+        // compute MWIS in N(heavy_vertex)\N(second_heavy_vertex): 
+
+        build_graph_neighbors.clear();
+        build_graph_neighbors_set.clear();
+        std::for_each(status.graph[heavy_vertex].begin(), status.graph[heavy_vertex].end(), [&](NodeID neighbor) {
+            if (status.node_status[neighbor] == IS_status::not_set && !second_heavy_vertex_neighbors_set.get(neighbor)) {
+			  	build_graph_neighbors.push_back(neighbor);
+			   	build_graph_neighbors_set.add(neighbor);
+			}
+        });
+        ::NodeWeight MWIS_weight_case3 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, build_graph_neighbors_set, reverse_mapping);
+                   
+		// case 4)
+        // compute MWIS in N(second_heavy_vertex)\N(heavy_vertex): 
+        // first set graph 
+
 		build_graph_neighbors.clear();
-		std::for_each(status.graph[heavy_vertex].begin(), status.graph[heavy_vertex].end(), [&](NodeID neighbor) {
-			if (status.node_status[neighbor] == IS_status::not_set) {
+		build_graph_neighbors_set.clear();
+		std::for_each(status.graph[second_heavy_vertex].begin(), status.graph[second_heavy_vertex].end(), [&](NodeID neighbor) {
+			if (status.node_status[neighbor] == IS_status::not_set && !heavy_vertex_neighbors_set.get(neighbor)) {
 				build_graph_neighbors.push_back(neighbor);
+				build_graph_neighbors_set.add(neighbor);
 			}
 		});
-        ::NodeWeight MWIS_weight_case2 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, heavy_vertex_neighbors_set, reverse_mapping);
+        ::NodeWeight MWIS_weight_case4 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, build_graph_neighbors_set, reverse_mapping);
 
-        if (heavy_vertex_weight >= MWIS_weight_case2) {
+        if (heavy_vertex_weight + second_heavy_vertex_weight >= MWIS_weight_case1 &&
+            heavy_vertex_weight >= MWIS_weight_case3 &&
+            second_heavy_vertex_weight >= MWIS_weight_case4) {
             br_alg->set(heavy_vertex, IS_status::included);
-            only_check_single = true;
+            br_alg->set(second_heavy_vertex, IS_status::included);
+            reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+            reduction_time += br_alg->reduction_timer.elapsed();
+            return oldn != br_alg->status.remaining_nodes;
         }
+    }
 
-        if (!only_check_single) {
-            // case 3)
-            // compute MWIS in N(heavy_vertex)\N(second_heavy_vertex): 
-
-		    build_graph_neighbors.clear();
-		    build_graph_neighbors_set.clear();
-		    std::for_each(status.graph[heavy_vertex].begin(), status.graph[heavy_vertex].end(), [&](NodeID neighbor) {
-			    if (status.node_status[neighbor] == IS_status::not_set && !second_heavy_vertex_neighbors_set.get(neighbor)) {
-			    	build_graph_neighbors.push_back(neighbor);
-			    	build_graph_neighbors_set.add(neighbor);
-			    }
-		    });
-            ::NodeWeight MWIS_weight_case3 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, build_graph_neighbors_set, reverse_mapping);
-                   
-		    // case 4)
-            // compute MWIS in N(second_heavy_vertex)\N(heavy_vertex): 
-            // first set graph 
-
-			build_graph_neighbors.clear();
-			build_graph_neighbors_set.clear();
-			std::for_each(status.graph[second_heavy_vertex].begin(), status.graph[second_heavy_vertex].end(), [&](NodeID neighbor) {
-				if (status.node_status[neighbor] == IS_status::not_set && !heavy_vertex_neighbors_set.get(neighbor)) {
-					build_graph_neighbors.push_back(neighbor);
-					build_graph_neighbors_set.add(neighbor);
-				}
-			});
-            ::NodeWeight MWIS_weight_case4 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, build_graph_neighbors_set, reverse_mapping);
-
-            if (heavy_vertex_weight + second_heavy_vertex_weight >= MWIS_weight_case1 &&
-                heavy_vertex_weight >= MWIS_weight_case3 &&
-                second_heavy_vertex_weight >= MWIS_weight_case4) {
-                br_alg->set(heavy_vertex, IS_status::included);
-                br_alg->set(second_heavy_vertex, IS_status::included);
-			    return;
+    // case 5)
+    // compute MWIS in N(second_heavy_vertex):
+    // first set graph 
+    if (only_check_single) {
+    	build_graph_neighbors.clear();
+        std::for_each(status.graph[second_heavy_vertex].begin(), status.graph[second_heavy_vertex].end(), [&](NodeID neighbor) {
+            if (status.node_status[neighbor] == IS_status::not_set) {
+                build_graph_neighbors.push_back(neighbor);
             }
-        }
+        });
+        ::NodeWeight MWIS_weight_case5 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, second_heavy_vertex_neighbors_set, reverse_mapping);
 
-		// case 5)
-        // compute MWIS in N(second_heavy_vertex):
-        // first set graph 
-        if (only_check_single) {
-        	build_graph_neighbors.clear();
-			std::for_each(status.graph[second_heavy_vertex].begin(), status.graph[second_heavy_vertex].end(), [&](NodeID neighbor) {
-				if (status.node_status[neighbor] == IS_status::not_set) {
-					build_graph_neighbors.push_back(neighbor);
-				}
-			});
-            ::NodeWeight MWIS_weight_case5 = this->solve_induced_subgraph_from_set(subgraph, config, br_alg, build_graph_neighbors, second_heavy_vertex_neighbors_set, reverse_mapping);
-
-            if (second_heavy_vertex_weight >= MWIS_weight_case5) {
-                br_alg->set(second_heavy_vertex, IS_status::included);
-            }
+        if (second_heavy_vertex_weight >= MWIS_weight_case5) {
+            br_alg->set(second_heavy_vertex, IS_status::included);
         }
-    });
-    br_alg->ch.enable_cout();
+    }
+    // br_alg->ch.enable_cout();
 
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -1917,6 +2126,19 @@ bool heavy_set_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 }
 
 bool generalized_neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
+    auto config = br_alg->config;
+    if (config.disable_generalized_neighborhood) return false;
+
+	auto& status = br_alg->status;
+    size_t oldn = status.remaining_nodes;
+
+    for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
+    });
+
+	return oldn != status.remaining_nodes;
+}
+bool generalized_neighborhood_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
     if (br_alg->config.disable_generalized_neighborhood) return false;
     br_alg->reduction_timer.restart();
 	auto& status = br_alg->status;
@@ -1925,37 +2147,38 @@ bool generalized_neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_
 
 	graph_access neighborhood_graph;
 
+
+    NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
+    if (try_neighborhood_reduction(v, br_alg, neighbors_weight)) {
+        reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != br_alg->status.remaining_nodes;
+    } 
+
+    NodeID max_neighbor = get_max_weight_neighbor(v, br_alg);
+    NodeWeight max_neighbor_weight = status.weights[max_neighbor]; 
+
+    //MWIS in N(v) >= max_neighbor_weight > w(v)
+    if (status.weights[v] < max_neighbor_weight) 
+        return false;
+
+    if (status.graph[v].size() > branch_and_reduce_algorithm::REDU_RECURSION_LIMIT) 
+        return false;
+    
+    // compute MWIS in N(v)
+    config.time_limit = status.graph[v].size() / 10.0;
+    br_alg->build_induced_neighborhood_subgraph(neighborhood_graph, v);
+    branch_and_reduce_algorithm neighborhood_br_alg(neighborhood_graph, config, true);
 	br_alg->ch.disable_cout();
 
-    for_each_changed_vertex(br_alg, [&](NodeID v) {
-        NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
-        if (try_neighborhood_reduction(v, br_alg, neighbors_weight)) return;
+    if (!neighborhood_br_alg.run_branch_reduce()) {
+        std::cerr << "%generalized_neighborhood_reduction br_call time out" << std::endl;
+        return false;
+    }
 
-        NodeID max_neighbor = get_max_weight_neighbor(v, br_alg);
-        NodeWeight max_neighbor_weight = status.weights[max_neighbor]; 
-
-        //MWIS in N(v) >= max_neighbor_weight > w(v)
-        if (status.weights[v] < max_neighbor_weight) return;
-
-        if (status.graph[v].size() > branch_and_reduce_algorithm::REDU_RECURSION_LIMIT) 
-            return;
-        
-        //std::cerr << "%gnr try neighborhood of size " << status.graph[v].size() << " start node: " << v << std::endl;
-
-        // compute MWIS in N(v)
-        config.time_limit = status.graph[v].size() / 10.0;
-        br_alg->build_induced_neighborhood_subgraph(neighborhood_graph, v);
-        branch_and_reduce_algorithm neighborhood_br_alg(neighborhood_graph, config, true);
-
-        if (!neighborhood_br_alg.run_branch_reduce()) {
-            std::cerr << "%generalized_neighborhood_reduction br_call time out" << std::endl;
-            return;
-        }
-
-        if (status.weights[v] >= neighborhood_br_alg.get_current_is_weight())
-            br_alg->set(v, IS_status::included);
-    });
-
+    if (status.weights[v] >= neighborhood_br_alg.get_current_is_weight())
+        br_alg->set(v, IS_status::included);
+ 
 	br_alg->ch.enable_cout();
 
     reduced_nodes += (oldn - status.remaining_nodes);
@@ -1963,8 +2186,25 @@ bool generalized_neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_
 	return oldn != status.remaining_nodes;
 }
 
+
 bool generalized_fold_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
+    auto config = br_alg->config;
+    if (config.disable_generalized_fold) return false;
+
+	auto& status = br_alg->status;
+    size_t oldn = status.remaining_nodes;
+
+    for_each_changed_vertex(br_alg, [&](NodeID v) {
+        NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
+        if(try_neighborhood_reduction(v, br_alg, neighbors_weight)) return;
+        reduce_vertex(br_alg, v);
+    });
+
+	return oldn != status.remaining_nodes;
+}
+bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
     if (br_alg->config.disable_generalized_fold) return false;
+    if (br_alg->deg(v) <= 1) return false;
     br_alg->reduction_timer.restart();
 	auto& status = br_alg->status;
 	auto& neighbors = br_alg->buffers[0];
@@ -1976,161 +2216,171 @@ bool generalized_fold_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 	graph_access neighborhood_graph;
 	auto config = br_alg->config;
 
-	br_alg->ch.disable_cout();
 
-    for_each_changed_vertex(br_alg, [&](NodeID v) {
-        get_neighborhood_set(v, br_alg, neighbors_set);
-        get_neighborhood_vector(v, br_alg, neighbors);
+    get_neighborhood_set(v, br_alg, neighbors_set);
+    get_neighborhood_vector(v, br_alg, neighbors);
 
-        NodeID max_neighbor = get_max_weight_neighbor(v, br_alg);
-        NodeWeight max_neighbor_weight = status.weights[max_neighbor];
+    NodeID max_neighbor = get_max_weight_neighbor(v, br_alg);
+    NodeWeight max_neighbor_weight = status.weights[max_neighbor];
 
-        if (status.graph[v].size() > branch_and_reduce_algorithm::REDU_RECURSION_LIMIT) {
-            return;
+    if (status.graph[v].size() > branch_and_reduce_algorithm::REDU_RECURSION_LIMIT) {
+        return false;
+    }
+
+    // compute MWIS in N(v)
+    config.time_limit = status.graph[v].size() / 10.0;
+    // br_alg->ch.disable_cout();
+    // br_alg->build_induced_subgraph(neighborhood_graph, neighbors, neighbors_set, reverse_mapping);
+    // branch_and_reduce_algorithm neighborhood_br_alg(neighborhood_graph, config, true);
+    // if (!neighborhood_br_alg.run_branch_reduce()) {
+    //     std::cerr << "%generalized_fold_reduction br_call time out" << std::endl;
+    //     return false;
+    // }
+    // br_alg->ch.enable_cout();
+    // NodeWeight MWIS_weight = neighborhood_br_alg.get_current_is_weight();
+
+    NodeWeight MWIS_weight = solve_induced_subgraph_from_set(neighborhood_graph, config, br_alg, neighbors, neighbors_set, reverse_mapping, true); 
+    if (MWIS_weight == 0) {
+        return false;
+    }
+    NodeWeight min_MWIS_neighbor_weight = std::numeric_limits<NodeWeight>::max();
+
+    if (status.weights[v] >= MWIS_weight) {
+        // same as in generalized_neighborhood_reduction
+        br_alg->set(v, IS_status::included);
+        reduced_nodes += (oldn - status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != status.remaining_nodes;
+    }
+
+    // neighborhood_br_alg.apply_branch_reduce_solution(neighborhood_graph);
+    MWIS_set.clear();
+
+    forall_nodes(neighborhood_graph, node) {
+        if (neighborhood_graph.getPartitionIndex(node) == 1) {
+            const NodeID neighbor = neighbors[node];
+            MWIS_set.add(neighbor);
+
+            if (status.weights[neighbor] < min_MWIS_neighbor_weight)
+                min_MWIS_neighbor_weight = status.weights[neighbor];
         }
+    } endfor
 
-        //std::cerr << "%gfr try neighborhood of size " << status.graph[v].size() << " start node: " << v << std::endl;
+    if (status.weights[v] < MWIS_weight - min_MWIS_neighbor_weight) {
+        // multiple IS exist that have bigger weight than v
+        return false;
+    }
 
-        // compute MWIS in N(v)
-        config.time_limit = status.graph[v].size() / 10.0;
+    bool check_failed = false;
 
-        br_alg->build_induced_subgraph(neighborhood_graph, neighbors, neighbors_set, reverse_mapping);
-        #ifdef DEBUG
-        solution_check<graph_access> sc(neighborhood_graph);
-        sc.check_graph();
-        #endif
-        branch_and_reduce_algorithm neighborhood_br_alg(neighborhood_graph, config, true);
+    // check that no other IS in N(v) exists with weight greater than v
+    for (const NodeID neighbor : status.graph[v]) {
+        if (!MWIS_set.get(neighbor))
+            continue;
 
-        if (!neighborhood_br_alg.run_branch_reduce()) {
-            std::cerr << "%generalized_fold_reduction br_call time out" << std::endl;
-            return;
+        neighbors.remove(std::find(neighbors.begin(), neighbors.end(), neighbor));
+        neighbors_set.remove(neighbor);
+
+        NodeWeight MWIS_weight = solve_induced_subgraph_from_set(neighborhood_graph, config, br_alg, neighbors, neighbors_set, reverse_mapping);
+        if (MWIS_weight == 0) {
+            check_failed = true;
+
+        // br_alg->build_induced_subgraph(neighborhood_graph, neighbors, neighbors_set, reverse_mapping);
+        // branch_and_reduce_algorithm neighborhood_br_alg(neighborhood_graph, config, true);
+        // neighborhood_br_alg.ch.disable_cout();
+        // if (!neighborhood_br_alg.run_branch_reduce()) {
+            // std::cerr << "%generalized_fold_reduction br_call loop time out" << std::endl;
+            // check_failed = true;
+
+        } else if (MWIS_weight >= status.weights[v]) {
+            check_failed = true;
         }
+        // neighborhood_br_alg.ch.enable_cout();
 
-        NodeWeight MWIS_weight = neighborhood_br_alg.get_current_is_weight();
-        NodeWeight min_MWIS_neighbor_weight = std::numeric_limits<NodeWeight>::max();
+        neighbors.push_back(neighbor);
+        neighbors_set.add(neighbor);
 
-        if (status.weights[v] >= MWIS_weight) {
-            // same as in generalized_neighborhood_reduction
-            br_alg->set(v, IS_status::included);
-            return;
-        }
+        if (check_failed)
+            break;
+    }
 
-        neighborhood_br_alg.apply_branch_reduce_solution(neighborhood_graph);
-        MWIS_set.clear();
+    if (!check_failed) {
+        fold(br_alg, v, MWIS_set, MWIS_weight);
+        reduced_nodes += (oldn - status.remaining_nodes);
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return oldn != status.remaining_nodes;
+    }
 
-        forall_nodes(neighborhood_graph, node) {
-            if (neighborhood_graph.getPartitionIndex(node) == 1) {
-                const NodeID neighbor = neighbors[node];
-                MWIS_set.add(neighbor);
+    auto& neighborhood_intersection_set = MWIS_set;
+    bool remove_node;
 
-                if (status.weights[neighbor] < min_MWIS_neighbor_weight)
-                    min_MWIS_neighbor_weight = status.weights[neighbor];
+    // we can't fold but we can possibly remove some neighbors of v
+    do {
+        for (const NodeID node : status.graph[v]) {
+            neighborhood_intersection_set.clear();
+
+            for (const NodeID neighbor : status.graph[node]) {
+                if (neighbors_set.get(neighbor)) {
+                    neighborhood_intersection_set.add(neighbor);
+                }
             }
-        } endfor
 
-        if (status.weights[v] < MWIS_weight - min_MWIS_neighbor_weight) {
-            // multiple IS exist that have bigger weight than v
-            return;
-        }
+            // "force" node into an IS (= remove node and its neighbors from N(v) and compute MWIS in remaining N(v))
 
-        bool check_failed = false;
+            neighbors.remove(std::find(neighbors.begin(), neighbors.end(), node));
+            neighbors_set.remove(node);
 
-        // check that no other IS in N(v) exists with weight greater than v
-        for (const NodeID neighbor : status.graph[v]) {
-            if (!MWIS_set.get(neighbor))
-                continue;
-
-            neighbors.remove(std::find(neighbors.begin(), neighbors.end(), neighbor));
-            neighbors_set.remove(neighbor);
-
-            br_alg->build_induced_subgraph(neighborhood_graph, neighbors, neighbors_set, reverse_mapping);
-            branch_and_reduce_algorithm neighborhood_br_alg(neighborhood_graph, config, true);
-
-            if (!neighborhood_br_alg.run_branch_reduce()) {
-                std::cerr << "%generalized_fold_reduction br_call loop time out" << std::endl;
-                check_failed = true;
-            }
-            else if (neighborhood_br_alg.get_current_is_weight() >= status.weights[v]) {
-                check_failed = true;
+            for (const NodeID neighbor : status.graph[node]) {
+                if (neighborhood_intersection_set.get(neighbor)) {
+                    neighbors.remove(std::find(neighbors.begin(), neighbors.end(), neighbor));
+                    neighbors_set.remove(neighbor);
+                }
             }
 
-            neighbors.push_back(neighbor);
-            neighbors_set.add(neighbor);
+            // br_alg->build_induced_subgraph(neighborhood_graph, neighbors, neighbors_set, reverse_mapping);
 
-            if (check_failed)
-                break;
-        }
-
-        if (!check_failed) {
-            fold(br_alg, v, MWIS_set, MWIS_weight);
-            return;
-        }
-
-        auto& neighborhood_intersection_set = MWIS_set;
-        bool remove_node;
-
-        // we can't fold but we can possibly remove some neighbors of v
-        do {
-            for (const NodeID node : status.graph[v]) {
-                neighborhood_intersection_set.clear();
-
-                for (const NodeID neighbor : status.graph[node]) {
-                    if (neighbors_set.get(neighbor)) {
-                        neighborhood_intersection_set.add(neighbor);
-                    }
-                }
-
-                // "force" node into an IS (= remove node and its neighbors from N(v) and compute MWIS in remaining N(v))
-
-                neighbors.remove(std::find(neighbors.begin(), neighbors.end(), node));
-                neighbors_set.remove(node);
-
-                for (const NodeID neighbor : status.graph[node]) {
-                    if (neighborhood_intersection_set.get(neighbor)) {
-                        neighbors.remove(std::find(neighbors.begin(), neighbors.end(), neighbor));
-                        neighbors_set.remove(neighbor);
-                    }
-                }
-
-                br_alg->build_induced_subgraph(neighborhood_graph, neighbors, neighbors_set, reverse_mapping);
-
-                config.time_limit = neighbors.size() / 10.0;
-                branch_and_reduce_algorithm neighborhood_br_alg(neighborhood_graph, config, true);
-
-                if (!neighborhood_br_alg.run_branch_reduce()) {
-                    std::cerr << "%generalized_fold_reduction br_call loop time out" << std::endl;
-                    remove_node = false;
-                }
-                else {
-                    // if the weight of every MWIS in N(v) which contains "node" is smaller than w(v) then we can remove "node"
-                    remove_node = neighborhood_br_alg.get_current_is_weight() + status.weights[node] <= status.weights[v];
-                }
-
-                for (const NodeID neighbor : status.graph[node]) {
-                    if (neighborhood_intersection_set.get(neighbor)) {
-                        neighbors.push_back(neighbor);
-                        neighbors_set.add(neighbor);
-                    }
-                }
-
-                if (remove_node) {
-                    br_alg->set(node, IS_status::excluded);
-                    break; // break and restart loop because set(..) modifies the range which we currently iterate
-                }
-
-                neighbors.push_back(node);
-                neighbors_set.add(node);
+            config.time_limit = neighbors.size() / 10.0;
+            NodeWeight MWIS_weight = solve_induced_subgraph_from_set(neighborhood_graph, config, br_alg, neighbors, neighbors_set, reverse_mapping);
+            if (MWIS_weight == 0) {
+                remove_node = false;
+            } else {
+                remove_node = MWIS_weight + status.weights[node] <= status.weights[v];
             }
-        } while (remove_node);
-    });
+            // branch_and_reduce_algorithm neighborhood_br_alg(neighborhood_graph, config, true);
 
-	br_alg->ch.enable_cout();
+            // neighborhood_br_alg.ch.disable_cout();
+            // if (!neighborhood_br_alg.run_branch_reduce()) {
+                // std::cerr << "%generalized_fold_reduction br_call loop time out" << std::endl;
+                // remove_node = false;
+            // }
+            // else {
+                // if the weight of every MWIS in N(v) which contains "node" is smaller than w(v) then we can remove "node"
+                // remove_node = MWIS_weight + status.weights[node] <= status.weights[v];
+            // }
+            // neighborhood_br_alg.ch.enable_cout();
+
+            for (const NodeID neighbor : status.graph[node]) {
+                if (neighborhood_intersection_set.get(neighbor)) {
+                    neighbors.push_back(neighbor);
+                    neighbors_set.add(neighbor);
+                }
+            }
+
+            if (remove_node) {
+                br_alg->set(node, IS_status::excluded);
+                break; // break and restart loop because set(..) modifies the range which we currently iterate
+            }
+
+            neighbors.push_back(node);
+            neighbors_set.add(node);
+        }
+    } while (remove_node);
+
 
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
 	return oldn != status.remaining_nodes;
 }
-
 void generalized_fold_reduction::fold(branch_and_reduce_algorithm* br_alg, NodeID main_node, fast_set& MWIS_set, NodeWeight MWIS_weight) {
 	auto& status = br_alg->status;
 
@@ -2191,7 +2441,6 @@ void generalized_fold_reduction::fold(branch_and_reduce_algorithm* br_alg, NodeI
 	br_alg->add_next_level_node(nodes.main);
 	br_alg->add_next_level_neighborhood(nodes.main);
 }
-
 void generalized_fold_reduction::restore(branch_and_reduce_algorithm* br_alg) {
 	auto& status = br_alg->status;
 	auto& data = restore_vec.back();
@@ -2213,7 +2462,6 @@ void generalized_fold_reduction::restore(branch_and_reduce_algorithm* br_alg) {
 
 	restore_vec.pop_back();
 }
-
 void generalized_fold_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 	auto& status = br_alg->status;
 	auto nodes = restore_vec.back().nodes;
@@ -2245,11 +2493,20 @@ bool iterative_struction<struction_type, type, vertex_increase>::reduce(branch_a
     auto &status = br_alg->status;
     bool applied = false;
     for_each_changed_vertex(br_alg, [&](NodeID v) {
-        if (br_alg->deg(v) > br_alg->config.struction_degree || !s.reduce(br_alg, v, s.removed_vertices(br_alg, v) + vertex_increase)) return;
-
-        status.folded_stack.push_back(get_reduction_type());
-        applied = true;
+        if (reduce_vertex(br_alg, v))
+            applied = true;
     });
+
+    return applied;
+}
+template<typename struction_type, reduction_type type, int vertex_increase>
+bool iterative_struction<struction_type, type, vertex_increase>::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    bool applied = false;
+    if (br_alg->deg(v) > br_alg->config.struction_degree || !s.reduce(br_alg, v, s.removed_vertices(br_alg, v) + vertex_increase)) 
+        return false;
+
+    br_alg->status.folded_stack.push_back(get_reduction_type());
+    applied = true;
 
     return applied;
 }
@@ -2304,7 +2561,6 @@ void blow_up_struction<key_function, struction_type, type>::update_queue(NodeID 
     update_queue_by_key(n, f.key(br_alg, n));
 }
 
-
 template<typename key_function, typename struction_type, reduction_type type>
 bool blow_up_struction<key_function, struction_type, type>::clean_up_queue() {
     auto &status = br_alg->status;
@@ -2339,7 +2595,6 @@ void blow_up_struction<key_function, struction_type, type>::restore(branch_and_r
     s.restore(br_alg);
     restored = true;
 }
-
 
 template<typename key_function, typename struction_type, reduction_type type>
 void blow_up_struction<key_function, struction_type, type>::reset(branch_and_reduce_algorithm* br_alg, size_t comp_size) {
@@ -2388,10 +2643,19 @@ bool path_reduction::reduce(branch_and_reduce_algorithm *br_alg) {
     br_alg->buffers[1].clear();
 
     for_each_changed_vertex(br_alg, [&](NodeID v) {
-        enqueue_node<false>(v);
+        reduce_vertex(br_alg, v);
     });
 
     while (reduce_degree_one_node() || reduce_path());
+    reduced_nodes += (old_n - status.remaining_nodes);
+    reduction_time += br_alg->reduction_timer.elapsed();
+    return old_n != status.remaining_nodes;
+}
+bool path_reduction::reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) {
+
+    auto& status = br_alg->status;
+    size_t old_n = status.remaining_nodes;
+    enqueue_node<false>(v);
     reduced_nodes += (old_n - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
     return old_n != status.remaining_nodes;

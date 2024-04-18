@@ -55,6 +55,7 @@ struct general_reduction {
 	virtual reduction_type get_reduction_type() const = 0;
     virtual void print_reduction_type() = 0;
 	virtual bool reduce(branch_and_reduce_algorithm* br_alg) = 0;
+	virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {}
 	virtual void restore(branch_and_reduce_algorithm* br_alg) {}
     virtual void apply(branch_and_reduce_algorithm* br_alg) {}
     virtual void reset(branch_and_reduce_algorithm* br_alg, size_t comp_size) {}
@@ -85,6 +86,7 @@ struct neighborhood_reduction : public general_reduction {
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::neighborhood; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void print_reduction_type() final {std::cout << "neighborhood: \t\t"; }
 
 };
@@ -97,6 +99,7 @@ struct fold1_reduction : public general_reduction {
 	virtual reduction_type get_reduction_type() const final { return reduction_type::fold1; }
 	virtual void print_reduction_type() final {std::cout << "fold1: \t\t\t"; }
 	virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 	virtual void restore(branch_and_reduce_algorithm* br_alg) final;
 	virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
@@ -109,7 +112,7 @@ private:
 	struct restore_data {
 		fold_nodes nodes;
 		NodeWeight deg1_weight;
-		dynamic_graph::neighbor_list old_neighbors;
+		// dynamic_graph::neighbor_list old_neighbors;
 	};
 
 	void fold(branch_and_reduce_algorithm* br_alg, const fold_nodes& nodes);
@@ -125,6 +128,7 @@ struct fold2_reduction : public general_reduction {
 	virtual reduction_type get_reduction_type() const final { return reduction_type::fold2; }
 	virtual void print_reduction_type() final {std::cout << "fold2: \t\t\t"; }
 	virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 	virtual void restore(branch_and_reduce_algorithm* br_alg) final;
 	virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
@@ -162,6 +166,7 @@ struct clique_neighborhood_reduction_fast : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::clique_neighborhood_fast; }
     virtual void print_reduction_type() final {std::cout << "clique_nbh_fast: \t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 };
 
 struct clique_neighborhood_reduction : public general_reduction {
@@ -172,6 +177,7 @@ struct clique_neighborhood_reduction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::clique_neighborhood; }
     virtual void print_reduction_type() final {std::cout << "clique_nbh: \t\t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 
 
     bool partition_into_cliques(NodeID v);
@@ -190,6 +196,7 @@ struct clique_reduction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::clique; }
     virtual void print_reduction_type() final {std::cout << "clique: \t\t";}
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final;
     virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
@@ -220,6 +227,7 @@ struct funnel_reduction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::funnel; }
     virtual void print_reduction_type() final {std::cout << "funnel: \t\t";}
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final;
     virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
@@ -263,6 +271,7 @@ struct cut_vertex_reduction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::cut_vertex; }
     virtual void print_reduction_type() final {std::cout << "cut_vertex: \t\t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
     virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
@@ -303,6 +312,7 @@ struct single_edge_reduction: public general_reduction {
 	virtual reduction_type get_reduction_type() const final { return reduction_type::single_edge; }
 	virtual void print_reduction_type() final {std::cout << "single_edge: \t\t"; }
 	virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 };
 
 struct extended_single_edge_reduction: public general_reduction {
@@ -313,6 +323,7 @@ struct extended_single_edge_reduction: public general_reduction {
 	virtual reduction_type get_reduction_type() const final { return reduction_type::extended_single_edge; }
 	virtual void print_reduction_type() final {std::cout << "extended_single_edge: \t"; }
 	virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 };
 
 struct twin_reduction : public general_reduction {
@@ -323,6 +334,7 @@ struct twin_reduction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::twin; }
     virtual void print_reduction_type() final {std::cout << "twin: \t\t\t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final;
     virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
@@ -345,6 +357,7 @@ struct domination_reduction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::domination; }
     virtual void print_reduction_type() final {std::cout << "domination: \t\t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 };
 
 struct generalized_neighborhood_reduction : public general_reduction {
@@ -355,6 +368,7 @@ struct generalized_neighborhood_reduction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::generalized_neighborhood; }
     virtual void print_reduction_type() final {std::cout << "generalized_neighborhood: \t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 };
 
 struct generalized_fold_reduction : public general_reduction {
@@ -365,6 +379,7 @@ struct generalized_fold_reduction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::generalized_fold; }
     virtual void print_reduction_type() final {std::cout << "generalized_fold: \t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final;
     virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
@@ -395,6 +410,7 @@ struct heavy_set_reduction : public general_reduction {
 	virtual reduction_type get_reduction_type() const final { return reduction_type::heavy_set; }
 	virtual void print_reduction_type() final {std::cout << "heavy_set: \t\t"; }
 	virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 
     private:
 };
@@ -407,6 +423,7 @@ struct path_reduction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return reduction_type::path; }
     virtual void print_reduction_type() final {std::cout << "path: \t\t\t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final;
     virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
@@ -461,6 +478,7 @@ struct iterative_struction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return type; }
     virtual void print_reduction_type() final {std::cout << "iterative struction: \t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final {s.restore(br_alg);};
     virtual void apply(branch_and_reduce_algorithm* br_alg) final {s.apply(br_alg);};
 
@@ -481,6 +499,7 @@ struct blow_up_struction : public general_reduction {
     virtual reduction_type get_reduction_type() const final { return type; }
     virtual void print_reduction_type() final {std::cout << "blow up struction: \t\t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    // virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final;
     virtual void apply(branch_and_reduce_algorithm* br_alg) final {s.apply(br_alg);};
     virtual void reset(branch_and_reduce_algorithm* br_alg, size_t comp_size) final;

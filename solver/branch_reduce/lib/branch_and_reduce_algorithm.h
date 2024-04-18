@@ -107,9 +107,14 @@ private:
 		dynamic_graph graph;
 		std::vector<NodeWeight> weights;
 		std::vector<IS_status> node_status;
+		std::vector<std::vector<bool>> reduction_node_status;
 
         std::vector<reduction_ptr> transformations; //reductions + blow_ups.
+        std::vector<reduction_ptr> transformations_local; //reductions + blow_ups.
+        std::vector<reduction_ptr> transformations_global; //reductions + blow_ups.
         size_t num_reductions;
+        size_t local_num_reductions;
+        size_t global_num_reductions;
 
 		sized_vector<reduction_type> folded_stack;
 		sized_vector<node_pos> branching_stack;
@@ -120,7 +125,6 @@ private:
 		graph_status(graph_access& G) :
                 n(G.number_of_nodes()), remaining_nodes(n), graph(G), weights(n, 0), node_status(n, IS_status::not_set),
                 folded_stack(2*n), branching_stack(n), modified_stack(2*n + 1) {
-
 			forall_nodes(G, node) {
 				weights[node] = G.getNodeWeight(node);
 			} endfor
@@ -132,6 +136,8 @@ private:
             modified_stack.resize(2*size + 1);
             branching_stack.resize(size);
             folded_stack.resize(2*size);
+			if (reduction_node_status.size() > 0 )
+				reduction_node_status.resize(size, std::vector<bool>(num_reductions, true));
             n = size;
 		}
 
@@ -182,12 +188,16 @@ private:
 	graph_status global_status;
 	std::vector<NodeID> global_mapping;
 	std::vector<size_t> global_transformation_map;
+	std::vector<size_t> global_transformation_local_map;
+	std::vector<size_t> global_transformation_global_map;
 	size_t total_ils_node_count;
 
 	graph_status status;
     graph_access* local_graph;
 	std::vector<NodeID> local_mapping;
 	std::vector<size_t> local_transformation_map;
+	std::vector<size_t> local_transformation_local_map;
+	std::vector<size_t> local_transformation_global_map;
 	std::vector<reduction_ptr> local_reductions;
 
     graph_access recursive_graph;
@@ -216,24 +226,30 @@ private:
 	NodeWeight compute_cover_pruning_bound();
 
 	void init_transformation_step(reduction_ptr &reduction);
+	void init_global_transformation_step(reduction_ptr & reduction);
 	void add_next_level_node(NodeID node);
 	void add_next_level_neighborhood(NodeID node);
 	void add_next_level_neighborhood(const std::vector<NodeID>& nodes);
 
     void reduce_graph_internal();
+    void reduce_graph_by_vertex_internal();
     bool blow_up_graph_internal();
     void cyclic_blow_up();
 	bool branch_reduce_recursive();
 	void branch_reduce_single_component();
-	void initial_reduce();
+    void initial_reduce();
 
-	void update_best_solution();
+    void update_best_solution();
     void undo_blow_up();
     void reverse_branching();
 	void restore_best_local_solution();
 	void restore_best_global_solution();
 
-	void build_global_graph_access();
+    void restore_local_reduction(size_t type);
+    void restore_reduction(size_t type);
+    void apply_reduction(size_t type);
+
+    void build_global_graph_access();
 	void build_induced_neighborhood_subgraph(graph_access& G, NodeID source_node);
 	void build_induced_subgraph(graph_access& G, const sized_vector<NodeID>& nodes, const fast_set& nodes_set, sized_vector<NodeID>& reverse_mapping);
 
@@ -243,7 +259,8 @@ public:
 	branch_and_reduce_algorithm(graph_access& G, const ReductionConfig& config, bool called_from_fold = false);
 	~branch_and_reduce_algorithm();
 
-    graph_access& kernelize();
+
+    graph_access &kernelize();
     size_t deg(NodeID node) const;
 	void reduce_graph();
 	bool run_branch_reduce();
@@ -262,8 +279,17 @@ public:
     void exclude_nodes(std::vector<NodeID> const &nodes);
     void update_independent_set(std::vector<bool> & independent_set);
     void set_node_status(std::vector<bool> & independent_set , graph_access & G, graph_access & reduced, std::vector<NodeID> & reverse_mapping);
+    // added for training data
+	void generate_initial_reduce_data(std::vector<std::vector<bool>>& reduction_data);
+    // graph_access &get_training_data_for_graph_size(NodeID n, std::vector<std::vector<bool>> &reduction_data);
+    void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data);
+    void pick_nodes_random(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
+    void pick_nodes_by_BFS(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
+    void pick_nodes_by_nodeID(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
+
+    // printing
     void print_reduction_info();
-	void print_dyn_graph(){
+    void print_dyn_graph(){
 		print_dyn_graph(global_status);
 	}
 	void print_dyn_graph(graph_status & s)

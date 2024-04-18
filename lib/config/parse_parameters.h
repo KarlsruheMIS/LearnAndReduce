@@ -74,9 +74,9 @@ class ReductionArguments : public BaseArguments {
             reduction_time_limit= arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
             reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, all_decreasing]). Default: decreasing (not using increasing reductions).");
             kernel_filename     = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
-            kernel_csv_filename = arg_str0(NULL, "kernel_csv", NULL, "Path to store resulting kernel in csv format.");
 	        disable_reduction   = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
 	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
+	        reduce_by_vertex    = arg_lit0(NULL, "reduce_by_vertex", "Reduce by vertex instead of by edge.");
 
             // single reduction parameters
             disable_neighborhood        = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -115,6 +115,10 @@ class ReductionArguments : public BaseArguments {
             plain_struction         = arg_lit0(NULL, "plain_struction", "Only use struction to reduce graph.");
             reduce_and_peel         = arg_lit0(NULL, "reduce_and_peel", "Use reduce-and-peel as initial solution for local search");
             ils                     = arg_lit0(NULL, "ils", "Use ils as local search");
+	        pick_nodes_by_NodeID    = arg_lit0(NULL, "pick_nodes_by_NodeID", "Pick nodes by NodeID.");
+	        pick_nodes_by_BFS       = arg_lit0(NULL, "pick_nodes_by_BFS", "Pick nodes by BFS.");
+            num_of_subgraphs        = arg_int0(NULL, "num_of_subgraphs", NULL, "Choose number of subgraphs to generate.");
+            size_of_subgraph       = arg_int0(NULL, "size_of_subgraph", NULL, "Choose size of subgraphs to generate.");
         }
 
         int setConfig(ReductionConfig & config);
@@ -123,9 +127,9 @@ class ReductionArguments : public BaseArguments {
     protected:
         struct arg_str * reduction_style;
         struct arg_dbl * reduction_time_limit;
+        struct arg_lit * reduce_by_vertex;
         struct arg_str * reduction_config;
         struct arg_str * kernel_filename;
-        struct arg_str * kernel_csv_filename;
         struct arg_lit * print_reduction_info;
         struct arg_lit * disable_reduction;
         struct arg_lit * disable_neighborhood;
@@ -162,6 +166,10 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * ils;
         struct arg_lit * plain_struction;
         struct arg_lit * disable_blow_up;
+        struct arg_lit * pick_nodes_by_NodeID;
+        struct arg_lit * pick_nodes_by_BFS;
+        struct arg_int * num_of_subgraphs;
+        struct arg_int * size_of_subgraph;
     };
 
 int BaseArguments::setConfig(Config& config) {
@@ -239,8 +247,8 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_checks,
         weight_source,
         print_reduction_info,
+        reduce_by_vertex,
         kernel_filename,
-        kernel_csv_filename,
         reduction_config,
         reduction_time_limit,
         reduction_style,
@@ -279,6 +287,10 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         ils,
         plain_struction,
         disable_blow_up,
+        pick_nodes_by_NodeID,
+        pick_nodes_by_BFS,
+        num_of_subgraphs,
+        size_of_subgraph,
         end
     };
 
@@ -294,7 +306,6 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));
     return 0;
 }
-
 void ReductionArguments::parseParameters(ReductionConfig & config) {
 
     // Choose standard configuration
@@ -342,6 +353,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         config.reduction_time_limit = reduction_time_limit->dval[0];
     } else {
         config.reduction_time_limit = config.time_limit;
+    }
+    if (reduce_by_vertex->count > 0) {
+        config.reduce_by_vertex = true;
+    } else {
+        config.reduce_by_vertex = false;
     }
     if (print_reduction_info->count > 0) {
         config.print_reduction_info = true;
@@ -409,15 +425,14 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
 	if (disable_reduction->count > 0) {
 		config.perform_reductions = false;
 	}
+
     if (kernel_filename->count > 0) {
         config.kernel_filename = kernel_filename->sval[0];
         config.write_kernel= true;
     } else {
         config.write_kernel= false;
     }
-    if (kernel_csv_filename->count > 0) {
-        config.kernel_csv_filename = kernel_csv_filename->sval[0];
-    }
+
     if (struction_degree->count > 0) {
         config.struction_degree = struction_degree->ival[0];
     }
@@ -459,6 +474,22 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (disable_blow_up->count > 0) {
         config.disable_blow_up = true;
+    }
+    if (pick_nodes_by_BFS->count > 0) {
+		config.pick_nodes_by_BFS = true;
+	} else {
+        config.pick_nodes_by_BFS = false;
+    }
+	if (pick_nodes_by_NodeID->count > 0) {
+		config.pick_nodes_by_NodeID = true;
+	} else {
+        config.pick_nodes_by_NodeID = false;
+    }
+    if (num_of_subgraphs->count > 0) {
+        config.num_of_subgraphs = num_of_subgraphs->ival[0];
+    }
+    if (size_of_subgraph->count > 0) {
+        config.size_of_subgraph = size_of_subgraph->ival[0];
     }
 }
 

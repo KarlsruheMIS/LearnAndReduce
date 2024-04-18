@@ -22,7 +22,6 @@ struct ReductionConfig : public Config {
 
     // Name of the kernel file.
     std::string kernel_filename;
-    std::string kernel_csv_filename;
     // disable single reductions
     bool disable_fold1=false;
     bool disable_fold2=false;
@@ -65,6 +64,9 @@ struct ReductionConfig : public Config {
     std::string reduction_style_name = "initial";
     double reduction_time_limit;
 
+    // apply every reduction to one vertex?
+    bool reduce_by_vertex;
+
     // Lower bound for the change rate between best individuals
     double best_limit;
     // Number of candidates for forced insertion.
@@ -87,6 +89,12 @@ struct ReductionConfig : public Config {
     bool reduce_and_peel;
     bool plain_struction;
     bool disable_blow_up;
+
+    // for training data generation
+    bool pick_nodes_by_NodeID;
+    bool pick_nodes_by_BFS;
+    int num_of_subgraphs = 10;
+    int size_of_subgraph = 1000;
 
     void setReductionStyle(const std::string & redu_style) {
         if (strCompare(redu_style, "time"))                    { 
