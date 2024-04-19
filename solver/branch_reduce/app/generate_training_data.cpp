@@ -36,14 +36,24 @@
 #include "graph_operations.h"
 #include "solution_check.h"
 
-void write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::string filename) {
+bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::string filename) {
+    int count_data_per_graph = 0;
     for (size_t i = 0; i < reduction_data.size(); i++) {
-        // add checks for data 
-        if (std::all_of(reduction_data[i].begin(), reduction_data[i].end(), [](bool v) { return !v; })) {
-            std::cout << "Data is not suitable for reduction " << i << std::endl;
+        // check at least 10% of applications
+        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.10 * reduction_data[i].size()) {
+            continue;
+        }
+        count_data_per_graph++;
+    }
+    if (count_data_per_graph < 2) return false; // specify how much data per graph needed
+
+    for (size_t i = 0; i < reduction_data.size(); i++) {
+        // check at least 10% of applications
+        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.10 * reduction_data[i].size()) {
             continue;
         }
 
+        std::cout << "Data is suitable for reduction " << i << std::endl;
         std::string reduction_filename = filename + "_reduction" + std::to_string(i) + ".txt";
         std::ofstream file;
         file.open(reduction_filename);
@@ -52,6 +62,7 @@ void write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::s
         }
         file.close();
     }
+    return true;
 }
 
 int main(int argn, char **argv) {
@@ -92,8 +103,9 @@ int main(int argn, char **argv) {
     graph_access subgraph; 
     for (int i = 0; i < config.num_of_subgraphs; i++) { // number of different subgraphs out of one graph
         reducer.get_training_data_for_graph_size(subgraph, config.size_of_subgraph, reduction_data); // size of the subgraph
-        write_reduction_data(reduction_data, "training_data/reduction_data/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i) );
-        graph_io::writeGraphWeighted(subgraph, "training_data/graph/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i) + ".graph");
+        bool suitable_data = write_reduction_data(reduction_data, "/home/ernestineg/projects/MWIS_learn_and_reduce/training_data/reduction_data/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i) );
+        if (suitable_data)
+            graph_io::writeGraphWeighted(subgraph, "/home/ernestineg/projects/MWIS_learn_and_reduce/training_data/graph/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i) + ".graph");
         reduction_data = std::vector<std::vector<bool>>(num_of_reductions, std::vector<bool>(config.size_of_subgraph, false));
     }
 

@@ -1287,10 +1287,8 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access&
 	nodes_set.clear();
 	if (config.pick_nodes_by_NodeID) {
 		pick_nodes_by_nodeID(n, nodes_vec, nodes_set);
-	} else if (config.pick_nodes_by_BFS) {
+	} else {// if (config.pick_nodes_by_BFS) 
 		pick_nodes_by_BFS(n, nodes_vec, nodes_set);
-	} else {
-		pick_nodes_random(n, nodes_vec, nodes_set);
 	}
 	build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
 	global_status = std::move(status);
@@ -1299,34 +1297,6 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access&
     br_alg.generate_initial_reduce_data(reduction_data);
 }
 
-void  branch_and_reduce_algorithm::pick_nodes_random(NodeID n, sized_vector<NodeID>& nodes_vec, fast_set& nodes_set) {
-	nodes_vec.clear();
-	nodes_set.clear();
-	// start with random node in graph
-	NodeID node = random_functions::nextInt(0, status.n-1);	
-	nodes_vec.push_back(node);
-	nodes_set.add(node);
-	int count = 0;
-	while (nodes_vec.size() < n && count < 10) {
-		size_t olds = nodes_vec.size();
-		for (auto neighbor : status.graph[node]) {
-			if (nodes_set.get(neighbor)) continue;
-
-			nodes_vec.push_back(neighbor);
-			nodes_set.add(neighbor);
-		}
-
-		node = nodes_vec[std::rand() % (nodes_vec.size()-1)+1]; // pick random node from nodes_vec
-		if (olds == nodes_vec.size()) count++;
-		while (count == 10 && nodes_vec.size() < n) {
-			node = random_functions::nextInt(0, status.n-1);	
-			if (nodes_set.add(node)) {
-				nodes_vec.push_back(node);
-				count = 0;
-			}
-		}
-	}
-}
 void  branch_and_reduce_algorithm::pick_nodes_by_BFS(NodeID n, sized_vector<NodeID>& nodes_vec, fast_set& nodes_set) {
 	nodes_vec.clear();
 	nodes_set.clear();
