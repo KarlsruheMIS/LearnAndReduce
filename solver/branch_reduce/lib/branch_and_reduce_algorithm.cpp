@@ -563,20 +563,30 @@ void branch_and_reduce_algorithm::reduce_graph_internal() {
 }
 
 void branch_and_reduce_algorithm::reduce_graph_by_vertex_internal() {
+	// apply easy rules here (exhausitve)
+    size_t active_reduction_index = 0;
+    while (active_reduction_index < config.num_initial_reductions && t.elapsed() <= config.time_limit) {
+        auto& reduction = status.transformations[active_reduction_index];
+
+        init_transformation_step(reduction);
+        bool progress = reduction->reduce(this);
+        active_reduction_index = progress ? 0 : active_reduction_index + 1;
+    }
+
 	NodeID node = 0;
 	NodeID oldn = status.n + 1;
 	while (oldn > status.remaining_nodes && t.elapsed() <= config.time_limit) {
 		oldn = status.remaining_nodes;
 		while ( node < status.n && t.elapsed() <= config.time_limit) {
 			while (node < status.n && status.node_status[node] != IS_status::not_set)
-			{
+			{ // skip reduced nodes
 				node++;
 			}
 			if (node == status.n) break;
 			bool node_progress = false;
-			for (size_t i = 0; i < status.local_num_reductions; i++ )
+			for (size_t i = config.num_initial_reductions; i < status.local_num_reductions; i++ )
 			{
-				if (status.reduction_node_status[node][i] && status.node_status[node] == IS_status::not_set)
+				if (status.reduction_node_status[node][i] )
 				{
 					node_progress = status.transformations_local[i]->reduce_vertex(this, node);
 					if (node_progress) break;
@@ -584,6 +594,7 @@ void branch_and_reduce_algorithm::reduce_graph_by_vertex_internal() {
 			}
 			node ++;
 		}
+		// recompute reduction_node_status?
  	 	node = (oldn > status.remaining_nodes) ? 0 : node + 1;
 	}
 
@@ -1060,28 +1071,31 @@ void branch_and_reduce_algorithm::restore_best_global_solution() {
 }
 
 void branch_and_reduce_algorithm::restore_local_reduction(size_t type) {
-	if (config.reduce_by_vertex) {
-		if (type == critical_set || type == struction_decrease || type == struction_plateau || type == struction_blow) { // test global reductions
-			status.transformations_global[local_transformation_global_map[type]]->restore(this);
-		} else {
-			status.transformations_local[local_transformation_local_map[type]]->restore(this);
-		}
-	} else {
+	if (config.num_initial_reductions > type || ! config.reduce_by_vertex) {
 		status.transformations[local_transformation_map[type]]->restore(this);
+		return;
+	}
+	 // reductions by vertex:
+	if (type == critical_set || type == struction_decrease || type == struction_plateau || type == struction_blow) { // test global reductions
+		status.transformations_global[local_transformation_global_map[type]]->restore(this);
+	} else {
+		status.transformations_local[local_transformation_local_map[type]]->restore(this);
 	}
 }
 
 
 
 void branch_and_reduce_algorithm::apply_reduction(size_t type) {
-	if (config.reduce_by_vertex) {
-		if (type == critical_set || type == struction_decrease || type == struction_plateau || type == struction_blow) { // test global reductions
-			status.transformations_global[global_transformation_global_map[type]]->apply(this);
-		} else {
-			status.transformations_local[global_transformation_local_map[type]]->apply(this);
-		}
-	} else {
+	if (config.num_initial_reductions > type || ! config.reduce_by_vertex) {
 		status.transformations[global_transformation_map[type]]->apply(this);
+		return;
+	}
+
+	// reductions by vertex
+	if (type == critical_set || type == struction_decrease || type == struction_plateau || type == struction_blow) { // test global reductions
+		status.transformations_global[global_transformation_global_map[type]]->apply(this);
+	} else {
+		status.transformations_local[global_transformation_local_map[type]]->apply(this);
 	}
 }
 
@@ -1290,10 +1304,26 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access&
 	} else {// if (config.pick_nodes_by_BFS) 
 		pick_nodes_by_BFS(n, nodes_vec, nodes_set);
 	}
+	std::sort(nodes_vec.begin(), nodes_vec.end());
 	build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
+	#ifdef DEBUG
+	solution_check<graph_access> sc(graph);
+	assert(sc.check_graph() && "Graph is not a valid solution");
+	forall_nodes(graph, node) {
+		NodeID old_target = 0;
+		forall_out_edges(graph, e, node) {
+			NodeID target = graph.getEdgeTarget(e);
+			assert(target >= old_target && "edges are not sorted");
+			old_target = target;
+		} endfor
+	} endfor
+	#endif
+
+	graph_access modifiable_graph;
+	build_induced_subgraph(modifiable_graph, nodes_vec, nodes_set, reverse_mapping);
 	global_status = std::move(status);
 
-	branch_and_reduce_algorithm br_alg(graph, config, false);
+	branch_and_reduce_algorithm br_alg(modifiable_graph, config, false);
     br_alg.generate_initial_reduce_data(reduction_data);
 }
 
@@ -1377,9 +1407,16 @@ void branch_and_reduce_algorithm::print_reduction_info() {
 		}
 	} else {
     	for (size_t i = 0; i < status.local_num_reductions; i++) {
-    	    auto& reduction = status.transformations_local[i];
-			reduction->print_reduction_type();
-			std::cout << " (local) reduced " << reduction->reduced_nodes << "\tnodes in " << reduction->reduction_time <<" s" << std::endl;
+			if (i < config.num_initial_reductions)
+			{
+				auto& reduction = status.transformations[i];
+				reduction->print_reduction_type();
+				std::cout << " (global) reduced " << reduction->reduced_nodes << "\tnodes in " << reduction->reduction_time <<" s" << std::endl;
+			} else {
+    	    	auto& reduction = status.transformations_local[i];
+				reduction->print_reduction_type();
+				std::cout << " (local) reduced " << reduction->reduced_nodes << "\tnodes in " << reduction->reduction_time <<" s" << std::endl;
+			}
 		}
     	for (size_t i = 0; i < status.global_num_reductions; i++) {
     	    auto& reduction = status.transformations_global[i];

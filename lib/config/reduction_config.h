@@ -95,6 +95,7 @@ struct ReductionConfig : public Config {
     bool pick_nodes_by_BFS;
     int num_of_subgraphs = 10;
     int size_of_subgraph = 1000;
+    int num_initial_reductions = 3;
 
     void setReductionStyle(const std::string & redu_style) {
         if (strCompare(redu_style, "time"))                    { 

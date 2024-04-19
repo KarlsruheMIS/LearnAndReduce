@@ -42,8 +42,9 @@ class branch_and_reduce_algorithm;
 using Struction_Type = ReductionConfig::Struction_Type;
 using Key_Type = ReductionConfig::Key_Type;
 
-enum reduction_type {   neighborhood, clique, clique_neighborhood_fast, clique_neighborhood, domination, twin, generalized_neighborhood, critical_set, generalized_fold, 
-                        fold1, fold2, single_edge, extended_single_edge, heavy_set, cut_vertex, funnel,
+// initial reductions need to be at the beginning
+enum reduction_type {   fold1, neighborhood, fold2, clique, clique_neighborhood_fast, clique_neighborhood, domination, twin, generalized_neighborhood, critical_set, generalized_fold, 
+                        single_edge, extended_single_edge, heavy_set, cut_vertex, funnel,
                         path, struction_decrease, struction_plateau, struction_blow};
 constexpr size_t REDUCTION_NUM = 20;
 

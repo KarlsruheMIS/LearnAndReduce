@@ -119,6 +119,7 @@ class ReductionArguments : public BaseArguments {
 	        pick_nodes_by_BFS       = arg_lit0(NULL, "pick_nodes_by_BFS", "Pick nodes by BFS.");
             num_of_subgraphs        = arg_int0(NULL, "num_of_subgraphs", NULL, "Choose number of subgraphs to generate.");
             size_of_subgraph       = arg_int0(NULL, "size_of_subgraph", NULL, "Choose size of subgraphs to generate.");
+            num_initial_reductions = arg_int0(NULL, "num_initial_reductions", NULL, "Choose number of initial reductions to perform.");
         }
 
         int setConfig(ReductionConfig & config);
@@ -170,6 +171,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * pick_nodes_by_BFS;
         struct arg_int * num_of_subgraphs;
         struct arg_int * size_of_subgraph;
+        struct arg_int * num_initial_reductions;
     };
 
 int BaseArguments::setConfig(Config& config) {
@@ -291,6 +293,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         pick_nodes_by_BFS,
         num_of_subgraphs,
         size_of_subgraph,
+        num_initial_reductions,
         end
     };
 
@@ -490,6 +493,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (size_of_subgraph->count > 0) {
         config.size_of_subgraph = size_of_subgraph->ival[0];
+    }
+    if (num_initial_reductions->count > 0) {
+        config.num_initial_reductions = num_initial_reductions->ival[0];
     }
 }
 
