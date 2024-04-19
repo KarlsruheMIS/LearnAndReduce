@@ -99,6 +99,7 @@ endif()
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/lib
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/config
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/data_structure
@@ -165,3 +166,6 @@ add_library(lib STATIC $<TARGET_OBJECTS:libkaffpa>
                         )
 
 
+add_executable(metis_to_cosmo "app/metis_to_cosmo.cpp" $<TARGET_OBJECTS:lib_general>)
+target_link_libraries(metis_to_cosmo PRIVATE lib)
+target_include_directories(metis_to_cosmo PUBLIC ${GENERAL_INCLUDES})

@@ -32,8 +32,9 @@ make -j $NCORES
 cd ..
 
 mkdir -p deploy
-cp -f ./build/solver/branch_reduce/generate_training_data       deploy/generate_training_data
 cp -f ./build/solver/branch_reduce/branch_reduce_convergence    deploy/branch_reduce
 cp -f ./build/solver/branch_reduce/kernelization                deploy/kernelization
+cp -f ./build/solver/branch_reduce/generate_training_data       deploy/generate_training_data
+cp -f ./build/metis_to_cosmo                                    deploy/metis_to_cosmo
 
 
