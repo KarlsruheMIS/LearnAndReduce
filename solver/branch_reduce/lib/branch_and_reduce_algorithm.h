@@ -67,13 +67,15 @@ private:
     friend critical_set_reduction;
     friend cut_vertex_reduction;
     friend heavy_set_reduction;
+    friend heavy_vertex_reduction;
     friend clique_reduction;
 	friend funnel_reduction;
+	friend funnel_fold_reduction;
 	friend single_edge_reduction;
 	friend extended_single_edge_reduction;
     friend domination_reduction;
     friend twin_reduction;
-    friend generalized_neighborhood_reduction;
+    // friend generalized_neighborhood_reduction;
     friend generalized_fold_reduction;
 
     friend path_reduction;
@@ -110,11 +112,11 @@ private:
 		std::vector<std::vector<bool>> reduction_node_status;
 
         std::vector<reduction_ptr> transformations; //reductions + blow_ups.
-        std::vector<reduction_ptr> transformations_local; //reductions + blow_ups.
-        std::vector<reduction_ptr> transformations_global; //reductions + blow_ups.
+        // std::vector<reduction_ptr> transformations_local; //reductions + blow_ups.
+        // std::vector<reduction_ptr> transformations_global; //reductions + blow_ups.
         size_t num_reductions;
-        size_t local_num_reductions;
-        size_t global_num_reductions;
+        // size_t local_num_reductions;
+        // size_t global_num_reductions;
 
 		sized_vector<reduction_type> folded_stack;
 		sized_vector<node_pos> branching_stack;
@@ -188,16 +190,17 @@ private:
 	graph_status global_status;
 	std::vector<NodeID> global_mapping;
 	std::vector<size_t> global_transformation_map;
-	std::vector<size_t> global_transformation_local_map;
-	std::vector<size_t> global_transformation_global_map;
+	std::vector<reduction_type> global_transformations;
+	// std::vector<size_t> global_transformation_local_map;
+	// std::vector<size_t> global_transformation_global_map;
 	size_t total_ils_node_count;
 
 	graph_status status;
     graph_access* local_graph;
 	std::vector<NodeID> local_mapping;
 	std::vector<size_t> local_transformation_map;
-	std::vector<size_t> local_transformation_local_map;
-	std::vector<size_t> local_transformation_global_map;
+	// std::vector<size_t> local_transformation_local_map;
+	// std::vector<size_t> local_transformation_global_map;
 	std::vector<reduction_ptr> local_reductions;
 
     graph_access recursive_graph;
@@ -245,6 +248,7 @@ private:
 	void restore_best_local_solution();
 	void restore_best_global_solution();
 
+    void apply_local_reduction(size_t type);
     void restore_local_reduction(size_t type);
     void restore_reduction(size_t type);
     void apply_reduction(size_t type);

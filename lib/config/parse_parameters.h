@@ -94,9 +94,12 @@ class ReductionArguments : public BaseArguments {
             disable_critical_set        = arg_lit0(NULL, "disable_critical_set", "Disable critical set reduction.");
             disable_clique              = arg_lit0(NULL, "disable_clique", "Disable clique reduction.");
             disable_twin                = arg_lit0(NULL, "disable_twin", "Disable twin reduction."); 
+            disable_heavy_vertex        = arg_lit0(NULL, "disable_heavy_vertex", "Disable heavy vertex reduction.");
             disable_heavy_set           = arg_lit0(NULL, "disable_heavy_set", "Disable heavy set reduction.");
             disable_cut_vertex          = arg_lit0(NULL, "disable_cut_vertex", "Disable cut vertex reduction.");
             disable_funnel              = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
+            disable_funnel_fold         = arg_lit0(NULL, "disable_funnel_fold", "Disable funnel fold reduction.");
+            disable_decreasing_struction = arg_lit0(NULL, "disable_decreasing_struction", "Disable decreasing struction.");
             heavy_set                   = arg_int0(NULL, "heavy_set",NULL, " Set size constraint of neighborhood in heavy_set reduction. Set to 0, then don't perform heavy set reduction.");
 
             // for struction and branch_and_reduce
@@ -119,7 +122,6 @@ class ReductionArguments : public BaseArguments {
 	        pick_nodes_by_BFS       = arg_lit0(NULL, "pick_nodes_by_BFS", "Pick nodes by BFS.");
             num_of_subgraphs        = arg_int0(NULL, "num_of_subgraphs", NULL, "Choose number of subgraphs to generate.");
             size_of_subgraph       = arg_int0(NULL, "size_of_subgraph", NULL, "Choose size of subgraphs to generate.");
-            num_initial_reductions = arg_int0(NULL, "num_initial_reductions", NULL, "Choose number of initial reductions to perform.");
         }
 
         int setConfig(ReductionConfig & config);
@@ -148,9 +150,12 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_critical_set;
         struct arg_lit * disable_clique;
         struct arg_lit * disable_twin;
+        struct arg_lit * disable_heavy_vertex;
         struct arg_lit * disable_heavy_set;
         struct arg_lit * disable_cut_vertex;
         struct arg_lit * disable_funnel;
+        struct arg_lit * disable_funnel_fold;
+        struct arg_lit * disable_decreasing_struction;
         struct arg_int * heavy_set;
         struct arg_lit * random_freenodes;
         struct arg_int * struction_degree;
@@ -171,7 +176,6 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * pick_nodes_by_BFS;
         struct arg_int * num_of_subgraphs;
         struct arg_int * size_of_subgraph;
-        struct arg_int * num_initial_reductions;
     };
 
 int BaseArguments::setConfig(Config& config) {
@@ -270,9 +274,12 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_critical_set,
         disable_clique,
         disable_twin,
+        disable_heavy_vertex,
         disable_heavy_set,
         disable_cut_vertex,
         disable_funnel,
+        disable_funnel_fold,
+        disable_decreasing_struction,
         heavy_set,
         random_freenodes,
         struction_degree,
@@ -293,7 +300,6 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         pick_nodes_by_BFS,
         num_of_subgraphs,
         size_of_subgraph,
-        num_initial_reductions,
         end
     };
 
@@ -410,6 +416,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     if (disable_twin->count > 0) {
         config.disable_twin = true;
     }
+    if (disable_heavy_vertex->count > 0) {
+        config.disable_heavy_vertex = true;
+    }
     if (disable_heavy_set->count > 0) {
         config.disable_heavy_set = true;
     }
@@ -418,6 +427,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (disable_cut_vertex->count > 0) {
         config.disable_cut_vertex = true;
+    }
+    if (disable_funnel_fold->count > 0) {
+        config.disable_funnel_fold = true;
     }
     if (disable_funnel->count > 0) {
         config.disable_funnel = true;
@@ -436,6 +448,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         config.write_kernel= false;
     }
 
+    if (disable_decreasing_struction->count > 0) {
+        config.disable_decreasing_struction = true;
+    }
     if (struction_degree->count > 0) {
         config.struction_degree = struction_degree->ival[0];
     }
@@ -493,9 +508,6 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (size_of_subgraph->count > 0) {
         config.size_of_subgraph = size_of_subgraph->ival[0];
-    }
-    if (num_initial_reductions->count > 0) {
-        config.num_initial_reductions = num_initial_reductions->ival[0];
     }
 }
 

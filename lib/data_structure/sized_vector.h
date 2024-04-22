@@ -79,8 +79,14 @@ public:
 		counter = size;
 	}
 
-	void push_back(const T& value) { data[counter++] = value; }
-	void push_back(T&& value) { data[counter++] = std::move(value); }
+	void push_back(const T& value) { 
+		data[counter++] = value;
+		assert(counter <= data.size() && "sized_vector::push_back: size too large");
+	}
+	void push_back(T&& value) { 
+		data[counter++] = std::move(value);
+		assert(counter <= data.size() && "sized_vector::push_back: size too large");
+	}
 	void pop_back() { --counter; }
 
 	void remove(iterator iter) {

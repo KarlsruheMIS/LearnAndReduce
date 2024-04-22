@@ -49,7 +49,7 @@ bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::s
 
     for (size_t i = 0; i < reduction_data.size(); i++) {
         // check at least 10% of applications
-        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.10 * reduction_data[i].size()) {
+        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.010 * reduction_data[i].size()) {
             continue;
         }
 
@@ -77,6 +77,8 @@ int main(int argn, char **argv) {
     int ret_code = arguments.setConfig(config); 
     if (ret_code) return 0;
 
+    config.generate_training_data = true;
+    config.disable_critical_set = true;
     std::string graph_filepath = config.graph_filename;
     config.graph_filename = graph_filepath.substr(graph_filepath.find_last_of('/') + 1);
     std::string name = config.graph_filename.substr(0,config.graph_filename.find_last_of('.'));
@@ -93,7 +95,7 @@ int main(int argn, char **argv) {
 
     branch_and_reduce_algorithm reducer(G, config);
 
-    int num_of_reductions = 12;
+    int num_of_reductions = 15;
 
     if (config.size_of_subgraph > G.number_of_nodes()) {
         config.size_of_subgraph = G.number_of_nodes();
@@ -103,9 +105,8 @@ int main(int argn, char **argv) {
     graph_access subgraph; 
     for (int i = 0; i < config.num_of_subgraphs; i++) { // number of different subgraphs out of one graph
         reducer.get_training_data_for_graph_size(subgraph, config.size_of_subgraph, reduction_data); // size of the subgraph
-        bool suitable_data = write_reduction_data(reduction_data, "/home/ernestineg/projects/MWIS_learn_and_reduce/training_data/reduction_data/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i) );
-        if (suitable_data)
-            graph_io::writeGraphWeighted(subgraph, "/home/ernestineg/projects/MWIS_learn_and_reduce/training_data/graph/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i) + ".graph");
+        if(write_reduction_data(reduction_data, "training_data/reduction_data/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i)))
+            graph_io::writeGraphWeighted(subgraph, "training_data/graph/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i) + ".graph");
         reduction_data = std::vector<std::vector<bool>>(num_of_reductions, std::vector<bool>(config.size_of_subgraph, false));
     }
 

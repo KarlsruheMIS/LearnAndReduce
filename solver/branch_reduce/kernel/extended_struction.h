@@ -17,7 +17,7 @@ public:
     void apply(branch_and_reduce_algorithm* br_alg);
     void restore(branch_and_reduce_algorithm* br_alg);
     size_t removed_vertices(branch_and_reduce_algorithm* br_alg, NodeID n);
-
+    
 private:
     branch_and_reduce_algorithm* br_alg;
     mwis_finder finder;

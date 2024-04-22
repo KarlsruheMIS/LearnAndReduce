@@ -40,12 +40,14 @@ struct ReductionConfig : public Config {
     bool disable_generalized_neighborhood = false;
     bool disable_critical_set = false;
     bool disable_neighborhood= false;
+    bool disable_heavy_vertex = false;
     bool disable_heavy_set = false;
     bool disable_domination = true;
     bool disable_decreasing_struction= false;
     bool disable_path= false;
     bool disable_cut_vertex = false;
-    bool disable_funnel = false;
+    bool disable_funnel = true;
+    bool disable_funnel_fold = true;
     // bound for number of nodes in heavy_set neighborhood graph =0 is disabled reduction completely
     int  heavy_set= 20;
     int  cut_vertex_max_component_size= 20;
@@ -96,6 +98,7 @@ struct ReductionConfig : public Config {
     int num_of_subgraphs = 10;
     int size_of_subgraph = 1000;
     int num_initial_reductions = 3;
+    bool generate_training_data = false;
 
     void setReductionStyle(const std::string & redu_style) {
         if (strCompare(redu_style, "time"))                    { 

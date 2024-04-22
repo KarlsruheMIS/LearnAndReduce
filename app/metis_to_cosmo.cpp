@@ -42,36 +42,39 @@ bool reduction_file_exists(const std::string & filename) {
     std::ifstream file(filename);
     return file.good();
 }
-void parse_reduction_data(const std::string & line, std::vector<bool> & reduction_data) {
-    std::istringstream iss(line);
-    std::string token;
-    for (size_t i = 0; i < reduction_data.size(); i++) {
-        std::getline(iss, token, ' ');
-        reduction_data[i] = std::stoi(token);
+void parse_reduction_data(const std::string & reduction_file, std::vector<bool> & reduction_data) {
+    // each row has a 1 or 0 to be stored in reduction_data
+    std::ifstream file(reduction_file);
+    std::string line;
+    while (std::getline(file, line)) {
+        reduction_data.push_back(std::stoi(line));
     }
 }
-int write_weights_and_reductions_to_csv(graph_access & G, const std::string & filename) {
+int write_weights_and_reductions_to_csv(graph_access & G, const std::string & resulting_filename, const std::string & filename) {
     // if reduction file with filename exists, add the content, otherwise all 0
-    int num_of_reductions = 12;
-    std::vector<std::vector<bool>> reduction_data(num_of_reductions, std::vector<bool>(G.number_of_nodes(), false));
+    int num_of_reductions = 15;
+    //reduction names:
+    std::vector<std::string> reduction_names = {"fold1", "neighborhood", "fold2", "clique", "funnel", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "heavy_vertex", "heavy_set", "generalized_fold", "cut_vertex"};
+    std::vector<std::vector<bool>> reduction_data(num_of_reductions);
     for (size_t i = 0; i < num_of_reductions; i++) {
-        if (reduction_file_exists("training_data/reduction_data/" + filename + "_reduction" + std::to_string(i) + ".txt")) {
-            std::ifstream reduction_file("training_data/reduction_data/" +filename + "_reduction" + std::to_string(i) + ".txt");
-            std::string line;
-            std::getline(reduction_file, line);
-            parse_reduction_data(line, reduction_data[i]);
+        std:: string reduction_file = "training_data/reduction_data/" +filename + "_reduction" + std::to_string(i) + ".txt";
+        if (reduction_file_exists(reduction_file)) {
+            parse_reduction_data(reduction_file, reduction_data[i]);
+        } else {
+            reduction_data[i] = std::vector<bool>(G.number_of_nodes(), false);
         }
     }
 
-    std::ofstream f(filename.c_str());
+    std::ofstream f(resulting_filename.c_str());
     f << "id;node_weight";
-    for (size_t i = 0; i < 12; i++) {
-        f << ";reduction" << i;
+    for (size_t i = 0; i < num_of_reductions; i++) {
+        f << ";" << reduction_names[i];
     }
+    f << std::endl;
 
     forall_nodes(G, node) {
         f << node << ";" << G.getNodeWeight(node);
-        for (size_t i = 0; i < 12; i++) {
+        for (size_t i = 0; i < num_of_reductions; i++) {
             f << ";" << reduction_data[i][node];
         }
         f << std::endl;
@@ -98,15 +101,15 @@ int main(int argn, char **argv) {
     std::string name = config.graph_filename.substr(0, config.graph_filename.find_last_of('.'));
     std::string path_and_file = graph_filepath.substr(0,graph_filepath.find_last_of('-'));
 
+    config.check_sorted = false;
     graph_access G;
     graph_operations go;
     graph_io::readGraphWeighted(G, graph_filepath);
     go.assign_weights(G, config);
-    // mis_log::instance()->set_graph(G);
-    // mis_log::instance()->print_graphj);
+
 
     go.writeGraphWeighted_to_csv(G, config.output_filename + ".csv");
-    go.writeWeights_to_csv(G, config.output_filename + "_weight.csv");
-    write_weights_and_reductions_to_csv(G, config.output_filename + "_weights_and_reduction.csv");
+    // go.writeWeights_to_csv(G, config.output_filename + "_weight.csv");
+    write_weights_and_reductions_to_csv(G, config.output_filename + "_weights_and_reduction.csv" , name);
     return 0;
 }
