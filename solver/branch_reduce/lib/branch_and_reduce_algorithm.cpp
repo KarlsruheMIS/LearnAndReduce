@@ -37,7 +37,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	  buffers(4, sized_vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0)
 {
 	// others are locally applied if config.reduce_by_vertex
-	global_transformations = {fold1, neighborhood, fold2, critical_set, struction_plateau, struction_blow};
+	global_transformations = {critical_set, struction_plateau, struction_blow};
 
 	if (called_from_fold)
 	{ // ReductionConfig::Reduction_Style::initial (extended)

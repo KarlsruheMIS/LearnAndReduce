@@ -2119,6 +2119,7 @@ bool heavy_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 bool heavy_vertex_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
     auto& config = br_alg->config;
     if (config.disable_heavy_vertex) return false;
+    if (br_alg->deg(v) < 3) return false; // reduce with fold1 or 2
     br_alg->reduction_timer.restart();
 
 	auto& status = br_alg->status;
