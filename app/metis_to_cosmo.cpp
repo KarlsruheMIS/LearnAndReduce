@@ -50,14 +50,32 @@ void parse_reduction_data(const std::string & reduction_file, std::vector<bool> 
         reduction_data.push_back(std::stoi(line));
     }
 }
-int write_weights_and_reductions_to_csv(graph_access & G, const std::string & resulting_filename, const std::string & filename) {
+int write_weights_and_reductions_to_csv(graph_access & G, const std::string & resulting_filename, const std::string & filename, ReductionConfig & config) {
     // if reduction file with filename exists, add the content, otherwise all 0
-    int num_of_reductions = 15;
     //reduction names:
-    std::vector<std::string> reduction_names = {"fold1", "neighborhood", "fold2", "clique", "funnel", "funnel_fold", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "Clique_neighborhood", "heavy_vertex", "heavy_set", "generalized_fold", "cut_vertex"};
+     // {"fold1", "neighborhood", "fold2", "clique", "funnel", "funnel_fold", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "clique_neighborhood", "decreasing_struction", "heavy_vertex", "heavy_set", "generalized_fold", "cut_vertex"};
+    sized_vector<std::string> reduction_names(25);
+    if (!config.disable_fold1) reduction_names.push_back("fold1");
+    if (!config.disable_neighborhood) reduction_names.push_back("neighborhood");
+    if (!config.disable_fold2) reduction_names.push_back("fold2");
+    if (!config.disable_clique) reduction_names.push_back("clique");
+    if (!config.disable_funnel) reduction_names.push_back("funnel");
+    if (!config.disable_funnel_fold) reduction_names.push_back("funnel_fold");
+    if (!config.disable_basic_se) reduction_names.push_back("single_edge");
+    if (!config.disable_extended_se) reduction_names.push_back("extended_single_edge");
+    if (!config.disable_twin) reduction_names.push_back("twin");
+    if (!config.disable_clique_neighborhood_fast) reduction_names.push_back("clique_nbh_fast");
+    if (!config.disable_clique_neighborhood) reduction_names.push_back("clique_neighborhood");
+    if (!config.disable_decreasing_struction) reduction_names.push_back("decreasing_struction");
+    if (!config.disable_heavy_vertex) reduction_names.push_back("heavy_vertex");
+    if (!config.disable_heavy_set) reduction_names.push_back("heavy_set");
+    if (!config.disable_generalized_fold) reduction_names.push_back("generalized_fold");
+    if (!config.disable_cut_vertex) reduction_names.push_back("cut_vertex");
+
+    int num_of_reductions = reduction_names.size();
     std::vector<std::vector<bool>> reduction_data(num_of_reductions);
     for (size_t i = 0; i < num_of_reductions; i++) {
-        std:: string reduction_file = "training_data/reduction_data/" +filename + "_reduction" + std::to_string(i) + ".txt";
+        std:: string reduction_file = "training_data/reduction_data/" +filename + "_" + reduction_names[i] + ".txt";
         if (reduction_file_exists(reduction_file)) {
             parse_reduction_data(reduction_file, reduction_data[i]);
         } else {
@@ -110,6 +128,6 @@ int main(int argn, char **argv) {
 
     go.writeGraphWeighted_to_csv(G, config.output_filename + ".csv");
     // go.writeWeights_to_csv(G, config.output_filename + "_weight.csv");
-    write_weights_and_reductions_to_csv(G, config.output_filename + "_weights_and_reduction.csv" , name);
+    write_weights_and_reductions_to_csv(G, config.output_filename + "_weights_and_reduction.csv" , name, config);
     return 0;
 }

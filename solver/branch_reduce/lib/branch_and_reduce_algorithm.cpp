@@ -1356,7 +1356,7 @@ void branch_and_reduce_algorithm::update_independent_set(std::vector<bool> &inde
  * added for generating training_data
  * ************************************************/
 
-void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data)
+void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, size_t i)
 {
 	status = std::move(global_status);
 	auto &reverse_mapping = buffers[0];
@@ -1397,7 +1397,7 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access 
 	global_status = std::move(status);
 
 	branch_and_reduce_algorithm br_alg(modifiable_graph, config, false);
-	br_alg.generate_initial_reduce_data(reduction_data);
+	br_alg.generate_initial_reduce_data(reduction_data, i);
 }
 
 void branch_and_reduce_algorithm::pick_nodes_by_BFS(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set)
@@ -1436,7 +1436,7 @@ void branch_and_reduce_algorithm::pick_nodes_by_nodeID(NodeID n, sized_vector<No
 	}
 }
 
-void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::vector<bool>> &reduction_data)
+void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::vector<bool>> &reduction_data, size_t i)
 {
 	std::swap(global_transformation_map, local_transformation_map);
 	status = std::move(global_status);
@@ -1482,6 +1482,7 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 		}
 	}
 
+    if (i == 0) print_reduction_info();
 	global_status = std::move(status);
 	std::swap(global_transformation_map, local_transformation_map);
 }

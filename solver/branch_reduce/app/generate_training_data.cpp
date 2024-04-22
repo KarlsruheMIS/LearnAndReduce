@@ -36,7 +36,7 @@
 #include "graph_operations.h"
 #include "solution_check.h"
 
-bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::string filename) {
+bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::string filename, sized_vector<std::string>& reduction_names) {
     int count_data_per_graph = 0;
     for (size_t i = 0; i < reduction_data.size(); i++) {
         // check at least 10% of applications
@@ -49,12 +49,12 @@ bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::s
 
     for (size_t i = 0; i < reduction_data.size(); i++) {
         // check at least 10% of applications
-        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.010 * reduction_data[i].size()) {
+        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.10 * reduction_data[i].size()) {
             continue;
         }
 
-        std::cout << "Data is suitable for reduction " << i << std::endl;
-        std::string reduction_filename = filename + "_reduction" + std::to_string(i) + ".txt";
+        std::cout << "Data is suitable for reduction " << reduction_names[i] << std::endl;
+        std::string reduction_filename = filename + reduction_names[i]+".txt";
         std::ofstream file;
         file.open(reduction_filename);
         for (int j = 0; j < reduction_data[i].size(); j++) {
@@ -95,20 +95,41 @@ int main(int argn, char **argv) {
 
     branch_and_reduce_algorithm reducer(G, config);
 
-    int num_of_reductions = 15;
-
     if (config.size_of_subgraph > G.number_of_nodes()) {
         config.size_of_subgraph = G.number_of_nodes();
         config.num_of_subgraphs = 1;
     }
+    
+    // {"fold1", "neighborhood", "fold2", "clique", "funnel", "funnel_fold", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "clique_neighborhood", "decreasing_struction", "heavy_vertex", "heavy_set", "generalized_fold", "cut_vertex"};
+    sized_vector<std::string> reduction_names(25);
+    if (!config.disable_fold1) reduction_names.push_back("fold1");
+    if (!config.disable_neighborhood) reduction_names.push_back("neighborhood");
+    if (!config.disable_fold2) reduction_names.push_back("fold2");
+    if (!config.disable_clique) reduction_names.push_back("clique");
+    if (!config.disable_funnel) reduction_names.push_back("funnel");
+    if (!config.disable_funnel_fold) reduction_names.push_back("funnel_fold");
+    if (!config.disable_basic_se) reduction_names.push_back("single_edge");
+    if (!config.disable_extended_se) reduction_names.push_back("extended_single_edge");
+    if (!config.disable_twin) reduction_names.push_back("twin");
+    if (!config.disable_clique_neighborhood_fast) reduction_names.push_back("clique_nbh_fast");
+    if (!config.disable_clique_neighborhood) reduction_names.push_back("clique_neighborhood");
+    if (!config.disable_decreasing_struction) reduction_names.push_back("decreasing_struction");
+    if (!config.disable_heavy_vertex) reduction_names.push_back("heavy_vertex");
+    if (!config.disable_heavy_set) reduction_names.push_back("heavy_set");
+    if (!config.disable_generalized_fold) reduction_names.push_back("generalized_fold");
+    if (!config.disable_cut_vertex) reduction_names.push_back("cut_vertex");
+
+    int num_of_reductions = reduction_names.size();
+
     std::vector<std::vector<bool>> reduction_data(num_of_reductions, std::vector<bool>(config.size_of_subgraph, false));
     graph_access subgraph; 
     for (int i = 0; i < config.num_of_subgraphs; i++) { // number of different subgraphs out of one graph
-        reducer.get_training_data_for_graph_size(subgraph, config.size_of_subgraph, reduction_data); // size of the subgraph
-        if(write_reduction_data(reduction_data, "training_data/reduction_data/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i)))
-            graph_io::writeGraphWeighted(subgraph, "training_data/graph/" + name + "seed"+ std::to_string(config.seed) +"_training_data_" + std::to_string(i) + ".graph");
+        reducer.get_training_data_for_graph_size(subgraph, config.size_of_subgraph, reduction_data, i); // size of the subgraph
+        if(write_reduction_data(reduction_data, "training_data/reduction_data/" + name + "_seed"+ std::to_string(config.seed) +"_training_data_graph_" + std::to_string(i) + "_"  , reduction_names))
+            graph_io::writeGraphWeighted(subgraph, "training_data/graph/" + name + "_seed"+ std::to_string(config.seed) +"_training_data_graph_" + std::to_string(i)+ ".graph");
         reduction_data = std::vector<std::vector<bool>>(num_of_reductions, std::vector<bool>(config.size_of_subgraph, false));
     }
+
 
     return 0;
 }
