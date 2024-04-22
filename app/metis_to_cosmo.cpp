@@ -54,7 +54,7 @@ int write_weights_and_reductions_to_csv(graph_access & G, const std::string & re
     // if reduction file with filename exists, add the content, otherwise all 0
     int num_of_reductions = 15;
     //reduction names:
-    std::vector<std::string> reduction_names = {"fold1", "neighborhood", "fold2", "clique", "funnel", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "heavy_vertex", "heavy_set", "generalized_fold", "cut_vertex"};
+    std::vector<std::string> reduction_names = {"fold1", "neighborhood", "fold2", "clique", "funnel", "funnel_fold", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "Clique_neighborhood", "heavy_vertex", "heavy_set", "generalized_fold", "cut_vertex"};
     std::vector<std::vector<bool>> reduction_data(num_of_reductions);
     for (size_t i = 0; i < num_of_reductions; i++) {
         std:: string reduction_file = "training_data/reduction_data/" +filename + "_reduction" + std::to_string(i) + ".txt";
