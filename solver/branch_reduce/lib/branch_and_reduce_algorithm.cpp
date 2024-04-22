@@ -1482,7 +1482,6 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 		}
 	}
 
-    if (i == 0) print_reduction_info();
 	global_status = std::move(status);
 	std::swap(global_transformation_map, local_transformation_map);
 }

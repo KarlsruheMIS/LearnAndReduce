@@ -46,8 +46,8 @@ struct ReductionConfig : public Config {
     bool disable_decreasing_struction= false;
     bool disable_path= false;
     bool disable_cut_vertex = false;
-    bool disable_funnel = true;
-    bool disable_funnel_fold = true;
+    bool disable_funnel = false;
+    bool disable_funnel_fold = false;
     // bound for number of nodes in heavy_set neighborhood graph =0 is disabled reduction completely
     int  heavy_set= 20;
     int  cut_vertex_max_component_size= 20;

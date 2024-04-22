@@ -227,11 +227,27 @@ struct funnel_reduction : public general_reduction {
     virtual void print_reduction_type() final {std::cout << "funnel: \t\t";}
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
+    virtual void restore(branch_and_reduce_algorithm* br_alg) final;
+    virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
 private:
+    struct fold_data {
+        NodeID node;
+        NodeID funnel_neighbor;
+    };
+
+    struct restore_data {
+        NodeID node;
+        NodeID funnel_neighbor;
+        sized_vector<NodeID> remaining_neighbors;
+        std::vector<std::vector<NodeID>> node_vecs;
+    };
 
     bool is_funnel(NodeID v, NodeID& funnel_neighbor, branch_and_reduce_algorithm* br_alg, fast_set& funnel_set, sized_vector<NodeID>& funnel_nodes);
     bool is_clique(branch_and_reduce_algorithm* br_alg, fast_set& clique_set, sized_vector<NodeID>& clique_nodes);
+    void fold(const fold_data& data, fast_set &funnel_set, branch_and_reduce_algorithm *br_alg);
+
+    std::vector<restore_data> restore_vec;
 
 };
 struct funnel_fold_reduction : public general_reduction {
@@ -240,7 +256,7 @@ struct funnel_fold_reduction : public general_reduction {
     virtual funnel_fold_reduction* clone() const final { return new funnel_fold_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::funnel_fold; }
-    virtual void print_reduction_type() final {std::cout << "funnel min: \t";}
+    virtual void print_reduction_type() final {std::cout << "funnel_fold: \t\t";}
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final;
@@ -255,7 +271,6 @@ private:
     struct restore_data {
         NodeID node;
         NodeID funnel_neighbor;
-        sized_vector<NodeID> outside_funnel_neighbors;
         sized_vector<NodeID> remaining_neighbors;
         std::vector<std::vector<NodeID>> node_vecs;
     };

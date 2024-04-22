@@ -1700,21 +1700,7 @@ bool funnel_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID
         funnel_set.add(v);
 
         if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, neighbors)) {
-            f_neighbors.clear();
-
-            //collect neighbors of funnel neighbor
-            for (auto neighbor : graph[funnel_neighbor]) {
-                if (!is_reduced(neighbor, br_alg)) 
-                    f_neighbors.add(neighbor);
-            }
-
-            // common neighbors are not part of the IS in either case 
-            for (auto neighbor : graph[v]) {
-                if (is_reduced(neighbor, br_alg)) continue;
-                if (neighbor == funnel_neighbor) continue;
-                if (f_neighbors.get(neighbor)) 
-                    br_alg->set(neighbor, IS_status::excluded);
-            }
+            fold({v, funnel_neighbor}, funnel_set, br_alg);
         }
     }
 
@@ -1727,8 +1713,9 @@ bool funnel_reduction::is_funnel(NodeID node, NodeID& funnel_neighbor, branch_an
     auto& weights = status.weights;
     auto& graph = status.graph;
     auto& neighbors = br_alg->buffers[1];
+    if (is_clique(br_alg, funnel_set, funnel_nodes)) 
+        return false;
     funnel_neighbor = status.n;
-    if (is_clique(br_alg, funnel_set, funnel_nodes)) return false;
     for (NodeID v : funnel_nodes) {
         assert(v != node && "ERROR: funnel_reduction::is_funnel: node must not be in funnel_nodes");
         assert(!is_reduced(v, br_alg) && "ERROR: funnel_reduction::is_funnel: node must be unset");
@@ -1779,6 +1766,119 @@ bool funnel_reduction::is_clique(branch_and_reduce_algorithm* br_alg, fast_set& 
     }
     return true;
 }
+void funnel_reduction::fold(const fold_data& data, fast_set& funnel_set, branch_and_reduce_algorithm* br_alg) {
+    auto& status = br_alg->status;
+    auto& weights = status.weights;
+    auto& graph = status.graph;
+    auto& f_neighbors = br_alg->set_2; 
+    NodeID node = data.node;
+    NodeID funnel_neighbor = data.funnel_neighbor;
+
+    f_neighbors.clear();
+    sized_vector<NodeID> outside_funnel_neighbors(status.graph[funnel_neighbor].size());
+    sized_vector<NodeID> remaining_neighbors(graph[node].size());
+
+    //collect neighbors of funnel neighbor and those outside the funnel set
+    for (auto neighbor : graph[funnel_neighbor]) {
+        if (!is_reduced(neighbor, br_alg)) 
+        {
+            f_neighbors.add(neighbor);
+            if (!funnel_set.get(neighbor)) 
+                outside_funnel_neighbors.push_back(neighbor);
+        }
+    }
+
+    // common neighbors are not part of the IS in either case 
+    for (auto neighbor : graph[node]) {
+        if (is_reduced(neighbor, br_alg)) continue;
+        if (neighbor == funnel_neighbor) continue;
+        if (f_neighbors.get(neighbor)) 
+        {
+            br_alg->set(neighbor, IS_status::excluded);
+        }
+        else
+        {
+            remaining_neighbors.push_back(neighbor); 
+        }
+    }
+
+    if (remaining_neighbors.size() == 0) {
+        assert(br_alg->deg(node) == 1 && "ERROR: funnel_reduction::fold: remaining neighbors must be non-empty");
+        if (weights[node] >= weights[funnel_neighbor])
+        {
+            br_alg->set(node, IS_status::included);
+        }
+        return;
+    }
+
+    // remaining_neighbors.resize(remaining_neighbors.size());
+    status.folded_stack.push_back(get_reduction_type());
+    status.reduction_offset += weights[node];
+
+    // add additional edges connecting the remaining neighbors with funnel neighors outside the funnel set  
+    restore_vec.push_back({data.node, data.funnel_neighbor, remaining_neighbors, {}});
+    for (size_t idx = 0; idx < remaining_neighbors.size(); idx++) {
+        restore_vec.back().node_vecs.push_back({});
+        NodeID neighbor = remaining_neighbors[idx];
+        assert(!is_reduced(neighbor, br_alg) && "ERROR: funnel_reduction::fold: remaining neighbors must be unset");
+        assert( node != neighbor && "ERROR: funnel_reduction::restore: node must not be in remaining_neighbors");
+        assert( funnel_neighbor != neighbor && "ERROR: funnel_reduction::restore: node must not be in remaining_neighbors");
+        for (auto neighbor_2nd : outside_funnel_neighbors) {
+            if (!graph.adjacent(neighbor, neighbor_2nd)) {
+                graph.add_edge_undirected(neighbor, neighbor_2nd);
+                restore_vec.back().node_vecs[idx].push_back(neighbor_2nd);
+            }
+        }
+        assert(weights[neighbor] + weights[funnel_neighbor] >= weights[node] && "ERROR: funnel_reduction::fold: weight must be larger than node weight");
+        br_alg->add_next_level_node(neighbor);
+    }
+    weights[funnel_neighbor] -= weights[node];
+    br_alg->set(node, IS_status::folded, true);
+    br_alg->add_next_level_neighborhood(node);
+}
+void funnel_reduction::restore(branch_and_reduce_algorithm* br_alg) {
+	auto& status = br_alg->status;
+    auto& data = restore_vec.back();
+
+    br_alg->unset(data.node);
+    status.weights[data.funnel_neighbor] += status.weights[data.node];
+
+    // remove added edges:
+    for (size_t idx = 0; idx < data.remaining_neighbors.size(); idx++) {
+        NodeID neighbor = data.remaining_neighbors[idx];
+        for (auto neighbor_2nd : restore_vec.back().node_vecs[idx]) {
+            status.graph.hide_edge_undirected(neighbor, neighbor_2nd);
+        }
+    }
+    status.reduction_offset -= status.weights[data.node];
+
+	restore_vec.pop_back();
+}
+void funnel_reduction::apply(branch_and_reduce_algorithm* br_alg) {
+	auto& node_status = br_alg->status.node_status;
+	auto& is_weight = br_alg->status.is_weight;
+	auto& weights = br_alg->status.weights;
+	auto data = restore_vec.back();
+	auto& remaining = data.remaining_neighbors;
+
+    bool include_node = node_status[data.funnel_neighbor] == IS_status::excluded;
+    if (include_node) 
+        include_node = std::none_of(remaining.begin(), remaining.end(), [&](NodeID neighbor) { return node_status[neighbor] == IS_status::included; });
+
+    restore(br_alg);
+
+    if (include_node) {
+        node_status[data.node] = IS_status::included;
+        node_status[data.funnel_neighbor] = IS_status::excluded;
+        is_weight += weights[data.node];
+    } else {
+        node_status[data.node] = IS_status::excluded;
+        node_status[data.funnel_neighbor] = IS_status::included;
+        is_weight += weights[data.node];
+    }
+    // std::cout << "node: " << data.node << " (" << node_status[data.node] << ") funnel_neighbor: " << data.funnel_neighbor << " (" << node_status[data.funnel_neighbor] << ")\n";
+}
+
 
 bool funnel_fold_reduction::reduce(branch_and_reduce_algorithm* br_alg)
 {
@@ -1793,7 +1893,7 @@ bool funnel_fold_reduction::reduce(branch_and_reduce_algorithm* br_alg)
 }
 bool funnel_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v)
 {
-    if (br_alg->config.disable_funnel) return false;
+    if (br_alg->config.disable_funnel_fold) return false;
     br_alg->reduction_timer.restart();
     if (br_alg->deg(v) <= 2) return false; // fold1 or 2
 	auto& weights = br_alg->status.weights;
@@ -1808,14 +1908,21 @@ bool funnel_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, N
     funnel_set.clear();
     bool skip = false;
 
-
     if (std::none_of(neighbors.begin(), neighbors.end(), [&](NodeID neighbor) { return weights[neighbor] > weights[v]; })) {
 
         get_neighborhood_set(v, br_alg, funnel_set);
         funnel_set.add(v);
 
+        // sized_vector<NodeID> funnel_nodes(br_alg->status.graph[v].size() + 1);
+        // for (auto neighbor : br_alg->status.graph[v]) {
+        //         funnel_nodes.push_back(neighbor);
+        // }
+        // funnel_nodes.push_back(v);
+
         if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, neighbors)) {
+            // br_alg->print_subgraph(br_alg->status, funnel_nodes);
             fold({v, funnel_neighbor}, funnel_set, br_alg);
+            // br_alg->print_subgraph(br_alg->status, funnel_nodes);
         }
     }
 
@@ -1823,33 +1930,42 @@ bool funnel_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, N
     reduction_time += br_alg->reduction_timer.elapsed();
 	return oldn != remaining_n;
 }
-bool funnel_fold_reduction::is_funnel(NodeID node, NodeID& funnel_neighbor, branch_and_reduce_algorithm* br_alg, fast_set& funnel_set, sized_vector<NodeID>& funnel_nodes) {
+bool funnel_fold_reduction::is_funnel(NodeID v, NodeID& funnel_neighbor, branch_and_reduce_algorithm* br_alg, fast_set& funnel_set, sized_vector<NodeID>& funnel_nodes) {
     auto& status = br_alg->status;
     auto& weights = status.weights;
     auto& graph = status.graph;
-    auto& neighbors = br_alg->buffers[1]; // neighbors of node (set before)
+    auto& neighbors = br_alg->buffers[1]; // neighbors of v (set before)
     funnel_neighbor = status.n;
-    for (NodeID v : funnel_nodes) {
-        assert(v != node && "ERROR: funnel_reduction::is_funnel: node must not be in funnel_nodes");
-        assert(!is_reduced(v, br_alg) && "ERROR: funnel_reduction::is_funnel: node must be unset");
+    if (is_clique(br_alg, funnel_set, funnel_nodes)) 
+        return false;
+    
+    for (NodeID u : funnel_nodes) {
+        assert(u != v && "ERROR: funnel_reduction::is_funnel: node must not be in funnel_nodes");
+        assert(!is_reduced(u, br_alg) && "ERROR: funnel_reduction::is_funnel: node must be unset");
         bool skip = false;
-        funnel_nodes.remove(v);
-        if (std::any_of(funnel_nodes.begin(), funnel_nodes.end(), [&](NodeID neighbor) { return weights[neighbor] + weights[v] < weights[node]; })) {
-            funnel_nodes.push_back(v);
+        funnel_nodes.remove(std::find(funnel_nodes.begin(), funnel_nodes.end(), u));
+        if (std::any_of(funnel_nodes.begin(), funnel_nodes.end(), [&](NodeID neighbor) { return weights[neighbor] + weights[u] < weights[v]; })) {
+            funnel_nodes.push_back(u);
             continue;
         }
+        #ifdef DEBUG
 
-        funnel_set.remove(v);
+        for (auto neighbor : funnel_nodes) {
+            assert(weights[neighbor] + weights[u] >= weights[v] && "ERROR: funnel_reduction::fold: weight must be larger than node weight");
+        }
+        #endif
+
+        funnel_set.remove(u);
         if (is_clique(br_alg, funnel_set, funnel_nodes)) {
-            funnel_neighbor = v;
+            funnel_neighbor = u;
             funnel_nodes.push_back(funnel_neighbor);
             funnel_set.add(funnel_neighbor);
             return true; 
         }
         else 
         {
-            funnel_nodes.push_back(v);
-            funnel_set.add(v);
+            funnel_nodes.push_back(u);
+            funnel_set.add(u);
         } 
     }
     return false;
@@ -1908,37 +2024,25 @@ void funnel_fold_reduction::fold(const fold_data& data, fast_set& funnel_set, br
 
     if (remaining_neighbors.size() == 0) {
         assert(br_alg->deg(node) == 1 && "ERROR: funnel_reduction::fold: remaining neighbors must be non-empty");
-        if (weights[node] >= weights[funnel_neighbor])
-        {
-            br_alg->set(node, IS_status::included);
-        }
+        br_alg->set(node, IS_status::included);
         return;
     }
-
-
-    // remaining_neighbors.resize(remaining_neighbors.size());
+    return;
     status.folded_stack.push_back(get_reduction_type());
     status.reduction_offset += weights[node];
 
     // add additional edges connecting the remaining neighbors with funnel neighors outside the funnel set  
-    restore_vec.push_back({data.node, data.funnel_neighbor, outside_funnel_neighbors, remaining_neighbors, {}});
+    restore_vec.push_back({data.node, data.funnel_neighbor, remaining_neighbors, {}});
     for (size_t idx = 0; idx < remaining_neighbors.size(); idx++) {
         restore_vec.back().node_vecs.push_back({});
         NodeID neighbor = remaining_neighbors[idx];
-        assert(!is_reduced(neighbor, br_alg) && "ERROR: funnel_reduction::fold: remaining neighbors must be unset");
-        assert( node != neighbor && "ERROR: funnel_reduction::restore: node must not be in remaining_neighbors");
-        assert( funnel_neighbor != neighbor && "ERROR: funnel_reduction::restore: node must not be in remaining_neighbors");
         for (auto neighbor_2nd : outside_funnel_neighbors) {
             if (!graph.adjacent(neighbor, neighbor_2nd)) {
                 graph.add_edge_undirected(neighbor, neighbor_2nd);
                 restore_vec.back().node_vecs[idx].push_back(neighbor_2nd);
             }
-            assert( node != neighbor_2nd && "ERROR: funnel_reduction::restore: node must not be in remaining_neighbors");
-            assert( funnel_neighbor != neighbor_2nd && "ERROR: funnel_reduction::restore: node must not be in remaining_neighbors");
         }
-        assert(weights[neighbor] + weights[funnel_neighbor] >= weights[node] && "ERROR: funnel_reduction::fold: weight must be larger than node weight");
         weights[neighbor] += weights[funnel_neighbor];
-        assert(weights[neighbor] >= weights[node] && "ERROR: funnel_reduction::fold: weight must be larger than node weight");
         weights[neighbor] -= weights[node];
         br_alg->add_next_level_node(neighbor);
     }
@@ -1961,10 +2065,8 @@ void funnel_fold_reduction::restore(branch_and_reduce_algorithm* br_alg) {
         for (auto neighbor_2nd : restore_vec.back().node_vecs[idx]) {
             status.graph.hide_edge_undirected(neighbor, neighbor_2nd);
         }
-        assert( data.node != neighbor && "ERROR: funnel_reduction::restore: node must not be in remaining_neighbors");
-        assert( data.funnel_neighbor != neighbor && "ERROR: funnel_reduction::restore: node must not be in remaining_neighbors");
-        status.weights[neighbor] += status.weights[data.funnel_neighbor];
-        status.weights[neighbor] -= status.weights[data.node];
+        status.weights[neighbor] += status.weights[data.node];
+        status.weights[neighbor] -= status.weights[data.funnel_neighbor];
     }
     status.reduction_offset -= status.weights[data.node];
 
@@ -1976,11 +2078,8 @@ void funnel_fold_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 	auto& weights = br_alg->status.weights;
 	auto data = restore_vec.back();
 	auto& remaining = data.remaining_neighbors;
-	auto& outside = data.outside_funnel_neighbors;
 
     bool include_node = std::none_of(remaining.begin(), remaining.end(), [&](NodeID neighbor) { return node_status[neighbor] == IS_status::included; });
-    if (include_node) 
-        include_node = std::any_of(outside.begin(), outside.end(), [&](NodeID neighbor) { return node_status[neighbor] == IS_status::included; });
 
     restore(br_alg);
 
@@ -1991,6 +2090,10 @@ void funnel_fold_reduction::apply(branch_and_reduce_algorithm* br_alg) {
     } else {
         node_status[data.node] = IS_status::excluded;
         node_status[data.funnel_neighbor] = IS_status::included;
+        for (auto neighbor : remaining) {
+            if (node_status[neighbor] == IS_status::included)
+                is_weight += weights[neighbor];
+        }
         is_weight += weights[data.funnel_neighbor];
     }
     // std::cout << "node: " << data.node << " (" << node_status[data.node] << ") funnel_neighbor: " << data.funnel_neighbor << " (" << node_status[data.funnel_neighbor] << ")\n";
@@ -2328,6 +2431,7 @@ bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
     NodeWeight max_neighbor_weight = status.weights[max_neighbor];
 
     if (status.graph[v].size() > branch_and_reduce_algorithm::REDU_RECURSION_LIMIT) {
+        reduction_time += br_alg->reduction_timer.elapsed();
         return false;
     }
 
@@ -2335,10 +2439,14 @@ bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
 
     NodeWeight MWIS_weight = 0;
     bool solved_exact = solve_induced_subgraph_from_set(MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping, true); 
-    if (!solved_exact)  return false;
+    if (!solved_exact)  {
+        reduction_time += br_alg->reduction_timer.elapsed();
+        return false;
+    }
 
     if (status.weights[v] >= MWIS_weight) {
         if (br_alg->config.generate_training_data) {
+            reduction_time += br_alg->reduction_timer.elapsed();
             return false; // is heavy vertex reduction
         }
         // same as in generalized_neighborhood_reduction
@@ -2363,6 +2471,7 @@ bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
 
     if (status.weights[v] < MWIS_weight - min_MWIS_neighbor_weight) {
         // multiple IS exist that have bigger weight than v
+        reduction_time += br_alg->reduction_timer.elapsed();
         return false;
     }
 

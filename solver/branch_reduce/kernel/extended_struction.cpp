@@ -65,7 +65,10 @@ bool extended_struction<reduced>::reduce(branch_and_reduce_algorithm* br_alg, No
     // Delete v and its neighbors
     br_alg->set(n, IS_status::folded, true);
     for (const auto u : status.graph[n])
-        br_alg->set(u, IS_status::folded, false);
+    {
+        if (status.node_status[u] == IS_status::not_set)
+            br_alg->set(u, IS_status::folded, false);
+    }
 
 
     // Connect set nodes to original nodes
