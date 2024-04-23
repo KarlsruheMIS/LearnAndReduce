@@ -109,6 +109,7 @@ inline void configuration_reduction::disable_new_reductions( ReductionConfig & c
     config.disable_cut_vertex                     = true;
     config.disable_funnel                         = true;
     config.disable_funnel_fold                    = true;
+    config.disable_heavy_vertex                   = true;
 }
 
 inline void configuration_reduction::enable_new_reductions( ReductionConfig & config ) {
@@ -123,6 +124,7 @@ inline void configuration_reduction::enable_new_reductions( ReductionConfig & co
     config.disable_cut_vertex                     = false;
     config.disable_funnel                         = false;
     config.disable_funnel_fold                    = false;
+    config.disable_heavy_vertex                   = false;
 }
 
 inline void configuration_reduction::original_cyclicFast( ReductionConfig & config ) {
