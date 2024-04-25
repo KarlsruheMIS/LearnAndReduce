@@ -39,24 +39,69 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {critical_set, struction_plateau, struction_blow};
 
-	if (called_from_fold)
-	{ // ReductionConfig::Reduction_Style::initial (extended)
-		global_status.transformations = make_reduction_vector<
-			fold1_reduction, neighborhood_reduction, fold2_reduction, clique_reduction, funnel_reduction, funnel_fold_reduction, 
-			single_edge_reduction, extended_single_edge_reduction, domination_reduction, twin_reduction>(global_status.n);
+	if (called_from_fold) {
+        if (config.reduction_style != ReductionConfig::StructionReduction_Style::FULL)
+	    { 
+		    global_status.transformations = make_reduction_vector<
+            neighborhood_reduction, 
+            fold2_reduction, 
+            clique_reduction, 
+            domination_reduction, 
+            twin_reduction>(global_status.n);
 		global_status.num_reductions = global_status.transformations.size();
+        } else {
+            // ReductionConfig::Reduction_Style::FULL (extended)
+		    global_status.transformations = make_reduction_vector<
+			fold1_reduction, 
+            neighborhood_reduction, 
+            fold2_reduction, 
+            clique_reduction, 
+            funnel_reduction, 
+            funnel_fold_reduction, 
+			single_edge_reduction, 
+            extended_single_edge_reduction, 
+            twin_reduction>(global_status.n);
+		global_status.num_reductions = global_status.transformations.size();
+        }
 	}
 	else if (config.reduction_style == ReductionConfig::StructionReduction_Style::DENSE)
 	{
 		global_status.transformations = make_reduction_vector<
-			fold1_reduction, neighborhood_reduction, fold2_reduction, clique_reduction, funnel_reduction, funnel_fold_reduction, 
-			single_edge_reduction, extended_single_edge_reduction, domination_reduction, twin_reduction, 
-			clique_neighborhood_reduction_fast, critical_set_reduction, heavy_vertex_reduction, generalized_fold_reduction, heavy_set_reduction, heavy_set3_reduction, cut_vertex_reduction>(global_status.n);
+            neighborhood_reduction, 
+            fold2_reduction, 
+            clique_reduction, 
+            domination_reduction,
+            twin_reduction, 
+            generalized_fold_reduction>(global_status.n);
 		global_status.num_reductions = global_status.transformations.size();
 	}
-	else
+	else if (config.reduction_style == ReductionConfig::StructionReduction_Style::NORMAL)
 	{
-		// ReductionConfig::Reduction_Style::initial (extended not called from fold)
+        if (!config.plain_struction)
+		{
+			if (!config.disable_neighborhood) global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
+			if (!config.disable_fold2) global_status.transformations.emplace_back(new fold2_reduction(global_status.n));
+			if (!config.disable_clique) global_status.transformations.emplace_back(new clique_reduction(global_status.n));
+			if (!config.disable_domination) global_status.transformations.emplace_back(new domination_reduction(global_status.n));
+			if (!config.disable_twin) global_status.transformations.emplace_back(new twin_reduction(global_status.n));
+			if (!config.disable_clique_neighborhood) global_status.transformations.emplace_back(new clique_neighborhood_reduction(global_status.n));
+            if (!config.disable_generalized_fold) global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
+		}
+		if (config.struction_type != ReductionConfig::Struction_Type::NONE)
+		{
+			global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
+			global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
+		}
+		if (!config.plain_struction)
+		{
+			if (!config.disable_critical_set) global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
+		}
+
+		global_status.num_reductions = global_status.transformations.size();
+		if (!config.disable_blow_up)
+			global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
+
+    } else { // FULL 
 		if (!config.plain_struction)
 		{
 			if (!config.disable_fold1) global_status.transformations.emplace_back(new fold1_reduction(global_status.n));
@@ -81,7 +126,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		{
 			if (!config.disable_critical_set) global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
 			if (!config.disable_heavy_vertex) global_status.transformations.emplace_back(new heavy_vertex_reduction(global_status.n));
-			if (!config.disable_generalized_fold) global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
+            if (!config.disable_generalized_fold) global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
 			if (!config.disable_heavy_set) global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
 			if (!config.disable_heavy_set3) global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
 			if (!config.disable_cut_vertex) global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
@@ -109,17 +154,47 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		if (this->config.reduction_style == ReductionConfig::StructionReduction_Style::DENSE)
 		{
 			status.transformations = make_reduction_vector<
-				fold1_reduction, neighborhood_reduction, fold2_reduction, clique_reduction, funnel_reduction, funnel_fold_reduction, 
-				single_edge_reduction, extended_single_edge_reduction, domination_reduction, twin_reduction, clique_neighborhood_reduction_fast>(status.n);
+				neighborhood_reduction, fold2_reduction, clique_reduction, 
+				domination_reduction, twin_reduction, clique_neighborhood_reduction_fast>(status.n);
 		}
-		else
+		else if (this->config.reduction_style == ReductionConfig::StructionReduction_Style::NORMAL)
 		{
-			// ReductionConfig::Reduction_Style::NORMAL
+	   
 			if (called_from_fold)
 			{
 				status.transformations = make_reduction_vector<
-					fold1_reduction, neighborhood_reduction, fold2_reduction, clique_reduction, funnel_reduction, funnel_fold_reduction, 
-					single_edge_reduction, extended_single_edge_reduction, domination_reduction, twin_reduction, clique_neighborhood_reduction_fast, clique_neighborhood_reduction, critical_set_reduction>(status.n);
+					neighborhood_reduction, fold2_reduction, clique_reduction,
+                    domination_reduction, twin_reduction, clique_neighborhood_reduction, critical_set_reduction>(status.n);
+			}
+			else
+			{
+				status.transformations.clear();
+				if (!config.disable_neighborhood) status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
+				if (!config.disable_fold2) status.transformations.emplace_back(new fold2_reduction(global_status.n));
+				if (!config.disable_clique) status.transformations.emplace_back(new clique_reduction(global_status.n));
+				if (!config.disable_domination) status.transformations.emplace_back(new domination_reduction(global_status.n));
+				if (!config.disable_twin) status.transformations.emplace_back(new twin_reduction(global_status.n));
+				if (!config.disable_decreasing_struction) status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
+				if (!config.disable_critical_set) status.transformations.emplace_back(new critical_set_reduction(global_status.n));
+			}
+		}
+        else 
+        {
+		// ReductionConfig::Reduction_Style::FULL
+			if (called_from_fold)
+			{
+				status.transformations = make_reduction_vector<
+			    fold1_reduction, 
+                neighborhood_reduction, 
+                fold2_reduction, 
+                clique_reduction, 
+                funnel_reduction, 
+                funnel_fold_reduction, 
+			    single_edge_reduction, 
+                extended_single_edge_reduction, 
+                twin_reduction,
+                clique_neighborhood_reduction, 
+                critical_set_reduction>(status.n);
 			}
 			else
 			{

@@ -17,7 +17,7 @@ struct ReductionConfig : public Config {
     enum Reduction_Style {initial, time_ordering, weight_ordering, time_and_weight_ordering};
     enum Struction_Type {ORIGINAL, MODIFIED, EXTENDED, EXTENDED_REDUCED, NONE};
     enum Backtrack_Type {IMMEDIATE_TIE_BREAKING, IMMEDIATE_EXCLUDE, END_MIN_KERNEL, NO_BACKTRACK};
-    enum StructionReduction_Style {NORMAL, DENSE};
+    enum StructionReduction_Style {NORMAL, DENSE, FULL};
     enum Key_Type {RANDOM, DEGREE, INCREASE, APPROXIMATE_INCREASE};
 
     // Name of the kernel file.
@@ -118,7 +118,9 @@ struct ReductionConfig : public Config {
   void setStructionReductionType(const std::string & r_type) {
         if (strCompare(r_type, "dense")) {
             struction_reduction_style = StructionReduction_Style::DENSE;
-        } else  {
+        } else  if (strCompare(r_type, "full")) {
+            struction_reduction_style = StructionReduction_Style::FULL;
+        } else if (strCompare(r_type, "normal")) {
             struction_reduction_style = StructionReduction_Style::NORMAL;
         }
     }
