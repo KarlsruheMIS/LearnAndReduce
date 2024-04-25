@@ -14,10 +14,10 @@
 
 // Configuration for the calculation of the MIS
 struct ReductionConfig : public Config {
-    enum Reduction_Style {initial, time_ordering, weight_ordering, time_and_weight_ordering};
+    // enum Reduction_Style {initial, time_ordering, weight_ordering, time_and_weight_ordering};
     enum Struction_Type {ORIGINAL, MODIFIED, EXTENDED, EXTENDED_REDUCED, NONE};
     enum Backtrack_Type {IMMEDIATE_TIE_BREAKING, IMMEDIATE_EXCLUDE, END_MIN_KERNEL, NO_BACKTRACK};
-    enum StructionReduction_Style {NORMAL, DENSE, FULL};
+    enum Reduction_Style {NORMAL, DENSE, FULL};
     enum Key_Type {RANDOM, DEGREE, INCREASE, APPROXIMATE_INCREASE};
 
     // Name of the kernel file.
@@ -84,7 +84,7 @@ struct ReductionConfig : public Config {
     unsigned int phase_blow_ups;
     unsigned int max_unimproving_phases;
     Backtrack_Type backtrack_style;
-    StructionReduction_Style struction_reduction_style;
+    // StructionReduction_Style struction_reduction_style;
     Key_Type key_type;
     double key_reinsert_factor;
     bool reduce_and_peel;
@@ -99,29 +99,13 @@ struct ReductionConfig : public Config {
     int num_initial_reductions = 3;
     bool generate_training_data = false;
 
-    void setReductionStyle(const std::string & redu_style) {
-        if (strCompare(redu_style, "time"))                    { 
-            reduction_style = Reduction_Style::time_ordering;
-            reduction_style_name = "time";
-        } else if (strCompare(redu_style, "weight"))           { 
-            reduction_style = Reduction_Style::weight_ordering;
-            reduction_style_name = "weight";
-        } else if (strCompare(redu_style, "time_and_weight"))  { 
-            reduction_style = Reduction_Style::time_and_weight_ordering;
-            reduction_style_name = "time_and_weight";
-        } else { 
-            reduction_style = Reduction_Style::initial;
-            reduction_style_name = "initial";
-            }
-    }
- 
-  void setStructionReductionType(const std::string & r_type) {
-        if (strCompare(r_type, "dense")) {
-            struction_reduction_style = StructionReduction_Style::DENSE;
-        } else  if (strCompare(r_type, "full")) {
-            struction_reduction_style = StructionReduction_Style::FULL;
-        } else if (strCompare(r_type, "normal")) {
-            struction_reduction_style = StructionReduction_Style::NORMAL;
+    void setReductionStyle(const std::string & style) {
+        if (strCompare(style, "dense")) {
+            reduction_style = Reduction_Style::DENSE;
+        } else  if (strCompare(style, "full")) {
+            reduction_style = Reduction_Style::FULL;
+        } else if (strCompare(style, "normal")) {
+            reduction_style = Reduction_Style::NORMAL;
         }
     }
     

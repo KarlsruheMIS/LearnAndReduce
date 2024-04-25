@@ -72,7 +72,7 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
 	config.sort_freenodes                         = true;
     // Reductions
 	config.perform_reductions                     = true;
-    config.reduction_style                        = ReductionConfig::Reduction_Style::initial;
+    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
     // Weights
     config.weight_source                          = ReductionConfig::Weight_Source::FILE;
 
@@ -134,7 +134,7 @@ inline void configuration_reduction::original_cyclicFast( ReductionConfig & conf
     disable_new_reductions(config);
     config.disable_blow_up                        = false;
     config.struction_type                         = ReductionConfig::Struction_Type::EXTENDED;
-    config.struction_reduction_style              = ReductionConfig::StructionReduction_Style::NORMAL;
+    config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
     config.disable_generalized_fold               = true;
     config.disable_clique_neighborhood            = true;
     config.global_blow_up_factor                  = 9999;
@@ -148,7 +148,7 @@ inline void configuration_reduction::original_cyclicStrong( ReductionConfig & co
     standard(config);
     disable_new_reductions(config);
     config.struction_type                         = ReductionConfig::Struction_Type::EXTENDED;
-    config.struction_reduction_style              = ReductionConfig::StructionReduction_Style::NORMAL;
+    config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
     config.disable_blow_up                        = false;
     config.disable_generalized_fold               = true;
     config.global_blow_up_factor                  = 9999;
@@ -171,13 +171,13 @@ inline void configuration_reduction::mmwis( ReductionConfig & config ) {
 
 inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig & config ) {
     original_cyclicFast(config);
-    config.struction_reduction_style              = ReductionConfig::StructionReduction_Style::FULL;
+    config.reduction_style              = ReductionConfig::Reduction_Style::FULL;
     enable_new_reductions(config);
 }
 
 inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfig & config ) {
     original_cyclicStrong(config);
-    config.struction_reduction_style              = ReductionConfig::StructionReduction_Style::FULL;
+    config.reduction_style              = ReductionConfig::Reduction_Style::FULL;
     enable_new_reductions(config);
 }
 

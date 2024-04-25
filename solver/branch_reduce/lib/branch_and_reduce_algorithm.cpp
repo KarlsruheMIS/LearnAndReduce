@@ -40,7 +40,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	global_transformations = {critical_set, struction_plateau, struction_blow};
 
 	if (called_from_fold) {
-        if (config.reduction_style != ReductionConfig::StructionReduction_Style::FULL)
+        if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
 	    { 
 		    global_status.transformations = make_reduction_vector<
             neighborhood_reduction, 
@@ -60,11 +60,12 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
             funnel_fold_reduction, 
 			single_edge_reduction, 
             extended_single_edge_reduction, 
-            twin_reduction>(global_status.n);
+            twin_reduction,
+            clique_neighborhood_reduction_fast>(global_status.n);
 		global_status.num_reductions = global_status.transformations.size();
         }
 	}
-	else if (config.reduction_style == ReductionConfig::StructionReduction_Style::DENSE)
+	else if (config.reduction_style == ReductionConfig::Reduction_Style::DENSE)
 	{
 		global_status.transformations = make_reduction_vector<
             neighborhood_reduction, 
@@ -75,7 +76,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
             generalized_fold_reduction>(global_status.n);
 		global_status.num_reductions = global_status.transformations.size();
 	}
-	else if (config.reduction_style == ReductionConfig::StructionReduction_Style::NORMAL)
+	else if (config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
 	{
         if (!config.plain_struction)
 		{
@@ -132,11 +133,11 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			if (!config.disable_cut_vertex) global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
 		}
 
+		global_status.num_reductions = global_status.transformations.size();
 		if (!config.disable_blow_up)
 		{
 			global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
 		}
-		global_status.num_reductions = global_status.transformations.size();
 	}
 
 	global_transformation_map.resize(REDUCTION_NUM);
@@ -151,13 +152,13 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 
 	set_local_reductions = [this, called_from_fold, &config]()
 	{
-		if (this->config.reduction_style == ReductionConfig::StructionReduction_Style::DENSE)
+		if (this->config.reduction_style == ReductionConfig::Reduction_Style::DENSE)
 		{
 			status.transformations = make_reduction_vector<
 				neighborhood_reduction, fold2_reduction, clique_reduction, 
 				domination_reduction, twin_reduction, clique_neighborhood_reduction_fast>(status.n);
 		}
-		else if (this->config.reduction_style == ReductionConfig::StructionReduction_Style::NORMAL)
+		else if (this->config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
 		{
 	   
 			if (called_from_fold)
@@ -258,7 +259,7 @@ void branch_and_reduce_algorithm::resize(size_t size)
 	for (auto &transformation : status.transformations)
 	{
 		transformation->marker.resize(size);
-		transformation->marker.clear_next();
+		// transformation->marker.clear_next();
 	}
 }
 
