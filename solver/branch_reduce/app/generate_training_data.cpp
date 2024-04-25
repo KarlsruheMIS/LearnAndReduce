@@ -100,7 +100,7 @@ int main(int argn, char **argv) {
         config.num_of_subgraphs = 1;
     }
     
-    // {"fold1", "neighborhood", "fold2", "clique", "funnel", "funnel_fold", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "clique_neighborhood", "decreasing_struction", "heavy_vertex", "heavy_set", "generalized_fold", "cut_vertex"};
+    // {"fold1", "neighborhood", "fold2", "clique", "funnel", "funnel_fold", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "clique_neighborhood", "decreasing_struction", "heavy_vertex", "generalized_fold", "heavy_set", "heavy_set3", "cut_vertex"};
     sized_vector<std::string> reduction_names(25);
     if (!config.disable_fold1) reduction_names.push_back("fold1");
     if (!config.disable_neighborhood) reduction_names.push_back("neighborhood");
@@ -115,8 +115,9 @@ int main(int argn, char **argv) {
     if (!config.disable_clique_neighborhood) reduction_names.push_back("clique_neighborhood");
     if (!config.disable_decreasing_struction) reduction_names.push_back("decreasing_struction");
     if (!config.disable_heavy_vertex) reduction_names.push_back("heavy_vertex");
-    if (!config.disable_heavy_set) reduction_names.push_back("heavy_set");
     if (!config.disable_generalized_fold) reduction_names.push_back("generalized_fold");
+    if (!config.disable_heavy_set) reduction_names.push_back("heavy_set");
+    if (!config.disable_heavy_set3) reduction_names.push_back("heavy_set3");
     if (!config.disable_cut_vertex) reduction_names.push_back("cut_vertex");
 
     int num_of_reductions = reduction_names.size();

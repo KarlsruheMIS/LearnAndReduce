@@ -428,9 +428,6 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     if (disable_heavy_set3->count > 0) {
         config.disable_heavy_set3 = true;
     }
-    if (subgraph_node_limit->count > 0) {
-        config.subgraph_node_limit = subgraph_node_limit->ival[-1];
-    }
     if (disable_cut_vertex->count > 0) {
         config.disable_cut_vertex = true;
     }
@@ -446,6 +443,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
 	if (disable_reduction->count > 0) {
 		config.perform_reductions = false;
 	}
+    if (subgraph_node_limit->count > 0) {
+        config.subgraph_node_limit = subgraph_node_limit->ival[0];
+    }
 
     if (kernel_filename->count > 0) {
         config.kernel_filename = kernel_filename->sval[0];

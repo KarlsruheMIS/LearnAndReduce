@@ -48,10 +48,8 @@ struct ReductionConfig : public Config {
     bool disable_cut_vertex = false;
     bool disable_funnel = false;
     bool disable_funnel_fold = false;
-    // bound for number of nodes in heavy_set neighborhood graph =0 is disabled reduction completely
-    // int  heavy_set= 20;
-    // int  cut_vertex_max_component_size= 20;
-    NodeID subgraph_node_limit = 30;
+    // bound for number of nodes in subgraphs
+    NodeID subgraph_node_limit = 10;
     // Write the kernel into a file
     bool write_kernel;
     bool print_reduction_info = false;

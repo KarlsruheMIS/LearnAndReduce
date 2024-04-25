@@ -324,14 +324,14 @@ private:
         sized_vector<NodeID> case_cut_v_excluded_nodes_to_exclude;
     };
 
-    void fold(branch_and_reduce_algorithm *br_alg, fold_data &data, sized_vector<NodeID> &cut_v_included_i, sized_vector<NodeID> &cut_v_included_e, sized_vector<NodeID> &cut_v_excluded_i, sized_vector<NodeID> &cut_v_excluded_e);
-
-    bool find_cut_vertex(branch_and_reduce_algorithm *br_alg, NodeID &cut_v, sized_vector<NodeID> &cut_component, std::vector<NodeID> &reverse_mapping, fast_set &tested);
-    bool DFS(branch_and_reduce_algorithm *br_alg, NodeID u, int &step, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent);
+    // bool find_cut_vertex(branch_and_reduce_algorithm *br_alg, NodeID &cut_v, sized_vector<NodeID> &cut_component, std::vector<NodeID> &reverse_mapping, fast_set &tested, std::vector<bool> &global_visited);
+    // bool DFS(branch_and_reduce_algorithm *br_alg, NodeID u, int &step, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent, std::vector<bool> &global_visited);
+    // bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent, std::vector<bool> &global_visited);
     bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent);
-    bool build_small_component(NodeID u, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &component, std::vector<bool> &visited);
-    void dfs_fill_visited(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<bool> &visited);
-
+    bool build_small_component(NodeID u, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &component, std::vector<bool> &component_visited);
+    void dfs_fill_visited(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<bool> &component_visited);
+    // void dfs_fill_visited(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<bool> &component_visited, std::vector<bool> &global_visited);
+    void fold(branch_and_reduce_algorithm *br_alg, fold_data &data, sized_vector<NodeID> &cut_v_included_i, sized_vector<NodeID> &cut_v_included_e, sized_vector<NodeID> &cut_v_excluded_i, sized_vector<NodeID> &cut_v_excluded_e);
 
     std::vector<restore_data> restore_vec;
 };
@@ -443,7 +443,34 @@ struct heavy_set_reduction : public general_reduction {
 	virtual void print_reduction_type() final {std::cout << "heavy_set: \t\t"; }
 	virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
-    bool is_heavy_set(NodeID v, fast_set &v_neighbors_set, sized_vector<NodeID> &v_neighbors_vec, NodeID u, branch_and_reduce_algorithm *br_alg);
+    private:
+    enum v_combination {oo, uo, ov, uv}; // uo = u fixed as included and v is excluded (start with no increasing to all vertices)
+    bool is_heavy_set(NodeID v, fast_set &v_neighbors_set, NodeID u, branch_and_reduce_algorithm *br_alg);
+    void unset_weights(graph_access &graph, sized_vector<NodeID> &nodes, sized_vector<NodeID> &reverse_mapping);
+    void set_weights(graph_access &graph, sized_vector<NodeID> &nodes, sized_vector<NodeID> &reverse_mapping, std::vector<NodeWeight> &weights);
+};
+
+struct heavy_set3_reduction : public general_reduction {
+	heavy_set3_reduction(size_t n) : general_reduction(n) {}
+	~heavy_set3_reduction() {}
+	virtual heavy_set3_reduction* clone() const final { return new heavy_set3_reduction(*this); }
+
+	virtual reduction_type get_reduction_type() const final { return reduction_type::heavy_set3; }
+	virtual void print_reduction_type() final {std::cout << "heavy_set3: \t\t"; }
+	virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
+
+private:
+
+    enum v_combination {ooo, uoo, ovo, oow, uvo, uow, ovw, uvw}; // uoo = u fixed as included and v, w (=o) are excluded (start with no increasing to all vertices)
+
+    bool is_heavy_set(NodeID v, fast_set &v_neighbors_set, NodeID u, fast_set &u_neighbors_set, NodeID w, branch_and_reduce_algorithm *br_alg);
+    bool check_u_combination(std::vector<NodeWeight> &MWIS_weights);
+    bool check_v_combination(std::vector<NodeWeight> &MWIS_weights);
+    bool check_w_combination(std::vector<NodeWeight> &MWIS_weights);
+    void unset_weights(graph_access& graph, sized_vector<NodeID>& nodes, sized_vector<NodeID>& reverse_mapping);
+    void set_weights(graph_access& graph, sized_vector<NodeID>& nodes, sized_vector<NodeID>& reverse_mapping, std::vector<NodeWeight>& weights);
+
 };
 
 struct path_reduction : public general_reduction {
