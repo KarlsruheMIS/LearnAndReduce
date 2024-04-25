@@ -48,7 +48,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	else if (config.reduction_style == ReductionConfig::StructionReduction_Style::DENSE)
 	{
 		global_status.transformations = make_reduction_vector<
-			fold1_reduction, neighborhood_reduction, fold2_reduction, clique_reduction, funnel_reduction, funnel_fold_reduction, single_edge_reduction, extended_single_edge_reduction, domination_reduction, twin_reduction, clique_neighborhood_reduction_fast, critical_set_reduction, cut_vertex_reduction, heavy_vertex_reduction, heavy_set_reduction, generalized_fold_reduction>(global_status.n);
+			fold1_reduction, neighborhood_reduction, fold2_reduction, clique_reduction, funnel_reduction, funnel_fold_reduction, single_edge_reduction, extended_single_edge_reduction, domination_reduction, twin_reduction, clique_neighborhood_reduction_fast, critical_set_reduction, cut_vertex_reduction, heavy_vertex_reduction, heavy_set_reduction, heavy_set3_reduction, generalized_fold_reduction>(global_status.n);
 		global_status.num_reductions = global_status.transformations.size();
 	}
 	else
@@ -84,6 +84,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			if (!config.disable_cut_vertex) global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
 			if (!config.disable_heavy_vertex) global_status.transformations.emplace_back(new heavy_vertex_reduction(global_status.n));
 			if (!config.disable_heavy_set) global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
+			if (!config.disable_heavy_set3) global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
 		}
 
 		if (!config.disable_blow_up)

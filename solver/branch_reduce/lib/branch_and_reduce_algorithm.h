@@ -66,8 +66,9 @@ private:
     friend clique_neighborhood_reduction_fast;
     friend critical_set_reduction;
     friend cut_vertex_reduction;
-    friend heavy_set_reduction;
     friend heavy_vertex_reduction;
+    friend heavy_set_reduction;
+    friend heavy_set3_reduction;
     friend clique_reduction;
 	friend funnel_reduction;
 	friend funnel_fold_reduction;

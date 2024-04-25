@@ -96,11 +96,12 @@ class ReductionArguments : public BaseArguments {
             disable_twin                = arg_lit0(NULL, "disable_twin", "Disable twin reduction."); 
             disable_heavy_vertex        = arg_lit0(NULL, "disable_heavy_vertex", "Disable heavy vertex reduction.");
             disable_heavy_set           = arg_lit0(NULL, "disable_heavy_set", "Disable heavy set reduction.");
+            disable_heavy_set3          = arg_lit0(NULL, "disable_heavy_set3", "Disable heavy set3 reduction.");
             disable_cut_vertex          = arg_lit0(NULL, "disable_cut_vertex", "Disable cut vertex reduction.");
             disable_funnel              = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
             disable_funnel_fold         = arg_lit0(NULL, "disable_funnel_fold", "Disable funnel fold reduction.");
             disable_decreasing_struction = arg_lit0(NULL, "disable_decreasing_struction", "Disable decreasing struction.");
-            heavy_set                   = arg_int0(NULL, "heavy_set",NULL, " Set size constraint of neighborhood in heavy_set reduction. Set to 0, then don't perform heavy set reduction.");
+            subgraph_node_limit         = arg_int0(NULL, "subgraph_node_limit", NULL, "Choose maximum number of nodes in subgraph.");
 
             // for struction and branch_and_reduce
             random_freenodes        = arg_lit0(NULL, "random_freenodes", "Randomly picks free nodes to maximize to IS instead of sorting them by weight.");
@@ -152,11 +153,12 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_twin;
         struct arg_lit * disable_heavy_vertex;
         struct arg_lit * disable_heavy_set;
+        struct arg_lit * disable_heavy_set3;
         struct arg_lit * disable_cut_vertex;
         struct arg_lit * disable_funnel;
         struct arg_lit * disable_funnel_fold;
         struct arg_lit * disable_decreasing_struction;
-        struct arg_int * heavy_set;
+        struct arg_int * subgraph_node_limit;
         struct arg_lit * random_freenodes;
         struct arg_int * struction_degree;
         struct arg_int * set_limit;
@@ -276,11 +278,12 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_twin,
         disable_heavy_vertex,
         disable_heavy_set,
+        disable_heavy_set3,
         disable_cut_vertex,
         disable_funnel,
         disable_funnel_fold,
         disable_decreasing_struction,
-        heavy_set,
+        subgraph_node_limit,
         random_freenodes,
         struction_degree,
         set_limit,
@@ -422,8 +425,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     if (disable_heavy_set->count > 0) {
         config.disable_heavy_set = true;
     }
-    if (heavy_set->count > 0) {
-        config.heavy_set = heavy_set->ival[-1];
+    if (disable_heavy_set3->count > 0) {
+        config.disable_heavy_set3 = true;
+    }
+    if (subgraph_node_limit->count > 0) {
+        config.subgraph_node_limit = subgraph_node_limit->ival[-1];
     }
     if (disable_cut_vertex->count > 0) {
         config.disable_cut_vertex = true;

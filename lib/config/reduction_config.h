@@ -37,11 +37,11 @@ struct ReductionConfig : public Config {
     bool disable_clique_neighborhood= false;
     bool disable_clique_neighborhood_fast= false;
     bool disable_generalized_fold= false;
-    bool disable_generalized_neighborhood = false;
     bool disable_critical_set = false;
     bool disable_neighborhood= false;
     bool disable_heavy_vertex = false;
     bool disable_heavy_set = false;
+    bool disable_heavy_set3 = false;
     bool disable_domination = true;
     bool disable_decreasing_struction= false;
     bool disable_path= false;
@@ -49,8 +49,9 @@ struct ReductionConfig : public Config {
     bool disable_funnel = false;
     bool disable_funnel_fold = false;
     // bound for number of nodes in heavy_set neighborhood graph =0 is disabled reduction completely
-    int  heavy_set= 20;
-    int  cut_vertex_max_component_size= 20;
+    // int  heavy_set= 20;
+    // int  cut_vertex_max_component_size= 20;
+    NodeID subgraph_node_limit = 30;
     // Write the kernel into a file
     bool write_kernel;
     bool print_reduction_info = false;
