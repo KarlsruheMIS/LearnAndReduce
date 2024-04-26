@@ -651,7 +651,6 @@ bool single_edge_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 	auto& status = br_alg->status;
 	size_t oldn = status.remaining_nodes;
 
-    NodeWeight partial_neighbor_sum = 0;
 	for_each_changed_vertex(br_alg, [&](NodeID v) {
         reduce_vertex(br_alg, v);
 	});
@@ -673,6 +672,7 @@ bool single_edge_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, N
     get_neighborhood_set(v, br_alg, neighbors);
 
     for (NodeID neighbor : graph[v]) {
+        if (is_reduced(neighbor, br_alg)) continue;
         if (weights[v] <= weights[neighbor]) { // otherwise not applicable to this edge
             for (NodeID second_neighbor : status.graph[neighbor]) {
                 if (!is_reduced(second_neighbor, br_alg) && !neighbors.get(second_neighbor)) {
@@ -681,6 +681,7 @@ bool single_edge_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, N
             }
          
             // note: weight of v is in partial_neighbor_sum included
+            // if N(v) \subset N(neighbor) partial_neighbor_sum = weights[v]
             if (partial_neighbor_sum <= weights[neighbor]) { 
                 br_alg->set(v, IS_status::excluded);
                 break;
@@ -776,7 +777,6 @@ bool domination_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 	return oldn != status.remaining_nodes;
 }
 bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
-    // special case of single edge reduction (only used in original versions)
     if(br_alg->config.disable_domination) return false;
     br_alg->reduction_timer.restart();
 	auto& status = br_alg->status;
@@ -817,52 +817,6 @@ bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, No
 	return oldn != status.remaining_nodes;
 }
 
-// bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
-//     if (br_alg->blowing_up) return false;
-//     if (br_alg->config.disable_cut_vertex) return false;
-//     br_alg->reduction_timer.restart();
-// 	auto& status = br_alg->status;
-//     auto& cut_component = br_alg->buffers[0];
-//     auto& config = br_alg->config;
-// 	size_t oldn = status.remaining_nodes;
-//     NodeID cut_v;
-//     std::vector<bool> global_visited(status.n, true);
-//     sized_vector<NodeID> cut_v_included_i(config.subgraph_node_limit);
-//     sized_vector<NodeID> cut_v_included_e(config.subgraph_node_limit);
-//     sized_vector<NodeID> cut_v_excluded_i(config.subgraph_node_limit);
-//     sized_vector<NodeID> cut_v_excluded_e(config.subgraph_node_limit);
-//     std::vector<NodeID> unreduced_mapping(status.remaining_nodes, status.n);
-//     fast_set tested_cut_vertices(status.n);
-
-//     //TODO make dfs only run on reduced nodes (mappings vie buffer)
-//     NodeID local_n = 0;
-//     for (NodeID n = 0; n < br_alg->status.n; ++n) {
-//         if (status.node_status[n] == IS_status::not_set) global_visited[n] = false;
-//         if (!global_visited[n]) {
-//             unreduced_mapping[local_n] = n;
-//             local_n++;
-//         }
-//         assert(local_n <= status.remaining_nodes && "ERROR: cut_vertex_reduction::reduce: local_n too small");
-//     }
-
-//     while (find_cut_vertex(br_alg, cut_v, cut_component, unreduced_mapping, tested_cut_vertices, global_visited) && br_alg->config.reduction_time_limit > br_alg->t.elapsed())    
-//     {
-//         assert(cut_component.size() <= config.subgraph_node_limit && "ERROR: cut_vertex_reduction::reduce: component size too large");
-//         if (cut_component.size() <= 1) continue; //fold1
-//         NodeWeight small_cutMWIS_weight = 0;
-//         NodeWeight large_cutMWIS_weight = 0;
-//         if (get_fold_data(br_alg, cut_v, cut_v_included_i, cut_v_included_e, cut_v_excluded_i, cut_v_excluded_e, large_cutMWIS_weight, small_cutMWIS_weight)) 
-//         {
-//             fold_data data = {cut_v, status.weights[cut_v], large_cutMWIS_weight, small_cutMWIS_weight, cut_component};
-//             fold(br_alg, data, cut_v_included_i, cut_v_included_e, cut_v_excluded_i, cut_v_excluded_e);
-//         }
-//     }
-//     reduced_nodes += (oldn - status.remaining_nodes);
-//     reduction_time += br_alg->reduction_timer.elapsed();
-//     // br_alg->config.disable_cut_vertex = true; // only test whole graph once
-// 	return oldn != status.remaining_nodes;
-// }
-
 bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->blowing_up) return false;
     if (br_alg->config.disable_cut_vertex) return false;
@@ -873,7 +827,6 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 
 	return oldn != br_alg->status.remaining_nodes;
 }
-
 bool cut_vertex_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
     if (br_alg->blowing_up) return false;
     if (br_alg->config.disable_cut_vertex) return false;
@@ -940,7 +893,6 @@ bool cut_vertex_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, No
     // br_alg->config.disable_cut_vertex = true; // only test whole graph once
 	return oldn != status.remaining_nodes;
 }
-
 bool cut_vertex_reduction::get_fold_data(branch_and_reduce_algorithm* br_alg, NodeID cut_v, sized_vector<NodeID>& cut_v_included_i, sized_vector<NodeID>& cut_v_included_e, sized_vector<NodeID>& cut_v_excluded_i, sized_vector<NodeID>& cut_v_excluded_e, NodeWeight& large_cutMWIS_weight, NodeWeight& small_cutMWIS_weight)
 {
 	auto& status = br_alg->status;
@@ -1010,72 +962,6 @@ bool cut_vertex_reduction::get_fold_data(branch_and_reduce_algorithm* br_alg, No
         return true;
     }
 }
-// bool cut_vertex_reduction::find_cut_vertex(branch_and_reduce_algorithm* br_alg, NodeID& cut_v, sized_vector<NodeID>& cut_component, std::vector<NodeID>& reverse_mapping, fast_set& tested, std::vector<bool>& global_visited) {
-//     auto& status = br_alg->status;
-//     int step = 0;
-//     for (NodeID local_n = 0; local_n < br_alg->status.remaining_nodes; ++local_n) {
-//             if (!global_visited[reverse_mapping[local_n]]) {
-//                 if (DFS(br_alg, reverse_mapping[local_n], step, cut_v, cut_component, global_visited) && !tested.get(cut_v)) {
-//                         cut_v = cut_v;
-//                         tested.add(cut_v);
-//                         return true; // New articulation point with small component found
-//                 }
-//                 if (br_alg->config.reduction_time_limit < br_alg->t.elapsed()) return false;
-//             }
-//         }
-//     return false; // No articulation point meeting criteria found
-// }
-// bool cut_vertex_reduction::DFS(branch_and_reduce_algorithm* br_alg, NodeID u, int& step, NodeID& cut_vertex, sized_vector<NodeID>& smallComponent, std::vector<bool>& global_visited) {
-//     auto& status = br_alg->status;
-//     auto& graph = br_alg->status.graph;
-//     auto& low = br_alg->buffers[0];
-//     auto& disc = br_alg->buffers[1];
-//     auto& parent = br_alg->buffers[2];
-//     low.assign(status.n,INT_MAX);
-//     disc.assign(status.n,0);
-//     parent.assign(status.n, status.n);
-//     std::vector<NodeID> stack;
-//     std::vector<std::pair<NodeID,NodeID>> edge_stack;
-//     stack.reserve(br_alg->status.remaining_nodes);
-//     edge_stack.reserve(br_alg->status.remaining_nodes);
-//     stack.push_back(u);
-//     while (!stack.empty() && br_alg->config.reduction_time_limit > br_alg->t.elapsed()) {
-//         NodeID current = stack.back();
-//         int children = 0;
-//         disc[current] = low[current] = ++step;
-//         global_visited[current] = true;
-//         bool pushedChild = false;
-//         for (NodeID v : graph[current]) {
-//             // Avoid reprocessing an edge in the undirected graph
-//             if (!edge_stack.empty() && edge_stack.back() == std::make_pair(v, current)) continue;
-//             if (!global_visited[v]) {
-//                 stack.push_back(v);
-//                 edge_stack.push_back(std::make_pair(current, v)); // Track the edge
-//                 children++;
-//                 parent[v] = current;
-//                 pushedChild = true;
-//                 break;
-//             } else if (v != parent[current]) {
-//                 low[current] = std::min(low[current], disc[v]);
-//             }
-//         }
-//         if (!pushedChild) 
-//         {
-//            stack.pop_back(); // Finish processing current node 
-//            if (!stack.empty()) {
-//                 low[parent[current]] = std::min(low[parent[current]], low[current]);
-//                 // check if current is a cut vertex
-//                 if ((parent[current] == status.n && disc[current] != low[current]) ||  // root node
-//                     (parent[current] != status.n && low[current] >= disc[parent[current]])) 
-//                     if (check_components(br_alg, current, cut_vertex, smallComponent, global_visited)) {
-//                         return true;
-//                     }
-//            }
-//             if (!edge_stack.empty()) edge_stack.pop_back(); // Pop the edge after processing
-//         }
-//     }
-//     return false;
-// }
 bool cut_vertex_reduction::check_components(branch_and_reduce_algorithm* br_alg, NodeID u, NodeID& cut_vertex, sized_vector<NodeID>& smallComponent) {
     auto& status = br_alg->status;
     auto& config = br_alg->config;
@@ -1224,6 +1110,160 @@ void cut_vertex_reduction::apply(branch_and_reduce_algorithm* br_alg) {
             node_status[neighbor] = IS_status::included;
         }
         is_weight += restore_info.data.large_cutMWIS_weight;
+    }
+}
+
+
+bool component_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
+    if (br_alg->blowing_up) return false;
+    if (br_alg->config.disable_cut_vertex) return false;
+    size_t oldn = br_alg->status.remaining_nodes;
+    for_each_changed_vertex(br_alg, [&](NodeID v) {
+        reduce_vertex(br_alg, v);
+    });
+
+	return oldn != br_alg->status.remaining_nodes;
+}
+bool component_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->blowing_up) return false;
+    if (br_alg->config.disable_cut_vertex) return false;
+    if (!br_alg->config.generate_training_data) return false; // only used for training data (otherwise included in cut_vertex)
+    br_alg->reduction_timer.restart();
+	auto& status = br_alg->status;
+    auto& cut_component = br_alg->buffers[0];
+    auto& reverse_mapping = br_alg->buffers[1];
+    auto& cut_component_set = br_alg->set_1;
+    auto& cut_v_neighbor_set = br_alg->double_set; // since set_2 used in later iterative function call
+    auto& config = br_alg->config;
+	size_t oldn = status.remaining_nodes;
+    NodeID cut_v;
+    if (check_components(br_alg, v, cut_v, cut_component)) {
+        assert(cut_component.size() <= config.subgraph_node_limit && "ERROR: cut_vertex_reduction::reduce: component size too large");
+        if (cut_component.size() <= 1) return false; //fold1
+        assert(cut_component.size() <= config.subgraph_node_limit);
+
+        cut_component_set.clear();
+        get_neighborhood_set(cut_v, br_alg, cut_v_neighbor_set);
+        for (auto n : cut_component) {
+            cut_component_set.add(n);
+        }
+
+        // check if  v actual cut vertex (i.e. has neighbors outside the component)
+        bool real_cut_v = false;
+        for (NodeID neighbor : status.graph[cut_v]) {
+            if (!cut_component_set.get(neighbor))
+                real_cut_v = true;
+        }
+
+        if (!real_cut_v) { //directly solve the component without fold
+            if (config.generate_training_data)
+                return false;
+            cut_component.push_back(cut_v);
+            cut_component_set.add(cut_v);
+            NodeWeight MWIS_weight = 0;
+            graph_access component_graph;
+            if (!solve_induced_subgraph_from_set(MWIS_weight, component_graph, br_alg, cut_component, cut_component_set, reverse_mapping, true))
+                return false;
+
+            for (NodeID node : cut_component)
+            {
+                assert(reverse_mapping[node] != status.n && "ERROR: cut_vertex_reduction::reduce: node not in reverse_mapping");
+                if (component_graph.getPartitionIndex(reverse_mapping[node]) == 1) 
+                    br_alg->set(node, IS_status::included);
+            }
+        }
+    }
+
+    reduced_nodes += (oldn - status.remaining_nodes);
+    reduction_time += br_alg->reduction_timer.elapsed();
+	return oldn != status.remaining_nodes;
+}
+bool component_reduction::check_components(branch_and_reduce_algorithm* br_alg, NodeID u, NodeID& cut_vertex, sized_vector<NodeID>& smallComponent) {
+    auto& status = br_alg->status;
+    auto& config = br_alg->config;
+    auto& component_visited = br_alg->bool_buffer;
+
+    // Mark all nodes that are not to be considered as already visited
+    for (NodeID n = 0; n < status.n; ++n) {
+        if (status.node_status[n] == IS_status::not_set) {
+            component_visited[n] = false;
+        } else {
+            component_visited[n] = true;
+        }
+    }
+
+    component_visited[u] = true;
+    cut_vertex = u;
+
+    for (NodeID n : status.graph[u]){
+        if (!component_visited[n]) {
+            if (br_alg->config.reduction_time_limit < br_alg->t.elapsed()) return false;
+            smallComponent.clear();
+
+            if (!build_small_component(n, br_alg, smallComponent, component_visited)) {
+                // If component is too large, early terminate and set the visited status for this part
+                dfs_fill_visited(n, br_alg, component_visited);
+            } else if (smallComponent.size() <= config.subgraph_node_limit) {
+                // A small enough component was found, no need to check further
+                return true;
+            }
+        }
+    }
+    // After exploring all components and no valid small component was found
+    return false;
+}
+bool component_reduction::build_small_component(NodeID u, branch_and_reduce_algorithm* br_alg, sized_vector<NodeID>& component, std::vector<bool>& component_visited) 
+{
+    auto& status = br_alg->status;
+    std::vector<NodeID> stack;
+    stack.reserve(status.n);
+    stack.push_back(u);
+
+    while (!stack.empty()) {
+        NodeID current = stack.back();
+        stack.pop_back();
+
+        if (component_visited[current]) continue;
+
+        component_visited[current] = true;
+        component.push_back(current);
+
+        // If the component exceeds the maximum size, return false to indicate failure
+        if (component.size() > br_alg->config.subgraph_node_limit) {
+            for (NodeID n : component) component_visited[n] = false;
+            component.clear();
+            return false;
+        }
+
+        for (NodeID neighbor : status.graph[current]) {
+            if (!component_visited[neighbor]) {
+                stack.push_back(neighbor);
+            }
+        }
+    }
+    return true;
+}
+void component_reduction::dfs_fill_visited(NodeID u, branch_and_reduce_algorithm* br_alg, std::vector<bool>& component_visited) {
+    auto& status = br_alg->status;
+    std::vector<NodeID> stack;
+    stack.reserve(status.n);
+    stack.push_back(u);
+
+    while (!stack.empty() && br_alg->config.reduction_time_limit > br_alg->t.elapsed()) {
+        NodeID current = stack.back();
+        stack.pop_back();
+
+        if (component_visited[current]) {
+            continue;
+        }
+
+        component_visited[current] = true;
+
+        for (NodeID neighbor : br_alg->status.graph[current]) {
+            if (!component_visited[neighbor]) {
+                stack.push_back(neighbor);
+            }
+        }
     }
 }
 

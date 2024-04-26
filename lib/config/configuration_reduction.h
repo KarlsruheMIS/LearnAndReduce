@@ -94,7 +94,6 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
     config.disable_blow_up                        = true;
     config.plain_struction                        = false;
     config.perform_hils                           = true;
-    config.disable_domination                     = true;
 }
 
 inline void configuration_reduction::disable_new_reductions( ReductionConfig & config ) {
@@ -104,7 +103,6 @@ inline void configuration_reduction::disable_new_reductions( ReductionConfig & c
     config.disable_triangle                       = true;
     config.disable_basic_se                       = true;
     config.disable_extended_se                    = true;
-    config.disable_domination                     = false;
     config.disable_cut_vertex                     = true;
     config.disable_funnel                         = true;
     config.disable_funnel_fold                    = true;
@@ -114,7 +112,6 @@ inline void configuration_reduction::disable_new_reductions( ReductionConfig & c
 }
 
 inline void configuration_reduction::enable_new_reductions( ReductionConfig & config ) {
-    config.disable_domination                     = true;
     config.disable_fold1                          = false;
     config.disable_v_shape_min                    = false;
     config.disable_v_shape_mid                    = false;
@@ -171,13 +168,15 @@ inline void configuration_reduction::mmwis( ReductionConfig & config ) {
 
 inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig & config ) {
     original_cyclicFast(config);
-    config.reduction_style              = ReductionConfig::Reduction_Style::FULL;
+    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
+    config.disable_generalized_fold               = false;
     enable_new_reductions(config);
 }
 
 inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfig & config ) {
     original_cyclicStrong(config);
-    config.reduction_style              = ReductionConfig::Reduction_Style::FULL;
+    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
+    config.disable_generalized_fold               = false;
     enable_new_reductions(config);
 }
 

@@ -65,7 +65,6 @@ private:
     friend clique_neighborhood_reduction;
     friend clique_neighborhood_reduction_fast;
     friend critical_set_reduction;
-    friend cut_vertex_reduction;
     friend heavy_vertex_reduction;
     friend heavy_set_reduction;
     friend heavy_set3_reduction;
@@ -76,8 +75,9 @@ private:
 	friend extended_single_edge_reduction;
     friend domination_reduction;
     friend twin_reduction;
-    // friend generalized_neighborhood_reduction;
     friend generalized_fold_reduction;
+    friend cut_vertex_reduction;
+    friend component_reduction;
 
     friend path_reduction;
     template<typename struction_type, reduction_type type, int new_nodes>
@@ -192,6 +192,7 @@ private:
 	std::vector<NodeID> global_mapping;
 	std::vector<size_t> global_transformation_map;
 	std::vector<reduction_type> global_transformations;
+	std::vector<reduction_type> expensive_transformations;
 	// std::vector<size_t> global_transformation_local_map;
 	// std::vector<size_t> global_transformation_global_map;
 	size_t total_ils_node_count;
@@ -235,8 +236,8 @@ private:
 	void add_next_level_neighborhood(NodeID node);
 	void add_next_level_neighborhood(const std::vector<NodeID>& nodes);
 
-    void reduce_graph_internal();
-    void reduce_graph_by_vertex_internal();
+    void reduce_graph_internal(bool full = true);
+    void reduce_graph_by_vertex_internal(bool full);
     bool blow_up_graph_internal();
     void cyclic_blow_up();
 	bool branch_reduce_recursive();

@@ -61,6 +61,7 @@ int write_weights_and_reductions_to_csv(graph_access & G, const std::string & re
     if (!config.disable_clique) reduction_names.push_back("clique");
     if (!config.disable_funnel) reduction_names.push_back("funnel");
     if (!config.disable_funnel_fold) reduction_names.push_back("funnel_fold");
+    if (!config.disable_domination) reduction_names.push_back("domination");
     if (!config.disable_basic_se) reduction_names.push_back("single_edge");
     if (!config.disable_extended_se) reduction_names.push_back("extended_single_edge");
     if (!config.disable_twin) reduction_names.push_back("twin");
@@ -72,6 +73,7 @@ int write_weights_and_reductions_to_csv(graph_access & G, const std::string & re
     if (!config.disable_heavy_set) reduction_names.push_back("heavy_set");
     if (!config.disable_heavy_set3) reduction_names.push_back("heavy_set3");
     if (!config.disable_cut_vertex) reduction_names.push_back("cut_vertex");
+    if (!config.disable_cut_vertex) reduction_names.push_back("component");
 
     int num_of_reductions = reduction_names.size();
     std::vector<std::vector<bool>> reduction_data(num_of_reductions);

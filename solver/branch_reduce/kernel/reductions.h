@@ -44,9 +44,9 @@ using Key_Type = ReductionConfig::Key_Type;
 
 // initial reductions need to be at the beginning
 enum reduction_type {   fold1, neighborhood, fold2, clique, clique_neighborhood_fast, clique_neighborhood, domination, twin, critical_set, generalized_fold, 
-                        single_edge, extended_single_edge, heavy_vertex, heavy_set, heavy_set3, cut_vertex, funnel, funnel_fold,
+                        single_edge, extended_single_edge, heavy_vertex, heavy_set, heavy_set3, cut_vertex, component, funnel, funnel_fold,
                         path, struction_decrease, struction_plateau, struction_blow};
-constexpr size_t REDUCTION_NUM = 22;
+constexpr size_t REDUCTION_NUM = 23;
 
 struct general_reduction {
 	general_reduction(size_t n) : marker(n) {}
@@ -293,6 +293,22 @@ struct critical_set_reduction : public general_reduction {
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
 };
 
+struct component_reduction : public general_reduction {
+    component_reduction(size_t n) : general_reduction(n) {}
+    ~component_reduction() {}
+    virtual component_reduction* clone() const final { return new component_reduction(*this); }
+
+    virtual reduction_type get_reduction_type() const final { return reduction_type::component; }
+    virtual void print_reduction_type() final {std::cout << "component: \t\t"; }
+    virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
+
+private:
+    bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent);
+    bool build_small_component(NodeID u, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &component, std::vector<bool> &component_visited);
+    void dfs_fill_visited(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<bool> &component_visited);
+};
+
 struct cut_vertex_reduction : public general_reduction {
     cut_vertex_reduction(size_t n) : general_reduction(n) {}
     ~cut_vertex_reduction() {}
@@ -324,13 +340,9 @@ private:
         sized_vector<NodeID> case_cut_v_excluded_nodes_to_exclude;
     };
 
-    // bool find_cut_vertex(branch_and_reduce_algorithm *br_alg, NodeID &cut_v, sized_vector<NodeID> &cut_component, std::vector<NodeID> &reverse_mapping, fast_set &tested, std::vector<bool> &global_visited);
-    // bool DFS(branch_and_reduce_algorithm *br_alg, NodeID u, int &step, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent, std::vector<bool> &global_visited);
-    // bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent, std::vector<bool> &global_visited);
     bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent);
     bool build_small_component(NodeID u, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &component, std::vector<bool> &component_visited);
     void dfs_fill_visited(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<bool> &component_visited);
-    // void dfs_fill_visited(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<bool> &component_visited, std::vector<bool> &global_visited);
     void fold(branch_and_reduce_algorithm *br_alg, fold_data &data, sized_vector<NodeID> &cut_v_included_i, sized_vector<NodeID> &cut_v_included_e, sized_vector<NodeID> &cut_v_excluded_i, sized_vector<NodeID> &cut_v_excluded_e);
 
     std::vector<restore_data> restore_vec;
@@ -534,7 +546,7 @@ struct iterative_struction : public general_reduction {
     virtual iterative_struction* clone() const final { return new iterative_struction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return type; }
-    virtual void print_reduction_type() final {std::cout << "iterative struction: \t"; }
+    virtual void print_reduction_type() final {std::cout << "struction: \t\t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final {s.restore(br_alg);};

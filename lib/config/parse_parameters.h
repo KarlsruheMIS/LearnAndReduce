@@ -86,6 +86,7 @@ class ReductionArguments : public BaseArguments {
             disable_v_shape_min         = arg_lit0(NULL, "disable_v_shape_min", "Disable v_shape_min reduction.");
             disable_v_shape_max         = arg_lit0(NULL, "disable_v_shape_max", "Disable v_shape_max reduction.");
             disable_v_shape_mid         = arg_lit0(NULL, "disable_v_shape_mid", "Disable v_shape_mid reduction.");
+            disable_domination          = arg_lit0(NULL, "disable_domination", "Disable domination reduction.");
             disable_basic_se            = arg_lit0(NULL, "disable_basic_se", "Disable basic single edge reduction.");
             disable_extended_se         = arg_lit0(NULL, "disable_extended_se", "Disable extended single edge reduction.");
             disable_clique_neighborhood = arg_lit0(NULL, "disable_clique_neighborhood", "Disable neighborhood clique reduction.");
@@ -98,6 +99,7 @@ class ReductionArguments : public BaseArguments {
             disable_heavy_set           = arg_lit0(NULL, "disable_heavy_set", "Disable heavy set reduction.");
             disable_heavy_set3          = arg_lit0(NULL, "disable_heavy_set3", "Disable heavy set3 reduction.");
             disable_cut_vertex          = arg_lit0(NULL, "disable_cut_vertex", "Disable cut vertex reduction.");
+            disable_component           = arg_lit0(NULL, "disable_component", "Disable component reduction.");
             disable_funnel              = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
             disable_funnel_fold         = arg_lit0(NULL, "disable_funnel_fold", "Disable funnel fold reduction.");
             disable_decreasing_struction = arg_lit0(NULL, "disable_decreasing_struction", "Disable decreasing struction.");
@@ -143,6 +145,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_v_shape_min;
         struct arg_lit * disable_v_shape_max;
         struct arg_lit * disable_v_shape_mid;
+        struct arg_lit * disable_domination;
         struct arg_lit * disable_basic_se;
         struct arg_lit * disable_extended_se;
         struct arg_lit * disable_clique_neighborhood;
@@ -155,6 +158,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_heavy_set;
         struct arg_lit * disable_heavy_set3;
         struct arg_lit * disable_cut_vertex;
+        struct arg_lit * disable_component;
         struct arg_lit * disable_funnel;
         struct arg_lit * disable_funnel_fold;
         struct arg_lit * disable_decreasing_struction;
@@ -268,6 +272,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_v_shape_min,
         disable_v_shape_max,
         disable_v_shape_mid,
+        disable_domination,
         disable_basic_se,
         disable_extended_se,
         disable_clique_neighborhood,
@@ -280,6 +285,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_heavy_set,
         disable_heavy_set3,
         disable_cut_vertex,
+        disable_component,
         disable_funnel,
         disable_funnel_fold,
         disable_decreasing_struction,
@@ -395,6 +401,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     if (disable_v_shape_mid->count > 0) {
         config.disable_v_shape_mid = true;
     }
+    if (disable_domination->count > 0) {
+        config.disable_domination = true;
+    }
     if (disable_basic_se->count > 0) {
         config.disable_basic_se = true;
     }
@@ -430,6 +439,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (disable_cut_vertex->count > 0) {
         config.disable_cut_vertex = true;
+    }
+    if (disable_component->count > 0) {
+        config.disable_component = true;
     }
     if (disable_funnel_fold->count > 0) {
         config.disable_funnel_fold = true;
