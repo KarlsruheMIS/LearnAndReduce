@@ -668,20 +668,23 @@ bool single_edge_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, N
 	auto& neighbors = br_alg->set_1;
 	size_t oldn = status.remaining_nodes;
 
-    NodeWeight partial_neighbor_sum = 0;
     get_neighborhood_set(v, br_alg, neighbors);
 
     for (NodeID neighbor : graph[v]) {
         if (is_reduced(neighbor, br_alg)) continue;
         if (weights[v] <= weights[neighbor]) { // otherwise not applicable to this edge
+            NodeWeight partial_neighbor_sum = 0;
             for (NodeID second_neighbor : status.graph[neighbor]) {
                 if (!is_reduced(second_neighbor, br_alg) && !neighbors.get(second_neighbor)) {
                     partial_neighbor_sum += status.weights[second_neighbor];
+                    if (partial_neighbor_sum > weights[neighbor]) 
+                        break;
                 }
             }
          
             // note: weight of v is in partial_neighbor_sum included
-            // if N(v) \subset N(neighbor) partial_neighbor_sum = weights[v]
+            // if N(neighbor) \subset N(v) partial_neighbor_sum = weights[v]
+            if (br_alg->config.generate_training_data && partial_neighbor_sum == weights[v]) break; // should be domination
             if (partial_neighbor_sum <= weights[neighbor]) { 
                 br_alg->set(v, IS_status::excluded);
                 break;
@@ -796,6 +799,8 @@ bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, No
     for (NodeID neighbor : status.graph[v]) {
         if (br_alg->deg(neighbor) > neighbors_count)
             continue;
+        if (status.weights[neighbor] < status.weights[v])
+            continue;
 
         is_subset = true;
 
@@ -806,7 +811,8 @@ bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, No
             }
         }
 
-        if (is_subset && status.weights[neighbor] >= status.weights[v]) {
+        // if (is_subset && status.weights[neighbor] >= status.weights[v]) {
+        if (is_subset) {
             br_alg->set(v, IS_status::excluded);
             break;
         }

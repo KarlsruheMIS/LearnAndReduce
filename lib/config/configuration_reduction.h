@@ -1,6 +1,6 @@
 /**
  * configuration.h
- * Purpose: Contains preset configurations for the evolutionary algorithms.
+ * Purpose: Contains preset configurations for the reduction algorithms.
  *
  ******************************************************************************
  * Copyright (C) 2015-2017 Sebastian Lamm <lamm@ira.uka.de>
@@ -89,7 +89,6 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
     config.reduce_and_peel                        = false;
     config.disable_generalized_fold               = false;
     config.disable_clique_neighborhood            = true;
-    config.disable_clique_neighborhood_fast       = false;
     config.subgraph_node_limit                    = 20;
     config.disable_blow_up                        = true;
     config.plain_struction                        = false;
@@ -148,6 +147,7 @@ inline void configuration_reduction::original_cyclicStrong( ReductionConfig & co
     config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
     config.disable_blow_up                        = false;
     config.disable_generalized_fold               = true;
+    config.disable_clique_neighborhood            = true;
     config.global_blow_up_factor                  = 9999;
     config.struction_degree                       = 512;
     config.max_unimproving_phases                 = 64;
@@ -161,9 +161,12 @@ inline void configuration_reduction::original_kamis( ReductionConfig & config ) 
 
 inline void configuration_reduction::mmwis( ReductionConfig & config ) {
     standard(config);
-    config.disable_clique_neighborhood_fast       = false;
     config.disable_cut_vertex                     = true;
     config.disable_funnel                         = true;
+    config.disable_funnel_fold                    = true;
+    config.disable_heavy_vertex                   = true;
+    config.disable_heavy_set                      = true;
+    config.disable_heavy_set3                     = true;
 }
 
 inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig & config ) {

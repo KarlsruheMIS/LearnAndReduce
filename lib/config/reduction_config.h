@@ -1,6 +1,6 @@
 /**
  * reduction_config.h
- * Purpose: Configuration used for the evolutionary maximum independent set algorithms.
+ * Purpose: Configuration used for the reducttions for maximum independent set algorithms.
  *
  *****************************************************************************/
 

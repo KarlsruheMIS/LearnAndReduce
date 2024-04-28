@@ -1,6 +1,6 @@
 /**
  * configuration.h
- * Purpose: Contains preset configurations for the evolutionary algorithms.
+ * Purpose: Contains preset configurations for the maximum weight indpeneden set algorithms.
  *
  *****************************************************************************/
 
