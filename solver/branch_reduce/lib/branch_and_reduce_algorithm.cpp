@@ -605,7 +605,8 @@ void branch_and_reduce_algorithm::initial_reduce()
 	std::swap(global_transformation_map, local_transformation_map);
 	status = std::move(global_status);
 	reduce_graph_internal(false);
-	print_reduction_info();
+	if (config.print_reduction_info)
+	    print_reduction_info();
 	bool further_impovement = true;
 	while (further_impovement && status.remaining_nodes > 0 && t.elapsed() <= config.time_limit)
 	{
