@@ -50,15 +50,16 @@ int main(int argn, char **argv) {
     ReductionArguments arguments(argn, argv);
     int ret_code = arguments.setConfig(config);
     if (ret_code) return 0;
-    struction_log::instance()->set_config(config);
-    struction_log::instance()->print_config();
 
     // read and set the graph
     std::string graph_filepath = config.graph_filename;
     config.graph_filename = graph_filepath.substr(graph_filepath.find_last_of('/') + 1);
     std::string path = graph_filepath.substr(0, graph_filepath.find_last_of('/'));
     std::string name = config.graph_filename.substr(0, config.graph_filename.find_last_of('.'));
+    config.graph_filename = name;
     std::string path_and_file = graph_filepath.substr(0,graph_filepath.find_last_of('-'));
+    struction_log::instance()->set_config(config);
+    struction_log::instance()->print_config();
 
     graph_access G;
     graph_operations go;

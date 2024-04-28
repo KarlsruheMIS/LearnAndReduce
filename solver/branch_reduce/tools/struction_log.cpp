@@ -122,16 +122,16 @@ void struction_log::print_graph() {
 void struction_log::print_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, size_t max_component) {
     filebuffer_string << "\t\tReduction"                                                        << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
-    filebuffer_string << "Time:\t\t\t\t"         << time                                        << std::endl;
     filebuffer_string << "Offset:\t\t\t\t"       << offset                                      << std::endl;
+    filebuffer_string << "Time:\t\t\t\t"         << time                                        << std::endl;
     filebuffer_string << "Kernel nodes:\t\t\t"   << kernel_size_n                               << std::endl;
     filebuffer_string << "MaxComponent:\t\t\t"   << max_component <<  "\n"                      << std::endl;
 
     std::cout << "=========================================="                               << std::endl;
     std::cout << "\t\tReduction"                                                            << std::endl;
     std::cout << "=========================================="                               << std::endl;
-    std::cout << "Time:\t\t\t\t"             << time                                        << std::endl;
     std::cout << "Offset:\t\t\t\t"           << offset                                      << std::endl;
+    std::cout << "Time:\t\t\t\t"             << time                                        << std::endl;
     std::cout << "Kernel nodes:\t\t\t"       << kernel_size_n                               << std::endl;
     std::cout << "MaxComponent:\t\t\t"       << max_component <<  "\n"                      << std::endl;
 }
@@ -140,8 +140,8 @@ void struction_log::print_reduction(ReductionConfig & mis_config, double time, N
 void struction_log::print_full_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m, size_t component_count, size_t max_component) {
     filebuffer_string << "\t\tReduction"                                                        << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
-    filebuffer_string << "Time:\t\t\t\t"         << time                                        << std::endl;
     filebuffer_string << "Offset:\t\t\t\t"       << offset                                      << std::endl;
+    filebuffer_string << "Time:\t\t\t\t"         << time                                        << std::endl;
     filebuffer_string << "Kernel nodes:\t\t\t"   << kernel_size_n                               << std::endl;
     filebuffer_string << "Kernel edges:\t\t\t"   << kernel_size_m                               << std::endl;
     filebuffer_string << "Components:\t\t\t"     << component_count                             << std::endl;
@@ -150,8 +150,8 @@ void struction_log::print_full_reduction(ReductionConfig & mis_config, double ti
     std::cout << "=========================================="                               << std::endl;
     std::cout << "\t\tReduction"                                                            << std::endl;
     std::cout << "=========================================="                               << std::endl;
-    std::cout << "Time:\t\t\t\t"             << time                                        << std::endl;
     std::cout << "Offset:\t\t\t\t"           << offset                                      << std::endl;
+    std::cout << "Time:\t\t\t\t"             << time                                        << std::endl;
     std::cout << "Kernel nodes:\t\t\t"       << kernel_size_n                               << std::endl;
     std::cout << "Kernel edges:\t\t\t"       << kernel_size_m                               << std::endl;
     std::cout << "Components:\t\t\t"         << component_count                             << std::endl;
@@ -163,14 +163,16 @@ void struction_log::print_results(bool optimal) {
     filebuffer_string << "\t\tStatistics"                                                       << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
     filebuffer_string << "Final Weight:\t\t\t"  << optimum_size                                 << std::endl;
-    filebuffer_string << "Total time:\t\t\t\t"  << total_timer.elapsed()                        << std::endl;
+    filebuffer_string << "Total time:\t\t\t\t"  << time_taken_best                              << std::endl;
     filebuffer_string << "Is optimal:\t\t\t"    << optimal                                      << std::endl;
+    filebuffer_string << "Total time taken:\t\t"<< total_timer.elapsed()                        << std::endl;
     std::cout                                                                                   << std::endl;
     std::cout << "\t\tBest"                                                                     << std::endl;
     std::cout << "=========================================="                                   << std::endl;
     std::cout << "Final Weight:\t\t\t"          << optimum_size                                 << std::endl;
     std::cout << "Time found:\t\t\t"            << time_taken_best                              << std::endl;
     std::cout << "Is optimal:\t\t\t"            << optimal                                      << std::endl;
+    std::cout << "Total time taken:\t\t"        << total_timer.elapsed()                        << std::endl;
     std::cout                                                                                   << std::endl;
 }
 
@@ -191,3 +193,9 @@ void struction_log::set_best_time(double time) {
         time_taken_best = time;
 }
 
+void struction_log::set_best(unsigned int size, double time) {
+    if (size > optimum_size) {
+        optimum_size = size;
+        time_taken_best = time;
+    }
+}

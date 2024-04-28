@@ -110,6 +110,8 @@ class struction_log {
          */
         void set_best_time(double time);
 
+        void set_best(unsigned int size, double time);
+
         /**
          * Reset the size of the best solution.
          */

@@ -38,7 +38,6 @@
 
 
 int main(int argn, char **argv) {
-    struction_log::instance()->restart_total_timer();
     bool output_convergence = false;
     bool output_best_solution = true;
     struction_log::instance()->print_title();
@@ -52,6 +51,7 @@ int main(int argn, char **argv) {
     std::string graph_filepath = config.graph_filename;
     config.graph_filename = graph_filepath.substr(graph_filepath.find_last_of('/') + 1);
     std::string name = config.graph_filename.substr(0,config.graph_filename.find_last_of('.'));
+    config.graph_filename = name;
     struction_log::instance()->set_config(config);
     struction_log::instance()->print_config();
 
@@ -62,6 +62,7 @@ int main(int argn, char **argv) {
     go.assign_weights(G, config);
     struction_log::instance()->set_graph(G);
     struction_log::instance()->print_graph();
+    struction_log::instance()->restart_total_timer();
 
 
     branch_and_reduce_algorithm reducer(G, config);
@@ -89,8 +90,6 @@ int main(int argn, char **argv) {
     }
 
     struction_log::instance()->print_reduction(config, reducer.kernelization_time, reducer.kernelization_offset, reducer.min_kernel, reducer.max_min_kernel_comp);
-    struction_log::instance()->set_best_size(is_weight);
-    struction_log::instance()->set_best_time(branch_reduce_time.count());
     struction_log::instance()->print_results(!reducer.timeout);
 
 #ifndef OUTPUT_WEIGHT_CONVERGENCE
