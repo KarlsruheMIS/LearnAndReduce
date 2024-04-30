@@ -82,7 +82,8 @@ class ReductionArguments : public BaseArguments {
             disable_neighborhood        = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
             disable_fold1               = arg_lit0(NULL, "disable_fold1", "Disable fold1 reduction.");
             disable_fold2               = arg_lit0(NULL, "disable_fold2", "Disable fold2 reduction.");
-            disable_triangle            = arg_lit0(NULL, "disable_triangle", "Disable triangle reduction.");
+            disable_triangle_min        = arg_lit0(NULL, "disable_triangle_min", "Disable triangle min reduction.");
+            disable_triangle_mid        = arg_lit0(NULL, "disable_triangle_mid", "Disable triangle mid reduction.");
             disable_v_shape_min         = arg_lit0(NULL, "disable_v_shape_min", "Disable v_shape_min reduction.");
             disable_v_shape_max         = arg_lit0(NULL, "disable_v_shape_max", "Disable v_shape_max reduction.");
             disable_v_shape_mid         = arg_lit0(NULL, "disable_v_shape_mid", "Disable v_shape_mid reduction.");
@@ -141,7 +142,8 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_neighborhood;
         struct arg_lit * disable_fold1;
         struct arg_lit * disable_fold2;
-        struct arg_lit * disable_triangle;
+        struct arg_lit * disable_triangle_min;
+        struct arg_lit * disable_triangle_mid;
         struct arg_lit * disable_v_shape_min;
         struct arg_lit * disable_v_shape_max;
         struct arg_lit * disable_v_shape_mid;
@@ -268,7 +270,8 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_neighborhood,
         disable_fold1,
         disable_fold2,
-        disable_triangle,
+        disable_triangle_min,
+        disable_triangle_mid,
         disable_v_shape_min,
         disable_v_shape_max,
         disable_v_shape_mid,
@@ -389,8 +392,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     if (disable_fold2->count > 0) {
         config.disable_fold2 = true;
     }
-    if (disable_triangle->count > 0) {
-        config.disable_triangle = true;
+    if (disable_triangle_min->count > 0) {
+        config.disable_triangle_min = true;
+    }
+    if (disable_triangle_mid->count > 0) {
+        config.disable_triangle_mid = true;
     }
     if (disable_v_shape_min->count > 0) {
         config.disable_v_shape_min = true;

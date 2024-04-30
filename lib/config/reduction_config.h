@@ -29,7 +29,8 @@ struct ReductionConfig : public Config {
     bool disable_v_shape_mid=false;
     bool disable_v_shape_max=false;
     bool disable_v_shape=false;
-    bool disable_triangle = false;
+    bool disable_triangle_mid = false;
+    bool disable_triangle_min = false;
     bool disable_basic_se = false;
     bool disable_extended_se = false;
     bool disable_twin= false;
