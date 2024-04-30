@@ -1695,7 +1695,6 @@ bool funnel_reduction::reduce(branch_and_reduce_algorithm* br_alg)
         reduce_vertex(br_alg, node);
     });
 
-std::cout << "funnel_reduction: " << oldn - br_alg->status.remaining_nodes << std::endl;
 	return oldn != br_alg->status.remaining_nodes;
 }
 bool funnel_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v)

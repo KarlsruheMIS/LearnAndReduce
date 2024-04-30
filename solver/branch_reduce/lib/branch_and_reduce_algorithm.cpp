@@ -39,7 +39,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 {
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {fold1, neighborhood, critical_set, struction_plateau, struction_blow};
-	expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+	expensive_transformations = {single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
 
 	if (called_from_fold) {
         if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
@@ -970,7 +970,6 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 		}
 	}
 
-	struction_log::instance()->set_best(get_current_is_weight(), t.elapsed());
 	restore_best_local_solution();
 }
 
@@ -1081,6 +1080,7 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 		fill_global_greedy();
 	}
 
+	struction_log::instance()->set_best(get_current_is_weight(), t.elapsed());
 	restore_best_global_solution();
 	return !timeout;
 }
