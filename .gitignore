@@ -1,0 +1,6 @@
+.vscode/c_cpp_properties.json
+build/*
+deploy/*
+training_data/csv/*
+training_data/graph/*
+training_data/reduction_data/*
