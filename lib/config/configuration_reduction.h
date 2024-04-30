@@ -99,7 +99,8 @@ inline void configuration_reduction::disable_new_reductions( ReductionConfig & c
     config.disable_fold1                          = true;
     config.disable_v_shape_min                    = true;
     config.disable_v_shape_mid                    = true;
-    config.disable_triangle                       = true;
+    config.disable_triangle_mid                   = true;
+    config.disable_triangle_min                   = true;
     config.disable_basic_se                       = true;
     config.disable_extended_se                    = true;
     config.disable_cut_vertex                     = true;
@@ -114,7 +115,8 @@ inline void configuration_reduction::enable_new_reductions( ReductionConfig & co
     config.disable_fold1                          = false;
     config.disable_v_shape_min                    = false;
     config.disable_v_shape_mid                    = false;
-    config.disable_triangle                       = false;
+    config.disable_triangle_mid                   = false;
+    config.disable_triangle_min                   = false;
     config.disable_basic_se                       = false;
     config.disable_extended_se                    = false;
     config.disable_cut_vertex                     = false;
