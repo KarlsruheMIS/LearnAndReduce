@@ -137,7 +137,7 @@ inline void configuration_reduction::original_cyclicFast( ReductionConfig & conf
     config.disable_clique_neighborhood            = true;
     config.global_blow_up_factor                  = 9999;
     config.struction_degree                       = 64;
-    config.max_unimproving_phases                 = 512;
+    config.max_unimproving_phases                 = 25;
     config.set_limit                              = 512;
 }
 

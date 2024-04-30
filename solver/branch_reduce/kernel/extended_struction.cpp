@@ -123,7 +123,6 @@ bool extended_struction<reduced>::reduce(branch_and_reduce_algorithm* br_alg, No
 
     status.reduction_offset += status.weights[n];
     restore_vec.emplace_back(n, sets.size());
-    // if (oldn > status.remaining_nodes) std::cout << "Extended struction " << oldn-status.remaining_nodes << std::endl;
     return true;
 }
 
