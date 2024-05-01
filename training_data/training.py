@@ -6,7 +6,7 @@ import os
 import sys
 
 reduction = sys.argv[1]
-#reduction = 'domination'
+#reduction = 'neighborhood'
 print('Using', reduction)
 scale = 100.0
 
@@ -36,6 +36,7 @@ def parse_data(filename):
     dataset.append(Data(x=x, y=y, edge_index=edge_index.t().contiguous(), edge_attr=edge_attr))
 
 path = sys.argv[2]
+#path = 'csv/'
 
 directory = os.fsencode(path)
 for file in os.listdir(directory):
@@ -52,9 +53,9 @@ class LRConv(MessagePassing):
     def __init__(self, in_channels, out_channels, edge_channels):
         super().__init__(aggr='max')  # "Add" aggregation (Step 5).
         self.seq = Sequential(
-          Linear(in_channels * 2 + edge_channels, out_channels * 2),
+          Linear(in_channels * 2 + edge_channels, 16),
           ReLU(),
-          Linear(out_channels * 2, out_channels),
+          Linear(16, out_channels),
           ReLU()
         )
         self.reset_parameters()
@@ -93,8 +94,7 @@ def model_fit(model, epoch):
             l = loss(out, data.y)
             running_loss += l.item()
             l.backward()
-            optimizer.step()
-            optimizer.zero_grad()
+        optimizer.step()
         if e < 50 or (e % 10) == 0:
             model.eval()
             tp, fp, tn, fn = 0, 0, 0, 0
@@ -118,19 +118,16 @@ from torch_geometric.nn import GCNConv, SAGEConv, GENConv, GINEConv, Transformer
 class LR_GCN(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = LRConv(3, 32, 6)
-        self.lin1 = Linear(32, 16)
-        self.a1 = ReLU()
-        self.lin2 = Linear(16, 1)
-        self.a2 = Sigmoid()
+        self.conv1 = LRConv(3, 16, 6)
+        self.lin1 = Linear(16, 1)
+        self.a1 = Sigmoid()
 
     def forward(self, data):
         x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
         x = self.conv1(x, edge_index, edge_attr)
         x = self.lin1(x)
         x = self.a1(x)
-        x = self.lin2(x)
-        return self.a2(x)
+        return x
 
 class GCN(torch.nn.Module):
     def __init__(self):
