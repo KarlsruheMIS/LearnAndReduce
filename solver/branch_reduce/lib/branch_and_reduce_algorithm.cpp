@@ -24,6 +24,7 @@
 #include "graph_extractor.h"
 #include "ReduceAndPeel.h"
 #include "solution_check.h"
+#include "struction_log.h"
 
 #include <algorithm>
 #include <chrono>
@@ -37,8 +38,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	  buffers(4, sized_vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0)
 {
 	// others are locally applied if config.reduce_by_vertex
-	global_transformations = {critical_set, struction_plateau, struction_blow};
-	expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+	global_transformations = {fold1, neighborhood, critical_set, struction_plateau, struction_blow};
+	expensive_transformations = {single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
 
 	if (called_from_fold) {
         if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
@@ -92,7 +93,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		}
 		if (config.struction_type != ReductionConfig::Struction_Type::NONE)
 		{
-			global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
+			global_status.transformations.push_back(make_decreasing_struction(config, global_status.n));
 			global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
 		}
 		if (!config.plain_struction)
@@ -324,6 +325,7 @@ void branch_and_reduce_algorithm::unset(NodeID node, bool restore)
 void branch_and_reduce_algorithm::fill_global_greedy()
 {
 	auto &nodes = buffers[0];
+	nodes.resize(global_status.n);
 	nodes.clear();
 
 	for (size_t node = 0; node < global_status.n; node++)
@@ -552,7 +554,7 @@ void branch_and_reduce_algorithm::add_next_level_node(NodeID node)
 	// mark node for next round of status.reductions
 	if (config.reduce_by_vertex)
 	{
-		for (size_t i = 0; i < status.num_reductions; i++)
+		for (size_t i = 0; i < status.transformations.size(); i++)
 		{
 			if (std::find(global_transformations.begin(), global_transformations.end(), status.transformations[i]->get_reduction_type()) != global_transformations.end())
 			{
@@ -568,7 +570,7 @@ void branch_and_reduce_algorithm::add_next_level_node(NodeID node)
 	}
 	else 
 	{
-		for (size_t i = 0; i < status.num_reductions; i++)
+		for (size_t i = 0; i < status.transformations.size(); i++)
 		{
 			auto &reduction = status.transformations[i];
 			if (reduction->has_run)
@@ -604,21 +606,28 @@ void branch_and_reduce_algorithm::initial_reduce()
 {
 	std::swap(global_transformation_map, local_transformation_map);
 	status = std::move(global_status);
-	reduce_graph_internal(false);
-	if (config.print_reduction_info)
-	    print_reduction_info();
-	bool further_impovement = true;
-	while (further_impovement && status.remaining_nodes > 0 && t.elapsed() <= config.time_limit)
+	if (config.disable_blow_up)
 	{
-		further_impovement = false;
-
-		min_kernel = status.remaining_nodes;
-		if (!config.disable_blow_up && status.transformations.size() != status.num_reductions)
-			cyclic_blow_up();
-
-		size_t oldn = status.remaining_nodes;
 		reduce_graph_internal(true);
-		further_impovement = oldn != status.remaining_nodes;
+		min_kernel = status.remaining_nodes;
+	} else {
+		reduce_graph_internal(false);
+		if (config.print_reduction_info)
+		    print_reduction_info();
+		bool further_impovement = status.remaining_nodes > 0;
+		min_kernel = status.remaining_nodes;
+		while (further_impovement && status.remaining_nodes > 0 && t.elapsed() <= config.time_limit)
+		{
+			further_impovement = false;
+
+			min_kernel = status.remaining_nodes;
+			if (!config.disable_blow_up && status.transformations.size() != status.num_reductions)
+				cyclic_blow_up();
+
+			size_t oldn = status.remaining_nodes;
+			reduce_graph_internal(true);
+			further_impovement = oldn != status.remaining_nodes;
+		}
 	}
 	status.modified_stack.push_back(BRANCHING_TOKEN);
 
@@ -635,7 +644,8 @@ void branch_and_reduce_algorithm::reduce_graph_internal(bool full)
 	{
 		if (!config.disable_fold2)
 		{
-			config.disable_triangle = true;
+			config.disable_triangle_mid = true;
+			config.disable_triangle_min = true;
 			config.disable_v_shape_mid = true;
 		}
 	}
@@ -657,7 +667,8 @@ void branch_and_reduce_algorithm::reduce_graph_internal(bool full)
 
 	if (!full && !config.disable_fold2)
 	{	
-			config.disable_triangle = false;
+			config.disable_triangle_min = false;
+			config.disable_triangle_mid = false;
 			config.disable_v_shape_mid = false;
 	}
 	timeout |= t.elapsed() > config.time_limit;
@@ -973,17 +984,17 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 {
 	t.restart();
 	initial_reduce();
+	kernelization_time = t.elapsed();
+	kernelization_offset = global_status.is_weight + global_status.reduction_offset;
+	struction_log::instance()->set_best(kernelization_offset, kernelization_time);
 
 	if (config.console_log)
 	{
 		std::cout << "%reduction_nodes " << global_status.remaining_nodes << "\n";
-		std::cout << "%reduction_offset " << global_status.is_weight + global_status.reduction_offset << "\n";
-		std::cout << "%reduction_time " << t.elapsed() << "\n";
+		std::cout << "%reduction_offset " << kernelization_offset << "\n";
+		std::cout << "%reduction_time " << kernelization_time << "\n";
 	}
 
-	kernelization_time = t.elapsed();
-	kernelization_offset = global_status.is_weight + global_status.reduction_offset;
-	best_is_time = t.elapsed();
 	if (global_status.remaining_nodes == 0)
 	{
 		if (config.console_log)
@@ -1069,6 +1080,7 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 		fill_global_greedy();
 	}
 
+	struction_log::instance()->set_best(get_current_is_weight(), t.elapsed());
 	restore_best_global_solution();
 	return !timeout;
 }
@@ -1078,6 +1090,7 @@ void branch_and_reduce_algorithm::update_best_solution()
 	NodeWeight current_weight = status.is_weight + status.reduction_offset;
 	if (current_weight > best_weight)
 	{
+		struction_log::instance()->set_best(get_current_is_weight() + current_weight, t.elapsed());
 		best_solution_status = status;
 		best_weight = current_weight;
 		best_is_time = t.elapsed();
@@ -1607,7 +1620,7 @@ void branch_and_reduce_algorithm::print_reduction_info()
 	std::cout << "====================================================" << std::endl;
 	if (!config.reduce_by_vertex)
 	{
-		for (size_t i = 0; i < status.num_reductions; i++)
+		for (size_t i = 0; i < status.transformations.size(); i++)
 		{
 			auto &reduction = status.transformations[i];
 			std::cout << i << " ";
@@ -1617,7 +1630,7 @@ void branch_and_reduce_algorithm::print_reduction_info()
 	}
 	else
 	{
-		for (size_t i = 0; i < status.num_reductions; i++)
+		for (size_t i = 0; i < status.transformations.size(); i++)
 		{
 			if (std::find(global_transformations.begin(), global_transformations.end(), status.transformations[i]->get_reduction_type()) != global_transformations.end())
 			{

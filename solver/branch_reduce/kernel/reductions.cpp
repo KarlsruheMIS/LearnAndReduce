@@ -150,6 +150,7 @@ bool neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 	for_each_changed_vertex(br_alg, [&](NodeID v) {
         reduce_vertex(br_alg, v);
     });
+    // if (oldn > br_alg->status.remaining_nodes) std::cout << "neighborhood reduction " << oldn - br_alg->status.remaining_nodes << std::endl;
 	return oldn != br_alg->status.remaining_nodes;
 }
 bool neighborhood_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
@@ -263,6 +264,7 @@ bool fold2_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduce_vertex(br_alg, v);
 	});
     
+    // if (oldn > status.remaining_nodes) std::cout << "fold2 reduction " << oldn - status.remaining_nodes << std::endl;
 	return oldn != status.remaining_nodes || oldw != status.reduction_offset;
 }
 bool fold2_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
@@ -293,7 +295,6 @@ bool fold2_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID 
         if (neighbor == bigger)
         { 
             triangle = true;
-            if (br_alg->config.disable_triangle) return false;
             break;
         }
     }
@@ -301,8 +302,10 @@ bool fold2_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID 
     if (triangle && status.weights[bigger] <= status.weights[v]) {
           br_alg->set(v, IS_status::included);
     } else if (triangle && status.weights[bigger] > status.weights[v] && status.weights[smaller] <= status.weights[v]) {
+        if (br_alg->config.disable_triangle_mid) return false;
         this->fold_triangle_mid_weight(br_alg, {v, {bigger, smaller}});
     } else if (triangle) {
+        if (br_alg->config.disable_triangle_min) return false;
         this->fold_triangle_min_weight(br_alg, {v, {bigger, smaller}});
     } else if (status.weights[v] >= status.weights[bigger]) {
         if (br_alg->config.disable_v_shape_max) return false;
@@ -776,6 +779,7 @@ bool domination_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     for_each_changed_vertex(br_alg, [&](NodeID v) {
         reduce_vertex(br_alg, v);
     });
+// if (oldn > status.remaining_nodes) std::cout << "domination: " << oldn - status.remaining_nodes << std::endl;
 
 	return oldn != status.remaining_nodes;
 }
@@ -785,6 +789,14 @@ bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, No
 	auto& status = br_alg->status;
 	auto& neighbors = br_alg->set_1;
 	size_t oldn = status.remaining_nodes;
+    if (!br_alg->config.generate_training_data) {
+        NodeWeight neighbor_weights = get_neighborhood_weight(v, br_alg);
+        if (try_neighborhood_reduction(v, br_alg, neighbor_weights)) {
+            reduced_nodes += (oldn - status.remaining_nodes);
+            reduction_time += br_alg->reduction_timer.elapsed();
+            return oldn != status.remaining_nodes;
+        }
+    }
 
     size_t neighbors_count = 0;
     bool is_subset;
@@ -1534,6 +1546,7 @@ bool clique_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduce_vertex(br_alg, node);
     });
 
+// if (oldn > status.remaining_nodes) std::cout << "clique_reduction: " << oldn - status.remaining_nodes << std::endl;
 	return oldn != status.remaining_nodes;
 }
 bool clique_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
@@ -2992,7 +3005,7 @@ template<typename key_function, typename struction_type, reduction_type type>
 bool blow_up_struction<key_function, struction_type, type>::reduce(branch_and_reduce_algorithm *br_alg) {
     this->br_alg = br_alg;
     auto &status = br_alg->status;
-
+    br_alg->reduction_timer.restart();
     init_blow_up_phase();
 
     while (!is_done() && clean_up_queue()) {
@@ -3019,6 +3032,7 @@ bool blow_up_struction<key_function, struction_type, type>::reduce(branch_and_re
             update_queue_by_key(n, f.key_by_set_estimate(br_alg, n, set_limit_by_key + 1));
         }
     }
+    reduction_time += br_alg->reduction_timer.elapsed();
 
     return blow_ups != 0;
 }

@@ -567,7 +567,7 @@ struct blow_up_struction : public general_reduction {
     virtual blow_up_struction* clone() const final { return new blow_up_struction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return type; }
-    virtual void print_reduction_type() final {std::cout << "blow up struction: \t\t"; }
+    virtual void print_reduction_type() final {std::cout << "blow up struction: \t"; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
     // virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm* br_alg) final;

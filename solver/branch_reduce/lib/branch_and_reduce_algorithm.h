@@ -193,16 +193,12 @@ private:
 	std::vector<size_t> global_transformation_map;
 	std::vector<reduction_type> global_transformations;
 	std::vector<reduction_type> expensive_transformations;
-	// std::vector<size_t> global_transformation_local_map;
-	// std::vector<size_t> global_transformation_global_map;
 	size_t total_ils_node_count;
 
 	graph_status status;
     graph_access* local_graph;
 	std::vector<NodeID> local_mapping;
 	std::vector<size_t> local_transformation_map;
-	// std::vector<size_t> local_transformation_local_map;
-	// std::vector<size_t> local_transformation_global_map;
 	std::vector<reduction_ptr> local_reductions;
 
     graph_access recursive_graph;
