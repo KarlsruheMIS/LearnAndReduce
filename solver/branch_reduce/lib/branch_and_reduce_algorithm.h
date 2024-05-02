@@ -232,6 +232,8 @@ private:
 	void add_next_level_neighborhood(NodeID node);
 	void add_next_level_neighborhood(const std::vector<NodeID>& nodes);
 
+    // void initial_filter_vertices_for_reduction();
+
     void reduce_graph_internal(bool full = true);
     void reduce_graph_by_vertex_internal(bool full);
     bool blow_up_graph_internal();

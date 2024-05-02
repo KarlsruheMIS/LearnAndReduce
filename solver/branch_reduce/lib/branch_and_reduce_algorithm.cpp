@@ -39,7 +39,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 {
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {fold1, neighborhood, critical_set, struction_plateau, struction_blow};
-	expensive_transformations = {single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+	expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
 
 	if (called_from_fold) {
         if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
@@ -58,13 +58,11 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
             neighborhood_reduction, 
             fold2_reduction, 
             clique_reduction, 
-            funnel_reduction, 
-            funnel_fold_reduction, 
             domination_reduction, 
 			single_edge_reduction, 
             extended_single_edge_reduction, 
-            twin_reduction,
-            clique_neighborhood_reduction_fast>(global_status.n);
+            twin_reduction
+            >(global_status.n);
 		global_status.num_reductions = global_status.transformations.size();
         }
 	}
@@ -193,13 +191,10 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
                 neighborhood_reduction, 
                 fold2_reduction, 
                 clique_reduction, 
-                funnel_reduction, 
-                funnel_fold_reduction, 
 				domination_reduction,
 			    single_edge_reduction, 
                 extended_single_edge_reduction, 
                 twin_reduction,
-                clique_neighborhood_reduction, 
                 critical_set_reduction>(status.n);
 			}
 			else
@@ -406,6 +401,7 @@ void branch_and_reduce_algorithm::compute_ils_pruning_bound()
 
 	best_weight = status.reduction_offset + status.is_weight + run_ils(config_cpy, *local_graph, buffers[0], 1000);
 	best_is_time = t.elapsed();
+	struction_log::instance()->set_best(get_current_is_weight(), best_is_time);
 	ch.enable_cout();
 }
 
@@ -537,6 +533,23 @@ size_t branch_and_reduce_algorithm::run_ils(const ReductionConfig &config, graph
 
 void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduction)
 {
+	if (config.initial_filter && !reduction->has_run && reduction->has_filtered_marker) 
+	{
+		reduction->has_filtered_marker = false;
+		reduction->marker.current.clear();
+		for (NodeID node = 0; node < status.n; node++)
+		{
+			if (status.node_status[node] != branch_and_reduce_algorithm::IS_status::not_set) continue;
+			if (reduction->is_suited(node, this)) 
+			{
+				reduction->marker.current.push_back(node);
+			}
+		}
+
+		reduction->marker.clear_next();
+		reduction->has_run = true;
+		return;
+	}
 	if (!reduction->has_run)
 	{
 		reduction->marker.fill_current_ascending(status.n);
@@ -606,6 +619,7 @@ void branch_and_reduce_algorithm::initial_reduce()
 {
 	std::swap(global_transformation_map, local_transformation_map);
 	status = std::move(global_status);
+	// if (config.initial_filter) initial_filter_vertices_for_reduction();
 	if (config.disable_blow_up)
 	{
 		reduce_graph_internal(true);
@@ -637,6 +651,36 @@ void branch_and_reduce_algorithm::initial_reduce()
 	std::swap(global_transformation_map, local_transformation_map);
 }
 
+// filter vertices for simple reductions
+// void branch_and_reduce_algorithm::initial_filter_vertices_for_reduction()
+// {
+// 	auto& neighborhood = status.transformations[local_transformation_map[reduction_type::neighborhood]];
+// 	auto& fold1 = status.transformations[local_transformation_map[reduction_type::fold1]];
+// 	auto& fold2 = status.transformations[local_transformation_map[reduction_type::fold2]];
+// 	neighborhood->marker.clear_next();
+// 	fold1->marker.clear_next();
+// 	fold2->marker.clear_next();
+// 	for (NodeID node = 0; node < status.n; node++)
+// 	{
+// 		assert(status.node_status[node] == branch_and_reduce_algorithm::IS_status::not_set);
+// 		if (deg(node) <= 1) 
+// 		{
+// 			fold1->marker.current.push_back(node);
+// 		}
+// 		else if (status.weights[node] >= std::accumulate(status.graph[node].begin(), status.graph[node].end(), 0, [&](NodeWeight sum, NodeID neighbor) { 
+// 			if (status.node_status[neighbor] == IS_status::not_set) return sum + status.weights[neighbor]; 
+// 			else return sum;}))
+// 		{
+// 			neighborhood->marker.current.push_back(node);
+// 		} else if (deg(node) == 2)
+// 		{
+// 			fold2->marker.current.push_back(node);
+// 		}
+// 	}
+// 	neighborhood->has_filtered_marker = true;
+// 	fold1->has_filtered_marker = true;
+// 	fold2->has_filtered_marker = true;
+// }
 void branch_and_reduce_algorithm::reduce_graph_internal(bool full)
 {
 	// if not full skip the expensive reductions and disable triangle and v_shape mid since they interfere with the blow up 
@@ -984,6 +1028,7 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 {
 	t.restart();
 	initial_reduce();
+	min_kernel = status.remaining_nodes;
 	kernelization_time = t.elapsed();
 	kernelization_offset = global_status.is_weight + global_status.reduction_offset;
 	struction_log::instance()->set_best(kernelization_offset, kernelization_time);

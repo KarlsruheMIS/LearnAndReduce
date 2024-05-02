@@ -77,6 +77,7 @@ class ReductionArguments : public BaseArguments {
 	        disable_reduction   = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
 	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
 	        reduce_by_vertex    = arg_lit0(NULL, "reduce_by_vertex", "Reduce by vertex instead of by edge.");
+            initial_filter      = arg_lit0(NULL, "initial_filter", "Use initial filter on vertices to apply reductions on.");
 
             // single reduction parameters
             disable_neighborhood        = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -135,6 +136,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_str * reduction_style;
         struct arg_dbl * reduction_time_limit;
         struct arg_lit * reduce_by_vertex;
+        struct arg_lit * initial_filter;
         struct arg_str * reduction_config;
         struct arg_str * kernel_filename;
         struct arg_lit * print_reduction_info;
@@ -262,6 +264,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         weight_source,
         print_reduction_info,
         reduce_by_vertex,
+        initial_filter,
         kernel_filename,
         reduction_config,
         reduction_time_limit,
@@ -379,6 +382,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         config.reduce_by_vertex = true;
     } else {
         config.reduce_by_vertex = false;
+    }
+    if (initial_filter->count > 0) {
+        config.initial_filter = true;
+    } else {
+        config.initial_filter = false;
     }
     if (print_reduction_info->count > 0) {
         config.print_reduction_info = true;

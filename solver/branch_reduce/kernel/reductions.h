@@ -60,8 +60,10 @@ struct general_reduction {
 	virtual void restore(branch_and_reduce_algorithm* br_alg) {}
     virtual void apply(branch_and_reduce_algorithm* br_alg) {}
     virtual void reset(branch_and_reduce_algorithm* br_alg, size_t comp_size) {}
+    virtual bool is_suited(NodeID v, branch_and_reduce_algorithm* br_alg) { return true; }
 
 	bool has_run = false;
+	bool has_filtered_marker = false;
     NodeID reduced_nodes = 0;
     double reduction_time = 0.0;
 	vertex_marker marker;
@@ -81,19 +83,24 @@ struct general_reduction {
 
 // simple reductions:
 struct neighborhood_reduction : public general_reduction {
-    neighborhood_reduction(size_t n) : general_reduction(n) {}
+    neighborhood_reduction(size_t n) : general_reduction(n) {
+        has_filtered_marker = true;
+    }
     ~neighborhood_reduction() {}
     virtual neighborhood_reduction* clone() const final { return new neighborhood_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::neighborhood; }
     virtual bool reduce(branch_and_reduce_algorithm* br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
-    virtual void print_reduction_type() final {std::cout << "neighborhood: \t"; }
+    virtual void print_reduction_type() final { std::cout << "neighborhood: \t"; }
 
+    bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg);
 };
 
 struct fold1_reduction : public general_reduction {
-	fold1_reduction(size_t n) : general_reduction(n) {}
+	fold1_reduction(size_t n) : general_reduction(n) {
+        has_filtered_marker = true;
+    }
 	~fold1_reduction() {}
 	virtual fold1_reduction* clone() const final { return new fold1_reduction(*this); }
 
@@ -103,6 +110,7 @@ struct fold1_reduction : public general_reduction {
     virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 	virtual void restore(branch_and_reduce_algorithm* br_alg) final;
 	virtual void apply(branch_and_reduce_algorithm* br_alg) final;
+    bool is_suited(NodeID v, branch_and_reduce_algorithm* br_alg);
 
 private:
 	struct fold_nodes {
@@ -122,7 +130,7 @@ private:
 };
 
 struct fold2_reduction : public general_reduction {
-	fold2_reduction(size_t n) : general_reduction(n) {}
+	fold2_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true;}
 	~fold2_reduction() {}
 	virtual fold2_reduction* clone() const final { return new fold2_reduction(*this); }
 
@@ -132,6 +140,7 @@ struct fold2_reduction : public general_reduction {
     virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
 	virtual void restore(branch_and_reduce_algorithm* br_alg) final;
 	virtual void apply(branch_and_reduce_algorithm* br_alg) final;
+    bool is_suited(NodeID v, branch_and_reduce_algorithm* br_alg); 
 
 private:
 	struct fold_nodes {
@@ -321,6 +330,8 @@ struct cut_vertex_reduction : public general_reduction {
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
     virtual void apply(branch_and_reduce_algorithm* br_alg) final;
 
+    bool find_cut_vertex(branch_and_reduce_algorithm *br_alg, NodeID &cut_v, sized_vector<NodeID> &cut_component, std::vector<NodeID> &reverse_mapping, fast_set &tested);
+    bool DFS(branch_and_reduce_algorithm *br_alg, NodeID u, int &step, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent);
     bool get_fold_data(branch_and_reduce_algorithm *br_alg, NodeID cut_v, sized_vector<NodeID> &cut_v_included_i, sized_vector<NodeID> &cut_v_included_e, sized_vector<NodeID> &cut_v_excluded_i, sized_vector<NodeID> &cut_v_excluded_e, NodeWeight &large_cutMWIS_weight, NodeWeight &small_cutMWIS_weight);
 
 private:

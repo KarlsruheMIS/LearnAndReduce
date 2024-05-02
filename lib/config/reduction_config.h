@@ -67,8 +67,11 @@ struct ReductionConfig : public Config {
     std::string reduction_style_name = "initial";
     double reduction_time_limit;
 
-    // apply every reduction to one vertex?
+    // apply every reduction to one vertex
     bool reduce_by_vertex;
+
+    // filter reductions before adding to marker
+    bool initial_filter;
 
     // Lower bound for the change rate between best individuals
     double best_limit;
