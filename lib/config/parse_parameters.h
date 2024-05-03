@@ -105,6 +105,7 @@ class ReductionArguments : public BaseArguments {
             disable_funnel              = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
             disable_funnel_fold         = arg_lit0(NULL, "disable_funnel_fold", "Disable funnel fold reduction.");
             disable_decreasing_struction = arg_lit0(NULL, "disable_decreasing_struction", "Disable decreasing struction.");
+            disable_plateau_struction   = arg_lit0(NULL, "disable_plateau_struction", "Disable plateau struction.");
             subgraph_node_limit         = arg_int0(NULL, "subgraph_node_limit", NULL, "Choose maximum number of nodes in subgraph.");
 
             // for struction and branch_and_reduce
@@ -166,6 +167,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_funnel;
         struct arg_lit * disable_funnel_fold;
         struct arg_lit * disable_decreasing_struction;
+        struct arg_lit * disable_plateau_struction;
         struct arg_int * subgraph_node_limit;
         struct arg_lit * random_freenodes;
         struct arg_int * struction_degree;
@@ -295,6 +297,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_funnel,
         disable_funnel_fold,
         disable_decreasing_struction,
+        disable_plateau_struction,
         subgraph_node_limit,
         random_freenodes,
         struction_degree,
@@ -482,6 +485,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
 
     if (disable_decreasing_struction->count > 0) {
         config.disable_decreasing_struction = true;
+    }
+    if (disable_plateau_struction->count > 0) {
+        config.disable_plateau_struction = true;
     }
     if (struction_degree->count > 0) {
         config.struction_degree = struction_degree->ival[0];

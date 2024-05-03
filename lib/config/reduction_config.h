@@ -42,6 +42,7 @@ struct ReductionConfig : public Config {
     bool disable_neighborhood= false;
     bool disable_domination = false;
     bool disable_decreasing_struction= false;
+    bool disable_plateau_struction= false;
     bool disable_path= false;
     bool disable_cut_vertex = false;
     bool disable_funnel = false;
