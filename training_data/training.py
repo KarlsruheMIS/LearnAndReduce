@@ -6,9 +6,8 @@ import os
 import sys
 
 reduction = sys.argv[1]
-#reduction = 'neighborhood'
+#reduction = 'single_edge'
 print('Using', reduction)
-scale = 100.0
 
 dataset = []
 
@@ -22,7 +21,7 @@ def parse_data(filename):
 
     with open(path + '_meta' + ext) as f:
         reader = csv.DictReader(f, delimiter=';')
-        x = torch.tensor([[float(r['w']) / scale, float(r['d']) / scale, float(r['c'])] for r in reader], dtype=torch.float)
+        x = torch.tensor([[float(r['d']), float(r['w']), float(r['nw']), float(r['c'])] for r in reader], dtype=torch.float)
     
     with open(filename) as f:
         reader = csv.DictReader(f, delimiter=';')
@@ -30,10 +29,12 @@ def parse_data(filename):
 
     with open(filename) as f:
         reader = csv.DictReader(f, delimiter=';')
-        edge_attr = torch.tensor([[float(r['uc']) / scale, float(r['vc']) / scale, float(r['ic']) / scale, 
-                                   float(r['uw']) / scale, float(r['vw']) / scale, float(r['iw']) / scale] for r in reader], dtype=torch.float)
+        edge_attr = torch.tensor([[float(r['uc']), float(r['vc']), float(r['ic']), 
+                                   float(r['uw']), float(r['vw']), float(r['iw']),
+                                   float(r['twin']), float(r['dom'])] for r in reader], dtype=torch.float)
 
-    dataset.append(Data(x=x, y=y, edge_index=edge_index.t().contiguous(), edge_attr=edge_attr))
+    if x.size()[0] > 100:
+        dataset.append(Data(x=x, y=y, edge_index=edge_index.t().contiguous(), edge_attr=edge_attr))
 
 path = sys.argv[2]
 #path = 'csv/'
@@ -46,38 +47,10 @@ for file in os.listdir(directory):
 
 print('Found', len(dataset))
 
-from torch.nn import Linear, Parameter, Sequential, ReLU, Sigmoid
-from torch_geometric.nn import MessagePassing
-
-class LRConv(MessagePassing):
-    def __init__(self, in_channels, out_channels, edge_channels):
-        super().__init__(aggr='max')  # "Add" aggregation (Step 5).
-        self.seq = Sequential(
-          Linear(in_channels * 2 + edge_channels, 16),
-          ReLU(),
-          Linear(16, out_channels),
-          ReLU()
-        )
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        for layer in self.seq:
-            if hasattr(layer, 'reset_parameters'):
-                layer.reset_parameters()
-
-    def forward(self, x, edge_index, edge_attr):
-        out = self.propagate(edge_index, x=x, edge_attr=edge_attr)
-        #out = out + self.bias
-
-        return out
-
-    def message(self, x_i, x_j, edge_attr):
-        return self.seq(torch.cat([x_i, x_j, edge_attr], dim=-1))
-    
-
 def model_fit(model, epoch):
-    optimizer = torch.optim.Adam(model.parameters())
-    loss = torch.nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([5.0]))
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.96)
     
     N = len(dataset)
     M = int(N * 0.25)
@@ -95,140 +68,85 @@ def model_fit(model, epoch):
             running_loss += l.item()
             l.backward()
         optimizer.step()
-        if e < 50 or (e % 10) == 0:
+        if (e % 10) == 0:
+            scheduler.step()
             model.eval()
             tp, fp, tn, fn = 0, 0, 0, 0
             for data in dataset[N:N+M]:
                 out = model(data)
                 for i in range(data.y.size()[0]):
                     if data.y[i,0].item() > 0.5:
-                        if out[i,0].item() > 0.5:
+                        if out[i,0].item() > 0.0:
                             tp += 1
                         else:
                             fn += 1
                     else:
-                        if out[i,0].item() > 0.5:
+                        if out[i,0].item() > 0.0:
                             fp += 1
                         else:
                             tn += 1
-            print(e, running_loss / N, tp, fp, tn, fn)
+            print(e, "%.5f" % scheduler.get_last_lr()[0], "%.5f" % (running_loss / N), tp, fp, tn, fn)
+
+def store_model(model, path):
+    with open(path, "w") as f:
+        f.write(str(torch.nn.utils.parameters_to_vector(model.parameters()).size()[0])+'\n')
+        for p in torch.nn.utils.parameters_to_vector(model.parameters()):
+            f.write(str(p.item())+'\n')
+
+from torch.nn import Linear, Parameter, Sequential, ReLU, Sigmoid
+from torch_geometric.nn import MessagePassing
+
+class LRConv(MessagePassing):
+    def __init__(self, in_channels, out_channels, edge_channels):
+        super().__init__(flow='target_to_source', aggr='max')
+        self.seq = Sequential(
+          Linear(in_channels * 2 + edge_channels, 16),
+          ReLU(),
+          Linear(16, out_channels),
+          ReLU()
+        )
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for layer in self.seq:
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
+
+    def forward(self, x, edge_index, edge_attr):
+        out = self.propagate(edge_index, x=x, edge_attr=edge_attr)
+        #out = torch.cat([out, x], dim=-1)
+        #out = out + self.bias
+
+        return out
+
+    def message(self, x_i, x_j, edge_attr):
+        return self.seq(torch.cat([x_i, x_j, edge_attr], dim=-1))
 
 from torch_geometric.nn import GCNConv, SAGEConv, GENConv, GINEConv, TransformerConv, PNAConv
 
 class LR_GCN(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = LRConv(3, 16, 6)
-        self.lin1 = Linear(16, 1)
-        self.a1 = Sigmoid()
+        self.conv1 = LRConv(4, 16, 8)
+        self.lin1 = Linear(16, 16)
+        self.a1 = ReLU()
+        self.lin2 = Linear(16, 1)
 
     def forward(self, data):
         x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
         x = self.conv1(x, edge_index, edge_attr)
         x = self.lin1(x)
         x = self.a1(x)
+        x = self.lin2(x)
         return x
-
-class GCN(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = GCNConv(3, 16)
-        self.a1 = ReLU()
-        self.conv2 = GCNConv(16, 1)
-        self.a2 = Sigmoid()
-
-    def forward(self, data):
-        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
-        x = self.conv1(x, edge_index)
-        x = self.a1(x)
-        x = self.conv2(x, edge_index)
-        return self.a2(x)
-
-class SAGE(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = SAGEConv(3, 16)
-        self.a1 = ReLU()
-        self.conv2 = SAGEConv(16, 1)
-        self.a2 = Sigmoid()
-
-    def forward(self, data):
-        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
-        x = self.conv1(x, edge_index)
-        x = self.a1(x)
-        x = self.conv2(x, edge_index)
-        return self.a2(x)
-
-class GEN(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = GENConv(3, 16, edge_dim=6)
-        self.a1 = ReLU()
-        self.conv2 = GENConv(16, 1, edge_dim=6)
-        self.a2 = Sigmoid()
-
-    def forward(self, data):
-        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
-        x = self.conv1(x, edge_index, edge_attr)
-        x = self.a1(x)
-        x = self.conv2(x, edge_index, edge_attr)
-        return self.a2(x)
-
-class GINE(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.seq1 = Sequential(Linear(3, 16), ReLU())
-        self.conv1 = GINEConv(self.seq1, edge_dim=6)
-        self.a1 = ReLU()
-        self.seq2 = Sequential(Linear(16, 1), ReLU())
-        self.conv2 = GINEConv(self.seq2, edge_dim=6)
-        self.a2 = Sigmoid()
-
-    def forward(self, data):
-        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
-        x = self.conv1(x, edge_index, edge_attr)
-        x = self.a1(x)
-        x = self.conv2(x, edge_index, edge_attr)
-        return self.a2(x)
-
-class Transformer(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = TransformerConv(3, 16, edge_dim=6)
-        self.a1 = ReLU()
-        self.conv2 = TransformerConv(16, 1, edge_dim=6)
-        self.a2 = Sigmoid()
-
-    def forward(self, data):
-        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
-        x = self.conv1(x, edge_index, edge_attr)
-        x = self.a1(x)
-        x = self.conv2(x, edge_index, edge_attr)
-        return self.a2(x)
     
 
 it = 1000
 
 lr = LR_GCN()
-print('Learn and Reduce')
+print(torch.nn.utils.parameters_to_vector(lr.parameters()).size())
+print('LR')
+store_model(lr, reduction + '.gnn')
 model_fit(lr, it)
+store_model(lr, reduction + '.gnn')
 
-gcn = GCN()
-print('GCN')
-model_fit(gcn, it)
-
-sage = SAGE()
-print('Sage')
-model_fit(sage, it)
-
-gen = GEN()
-print('GENConv')
-model_fit(gen, it)
-
-gine = GINE()
-print('GINEConv')
-model_fit(gine, it)
-
-transformer = Transformer()
-print('TransformerConv')
-model_fit(transformer, it)
