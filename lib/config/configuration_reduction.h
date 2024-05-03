@@ -78,7 +78,7 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
 
     config.set_limit                              = 1024;
     config.struction_degree                       = 256;
-    config.struction_type                         = ReductionConfig::Struction_Type::NONE;
+    config.struction_type                         = ReductionConfig::Struction_Type::EXTENDED;
     config.key_type                               = ReductionConfig::Key_Type::APPROXIMATE_INCREASE;
     config.key_reinsert_factor                    = 2;
     config.global_blow_up_factor                  = 2;
@@ -131,7 +131,6 @@ inline void configuration_reduction::original_cyclicFast( ReductionConfig & conf
     standard(config);
     disable_new_reductions(config);
     config.disable_blow_up                        = false;
-    config.struction_type                         = ReductionConfig::Struction_Type::EXTENDED;
     config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
     config.disable_generalized_fold               = true;
     config.disable_clique_neighborhood            = true;
@@ -139,13 +138,13 @@ inline void configuration_reduction::original_cyclicFast( ReductionConfig & conf
     config.struction_degree                       = 64;
     config.max_unimproving_phases                 = 25;
     config.set_limit                              = 512;
+    config.subgraph_node_limit                    = 150;
 }
 
 
 inline void configuration_reduction::original_cyclicStrong( ReductionConfig & config ) {
     standard(config);
     disable_new_reductions(config);
-    config.struction_type                         = ReductionConfig::Struction_Type::EXTENDED;
     config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
     config.disable_blow_up                        = false;
     config.disable_generalized_fold               = true;
@@ -154,11 +153,13 @@ inline void configuration_reduction::original_cyclicStrong( ReductionConfig & co
     config.struction_degree                       = 512;
     config.max_unimproving_phases                 = 64;
     config.set_limit                              = 2048;
+    config.subgraph_node_limit                    = 150;
 }
 
 inline void configuration_reduction::original_kamis( ReductionConfig & config ) {
     standard(config);
     disable_new_reductions(config);
+    config.subgraph_node_limit                    = 150;
 }
 
 inline void configuration_reduction::mmwis( ReductionConfig & config ) {
@@ -169,6 +170,7 @@ inline void configuration_reduction::mmwis( ReductionConfig & config ) {
     config.disable_heavy_vertex                   = true;
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
+    config.subgraph_node_limit                    = 150;
 }
 
 inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig & config ) {
@@ -187,4 +189,5 @@ inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfi
 
 inline void configuration_reduction::all_decreasing( ReductionConfig & config ) {
     standard(config);
+    config.disable_blow_up                        = true;
 }

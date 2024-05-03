@@ -842,10 +842,6 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     graph_access cut_graph;
 	size_t oldn = status.remaining_nodes;
     NodeID cut_v;
-    sized_vector<NodeID> cut_v_included_i(config.subgraph_node_limit);
-    sized_vector<NodeID> cut_v_included_e(config.subgraph_node_limit);
-    sized_vector<NodeID> cut_v_excluded_i(config.subgraph_node_limit);
-    sized_vector<NodeID> cut_v_excluded_e(config.subgraph_node_limit);
     std::vector<NodeID> unreduced_mapping(status.remaining_nodes, status.n);
     fast_set tested_cut_vertices(status.n);
 

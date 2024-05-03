@@ -39,7 +39,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 {
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {fold1, neighborhood, critical_set, struction_plateau, struction_blow};
-	expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+	// expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+	expensive_transformations = {};
 
 	if (called_from_fold) {
         if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
@@ -54,8 +55,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
         } else {
             // ReductionConfig::Reduction_Style::FULL (extended)
 		    global_status.transformations = make_reduction_vector<
-			fold1_reduction, 
             neighborhood_reduction, 
+			fold1_reduction, 
             fold2_reduction, 
             clique_reduction, 
             domination_reduction, 
@@ -106,18 +107,19 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
     } else { // FULL 
 		if (!config.plain_struction)
 		{
-			if (!config.disable_fold1) global_status.transformations.emplace_back(new fold1_reduction(global_status.n));
 			if (!config.disable_neighborhood) global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
+			if (!config.disable_fold1) global_status.transformations.emplace_back(new fold1_reduction(global_status.n));
 			if (!config.disable_fold2) global_status.transformations.emplace_back(new fold2_reduction(global_status.n));
 			if (!config.disable_clique) global_status.transformations.emplace_back(new clique_reduction(global_status.n));
-			if (!config.disable_funnel) global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
-			if (!config.disable_funnel_fold) global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
 			if (!config.disable_domination) global_status.transformations.emplace_back(new domination_reduction(global_status.n));
 			if (!config.disable_basic_se) global_status.transformations.emplace_back(new single_edge_reduction(global_status.n));
 			if (!config.disable_extended_se) global_status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
 			if (!config.disable_twin) global_status.transformations.emplace_back(new twin_reduction(global_status.n));
+			if (!config.disable_funnel) global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
+			if (!config.disable_funnel_fold) global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
 			if (!config.disable_clique_neighborhood_fast) global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
 			if (!config.disable_clique_neighborhood) global_status.transformations.emplace_back(new clique_neighborhood_reduction(global_status.n));
+			if (!config.disable_heavy_vertex) global_status.transformations.emplace_back(new heavy_vertex_reduction(global_status.n));
 			if (!config.disable_decreasing_struction) global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 		}
 		if (config.struction_type != ReductionConfig::Struction_Type::NONE)
@@ -127,7 +129,6 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		if (!config.plain_struction)
 		{
 			if (!config.disable_critical_set) global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
-			if (!config.disable_heavy_vertex) global_status.transformations.emplace_back(new heavy_vertex_reduction(global_status.n));
             if (!config.disable_generalized_fold) global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
 			if (!config.disable_heavy_set) global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
 			if (!config.disable_heavy_set3) global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
@@ -187,8 +188,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			if (called_from_fold)
 			{
 				status.transformations = make_reduction_vector<
-			    fold1_reduction, 
                 neighborhood_reduction, 
+			    fold1_reduction, 
                 fold2_reduction, 
                 clique_reduction, 
 				domination_reduction,
@@ -200,19 +201,19 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			else
 			{
 				status.transformations.clear();
-				if (!config.disable_fold1) status.transformations.emplace_back(new fold1_reduction(global_status.n));
 				if (!config.disable_neighborhood) status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
+				if (!config.disable_fold1) status.transformations.emplace_back(new fold1_reduction(global_status.n));
 				if (!config.disable_fold2) status.transformations.emplace_back(new fold2_reduction(global_status.n));
 				if (!config.disable_clique) status.transformations.emplace_back(new clique_reduction(global_status.n));
-				if (!config.disable_funnel) status.transformations.emplace_back(new funnel_reduction(global_status.n));
-				if (!config.disable_funnel_fold) status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
 				if (!config.disable_domination) status.transformations.emplace_back(new domination_reduction(global_status.n));
 				if (!config.disable_basic_se) status.transformations.emplace_back(new single_edge_reduction(global_status.n));
 				if (!config.disable_extended_se) status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
 				if (!config.disable_twin) status.transformations.emplace_back(new twin_reduction(global_status.n));
+				if (!config.disable_funnel) status.transformations.emplace_back(new funnel_reduction(global_status.n));
+				if (!config.disable_funnel_fold) status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
+				if (!config.disable_heavy_vertex) status.transformations.emplace_back(new heavy_vertex_reduction(global_status.n));
 				if (!config.disable_decreasing_struction) status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 				if (!config.disable_critical_set) status.transformations.emplace_back(new critical_set_reduction(global_status.n));
-				if (!config.disable_heavy_vertex) status.transformations.emplace_back(new heavy_vertex_reduction(global_status.n));
 				if (!config.disable_generalized_fold) status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
 				if (!config.disable_heavy_set) status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
 				if (!config.disable_heavy_set3) status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
@@ -625,9 +626,11 @@ void branch_and_reduce_algorithm::initial_reduce()
 		reduce_graph_internal(true);
 		min_kernel = status.remaining_nodes;
 	} else {
-		reduce_graph_internal(false);
-		if (config.print_reduction_info)
+		reduce_graph_internal(true);
+		if (config.print_reduction_info) {
 		    print_reduction_info();
+			// std::cout << "reduced to " << status.remaining_nodes << " nodes" << std::endl;
+		}
 		bool further_impovement = status.remaining_nodes > 0;
 		min_kernel = status.remaining_nodes;
 		while (further_impovement && status.remaining_nodes > 0 && t.elapsed() <= config.time_limit)
@@ -638,6 +641,9 @@ void branch_and_reduce_algorithm::initial_reduce()
 			if (!config.disable_blow_up && status.transformations.size() != status.num_reductions)
 				cyclic_blow_up();
 
+			// std::cout << "reduced to " << status.remaining_nodes << " nodes" << std::endl;
+			if (status.remaining_nodes == 0)
+				break;	
 			size_t oldn = status.remaining_nodes;
 			reduce_graph_internal(true);
 			further_impovement = oldn != status.remaining_nodes;
