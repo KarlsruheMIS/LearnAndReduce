@@ -913,6 +913,12 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 
 	if (status.n > ILS_SIZE_LIMIT)
 		compute_ils_pruning_bound();
+	
+	if (best_weight > weight_bound)
+	{
+		// std::cerr << "pruning for solving subgraphs in reducion" << std::endl;
+		return;
+	}
 
 	size_t i = 0;
 	while (i < status.n)
@@ -1030,6 +1036,11 @@ graph_access &branch_and_reduce_algorithm::kernelize()
 	return global_graph;
 }
 
+bool branch_and_reduce_algorithm::run_branch_reduce(NodeWeight bound)
+{
+	weight_bound = bound;
+	return run_branch_reduce();
+}
 bool branch_and_reduce_algorithm::run_branch_reduce()
 {
 	t.restart();
@@ -1115,6 +1126,13 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 
 		branch_reduce_single_component();
 
+		if (best_weight > weight_bound)
+		{
+			// std::cout << "pruning for solving subgraphs in reducion" << std::endl;
+			// struction_log::instance()->set_best(get_current_is_weight(), t.elapsed());
+			restore_best_global_solution();
+			return !timeout;
+		}
 		for (size_t node = 0; node < local_mapping.size(); node++)
 		{
 			global_status.node_status[global_mapping[local_mapping[node]]] = status.node_status[node];
