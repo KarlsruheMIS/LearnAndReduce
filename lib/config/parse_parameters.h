@@ -70,14 +70,15 @@ class ReductionArguments : public BaseArguments {
         ReductionArguments(int argc, char **argv) : BaseArguments(argc, argv) {
 
             // Unique parameters
-            reduction_style     = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: initial (default), weight, time, time_and_weight.");
-            reduction_time_limit= arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
-            reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, all_decreasing]). Default: decreasing (not using increasing reductions).");
-            kernel_filename     = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
-	        disable_reduction   = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
-	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
-	        reduce_by_vertex    = arg_lit0(NULL, "reduce_by_vertex", "Reduce by vertex instead of by edge.");
-            initial_filter      = arg_lit0(NULL, "initial_filter", "Use initial filter on vertices to apply reductions on.");
+            reduction_style             = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: initial (default), weight, time, time_and_weight.");
+            reduction_time_limit        = arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
+            reduction_config            = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, all_decreasing]). Default: decreasing (not using increasing reductions).");
+            kernel_filename             = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
+            disable_reduction           = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
+            print_reduction_info        = arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
+            reduce_by_vertex            = arg_lit0(NULL, "reduce_by_vertex", "Reduce by vertex rather than using marker.");
+            disable_early_termination   = arg_lit0(NULL, "disable_early_termination", "Disable early termination of solving subgraphs in reductions.");
+            initial_filter              = arg_lit0(NULL, "initial_filter", "Use initial filter for vertices to apply reductions on.");
 
             // single reduction parameters
             disable_neighborhood        = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -127,7 +128,7 @@ class ReductionArguments : public BaseArguments {
 	        pick_nodes_by_NodeID    = arg_lit0(NULL, "pick_nodes_by_NodeID", "Pick nodes by NodeID.");
 	        pick_nodes_by_BFS       = arg_lit0(NULL, "pick_nodes_by_BFS", "Pick nodes by BFS.");
             num_of_subgraphs        = arg_int0(NULL, "num_of_subgraphs", NULL, "Choose number of subgraphs to generate.");
-            size_of_subgraph       = arg_int0(NULL, "size_of_subgraph", NULL, "Choose size of subgraphs to generate.");
+            size_of_subgraph        = arg_int0(NULL, "size_of_subgraph", NULL, "Choose size of subgraphs to generate.");
         }
 
         int setConfig(ReductionConfig & config);
@@ -137,6 +138,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_str * reduction_style;
         struct arg_dbl * reduction_time_limit;
         struct arg_lit * reduce_by_vertex;
+        struct arg_lit * disable_early_termination;
         struct arg_lit * initial_filter;
         struct arg_str * reduction_config;
         struct arg_str * kernel_filename;
@@ -266,6 +268,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         weight_source,
         print_reduction_info,
         reduce_by_vertex,
+        disable_early_termination,
         initial_filter,
         kernel_filename,
         reduction_config,
@@ -385,6 +388,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         config.reduce_by_vertex = true;
     } else {
         config.reduce_by_vertex = false;
+    }
+    if (disable_early_termination->count > 0) {
+        config.disable_early_termination = true;
+    } else {
+        config.disable_early_termination = false;
     }
     if (initial_filter->count > 0) {
         config.initial_filter = true;

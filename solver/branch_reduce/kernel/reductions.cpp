@@ -89,7 +89,7 @@ bool general_reduction::try_neighborhood_reduction(NodeID v, branch_and_reduce_a
     }
     return false;
 }
-bool general_reduction::solve_induced_subgraph_from_set(NodeWeight& lower_bound, NodeWeight& solution, graph_access& graph, branch_and_reduce_algorithm* br_alg, sized_vector<NodeID>& nodes_vec, const fast_set& nodes_set, sized_vector<NodeID>& reverse_mapping, bool apply_solution) {
+bool general_reduction::solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight& solution, graph_access& graph, branch_and_reduce_algorithm* br_alg, sized_vector<NodeID>& nodes_vec, const fast_set& nodes_set, sized_vector<NodeID>& reverse_mapping, bool apply_solution) {
     if (nodes_vec.size() == 0) {
         solution = 0;
         return true;
@@ -100,13 +100,13 @@ bool general_reduction::solve_induced_subgraph_from_set(NodeWeight& lower_bound,
     }
     reverse_mapping.set_size(br_alg->status.n);
     br_alg->build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
-    return solve_graph(solution, graph, br_alg->config, lower_bound, apply_solution);
+    return solve_graph(solution, graph, br_alg->config, weight_bound, apply_solution);
 }
-bool general_reduction::solve_induced_neighborhood_subgraph(NodeWeight& lower_bound, NodeWeight& solution, graph_access& neighborhood_graph, branch_and_reduce_algorithm* br_alg, NodeID v, bool apply_solution) {
+bool general_reduction::solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight& solution, graph_access& neighborhood_graph, branch_and_reduce_algorithm* br_alg, NodeID v, bool apply_solution) {
     br_alg->build_induced_neighborhood_subgraph(neighborhood_graph, v);
-    return solve_graph(solution, neighborhood_graph, br_alg->config, lower_bound, apply_solution);
+    return solve_graph(solution, neighborhood_graph, br_alg->config, weight_bound, apply_solution);
 }
-bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, ReductionConfig &config, NodeWeight& lower_bound, bool apply_solution) {
+bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution) {
     if (graph.number_of_nodes() == 0 ){
         solution = 0;
         return true;
@@ -128,8 +128,11 @@ bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, R
 
     branch_and_reduce_algorithm solver(graph, config, true);
 	solver.ch.disable_cout();
-    if (!solver.run_branch_reduce(lower_bound)) {
-        std::cerr << "%br_call time out" << std::endl;
+    if (config.disable_early_termination) 
+        weight_bound = std::numeric_limits<NodeWeight>::max();
+
+    if (!solver.run_branch_reduce(weight_bound)) {
+	    solver.ch.enable_cout();
         return false;
     }
     if (apply_solution) {
@@ -2659,17 +2662,17 @@ bool heavy_set_reduction::is_heavy_set(NodeID v, fast_set& v_neighbors_set, Node
         return false;
     }
     bool original_heavy_set = false;
-    NodeWeight max_weight_limit = std::numeric_limits<NodeWeight>::max();
+    NodeWeight no_limit = std::numeric_limits<NodeWeight>::max();
     // compute MWIS[uo] in N(v)\N(u): (included u)
     unset_weights(subgraph, u_neighbors_vec, reverse_mapping);
-    if (!solve_graph( MWIS_weights[v_combination::uo], subgraph, config, max_weight_limit)) return false;
+    if (!solve_graph( MWIS_weights[v_combination::uo], subgraph, config, no_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::uo] > weights[v] ) return false;
     MWIS_weights[v_combination::uo] += weights[u];
 
-    // compute MWIS[5] in N(u)\N(v): (included v)
+    // compute MWIS[ov] in N(u)\N(v): (included v)
     set_weights(subgraph, u_neighbors_vec, reverse_mapping, weights);
     unset_weights(subgraph, v_neighbors_vec, reverse_mapping);
-    if (!solve_graph(MWIS_weights[v_combination::ov], subgraph, config, max_weight_limit)) return false;
+    if (!solve_graph(MWIS_weights[v_combination::ov], subgraph, config, no_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::ov] > weights[u]) return false;
     MWIS_weights[v_combination::ov] += weights[v];
 
