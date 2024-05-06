@@ -40,12 +40,28 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 {
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {fold1, neighborhood, critical_set, struction_plateau, struction_blow};
-	// expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
 	expensive_transformations = {};
+    if (config.reduction_style == ReductionConfig::Reduction_Style::test1)
+	    expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+    if (config.reduction_style == ReductionConfig::Reduction_Style::test2)
+	    expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
 
 	if (called_from_fold)
 	{
-		if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
+        if (config.reduction_style == ReductionConfig::Reduction_Style::test1|| config.reduction_style == ReductionConfig::Reduction_Style::test2 )
+        {
+			global_status.transformations = make_reduction_vector<
+				neighborhood_reduction,
+				fold1_reduction,
+				fold2_reduction,
+				clique_reduction,
+				domination_reduction,
+				single_edge_reduction,
+				extended_single_edge_reduction,
+				twin_reduction>(global_status.n);
+			global_status.num_reductions = global_status.transformations.size();
+        }
+        else if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
 		{
 			global_status.transformations = make_reduction_vector<
 				neighborhood_reduction,
@@ -116,7 +132,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
 	}
 	else
-	{ // FULL
+	{ // FULL and tests
 		if (!config.plain_struction)
 		{
 			if (!config.disable_neighborhood)
