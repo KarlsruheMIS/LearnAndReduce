@@ -70,7 +70,7 @@ class ReductionArguments : public BaseArguments {
         ReductionArguments(int argc, char **argv) : BaseArguments(argc, argv) {
 
             // Unique parameters
-            reduction_style     = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: initial (default), weight, time, time_and_weight.");
+            reduction_style     = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: full, normal, dense, test1, test2.");
             reduction_time_limit= arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
             reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, all_decreasing]). Default: decreasing (not using increasing reductions).");
             kernel_filename     = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
@@ -380,7 +380,7 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     BaseArguments::parseParameters(config);
 
     if (reduction_style->count > 0) {
-        config.setReductionStyle(reduction_style->sval[-1]);
+        config.setReductionStyle(reduction_style->sval[0]);
     }
     if (reduction_time_limit->count > 0) {
         config.reduction_time_limit = reduction_time_limit->dval[0];
