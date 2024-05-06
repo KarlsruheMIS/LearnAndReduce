@@ -113,11 +113,7 @@ private:
 		std::vector<std::vector<bool>> reduction_node_status;
 
         std::vector<reduction_ptr> transformations; //reductions + blow_ups.
-        // std::vector<reduction_ptr> transformations_local; //reductions + blow_ups.
-        // std::vector<reduction_ptr> transformations_global; //reductions + blow_ups.
         size_t num_reductions;
-        // size_t local_num_reductions;
-        // size_t global_num_reductions;
 
 		sized_vector<reduction_type> folded_stack;
 		sized_vector<node_pos> branching_stack;
@@ -182,6 +178,7 @@ private:
 	ReductionConfig config;
 	graph_status best_solution_status;
 	NodeWeight best_weight = 0;
+	NodeWeight weight_bound = std::numeric_limits<NodeWeight>::max();
 	timer t;
 	timer reduction_timer;
 	bool is_ils_best_solution = false;
@@ -267,9 +264,10 @@ public:
     graph_access &kernelize();
     size_t deg(NodeID node) const;
 	void reduce_graph();
-	bool run_branch_reduce();
+    bool run_branch_reduce(NodeWeight weight_bound);
+    bool run_branch_reduce();
 
-	static size_t run_ils(const ReductionConfig& config, graph_access& G, sized_vector<NodeID>& tmp_buffer, size_t max_swaps);
+    static size_t run_ils(const ReductionConfig& config, graph_access& G, sized_vector<NodeID>& tmp_buffer, size_t max_swaps);
 	static void greedy_initial_is(graph_access& G, sized_vector<NodeID>& tmp_buffer);
 
 	NodeWeight get_current_is_weight() const;

@@ -93,16 +93,16 @@ struct general_reduction
     double reduction_time = 0.0;
     vertex_marker marker;
 
-    template <typename F>
-    void for_each_changed_vertex(branch_and_reduce_algorithm *br_alg, F f);
-    inline NodeWeight get_neighborhood_weight(NodeID v, branch_and_reduce_algorithm *br_alg);
-    inline NodeID get_max_weight_neighbor(NodeID v, branch_and_reduce_algorithm *br_alg);
-    inline void get_neighborhood_set(NodeID v, branch_and_reduce_algorithm *br_alg, fast_set &neighborhood_set);
-    inline void get_neighborhood_vector(NodeID v, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &neighborhood_vec);
-    inline bool try_neighborhood_reduction(NodeID v, branch_and_reduce_algorithm *br_alg, NodeWeight neighborhood_weight);
-    inline bool solve_induced_subgraph_from_set(NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &nodes_vec, const fast_set &nodes_set, sized_vector<NodeID> &reverse_mapping, bool apply_solution = false);
-    inline bool solve_induced_neighborhood_subgraph(NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, bool apply_solution = false);
-    inline bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, bool apply_solution = false);
+	template<typename F>
+	void for_each_changed_vertex(branch_and_reduce_algorithm* br_alg, F f);
+    inline NodeWeight get_neighborhood_weight(NodeID v, branch_and_reduce_algorithm* br_alg);
+    inline NodeID get_max_weight_neighbor(NodeID v, branch_and_reduce_algorithm* br_alg);
+    inline void get_neighborhood_set(NodeID v, branch_and_reduce_algorithm* br_alg, fast_set& neighborhood_set);
+    inline void get_neighborhood_vector(NodeID v, branch_and_reduce_algorithm* br_alg, sized_vector<NodeID>& neighborhood_vec);
+    inline bool try_neighborhood_reduction(NodeID v, branch_and_reduce_algorithm* br_alg, NodeWeight neighborhood_weight);
+    inline bool solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &nodes_vec, const fast_set &nodes_set, sized_vector<NodeID> &reverse_mapping, bool apply_solution=false);
+    inline bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, bool apply_solution=false);
+    inline bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution=false);
     inline bool is_reduced(NodeID v, branch_and_reduce_algorithm *br_alg);
 };
 

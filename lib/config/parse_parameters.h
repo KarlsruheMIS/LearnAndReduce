@@ -77,6 +77,7 @@ class ReductionArguments : public BaseArguments {
 	        disable_reduction   = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
 	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
 	        reduce_by_vertex    = arg_lit0(NULL, "reduce_by_vertex", "Reduce by vertex instead of by edge.");
+            disable_early_termination   = arg_lit0(NULL, "disable_early_termination", "Disable early termination of solving subgraphs in reductions.");
             initial_filter      = arg_lit0(NULL, "initial_filter", "Use initial filter on vertices to apply reductions on.");
             gnn_filter          = arg_lit0(NULL, "gnn_filter", "Use GNNs for initial filter on vertices to apply reductions on.");
 
@@ -128,7 +129,7 @@ class ReductionArguments : public BaseArguments {
 	        pick_nodes_by_NodeID    = arg_lit0(NULL, "pick_nodes_by_NodeID", "Pick nodes by NodeID.");
 	        pick_nodes_by_BFS       = arg_lit0(NULL, "pick_nodes_by_BFS", "Pick nodes by BFS.");
             num_of_subgraphs        = arg_int0(NULL, "num_of_subgraphs", NULL, "Choose number of subgraphs to generate.");
-            size_of_subgraph       = arg_int0(NULL, "size_of_subgraph", NULL, "Choose size of subgraphs to generate.");
+            size_of_subgraph        = arg_int0(NULL, "size_of_subgraph", NULL, "Choose size of subgraphs to generate.");
         }
 
         int setConfig(ReductionConfig & config);
@@ -138,6 +139,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_str * reduction_style;
         struct arg_dbl * reduction_time_limit;
         struct arg_lit * reduce_by_vertex;
+        struct arg_lit * disable_early_termination;
         struct arg_lit * initial_filter;
         struct arg_lit * gnn_filter;
         struct arg_str * reduction_config;
@@ -268,6 +270,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         weight_source,
         print_reduction_info,
         reduce_by_vertex,
+        disable_early_termination,
         initial_filter,
         gnn_filter,
         kernel_filename,
@@ -388,6 +391,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         config.reduce_by_vertex = true;
     } else {
         config.reduce_by_vertex = false;
+    }
+    if (disable_early_termination->count > 0) {
+        config.disable_early_termination = true;
+    } else {
+        config.disable_early_termination = false;
     }
     if (initial_filter->count > 0) {
         config.initial_filter = true;

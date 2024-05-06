@@ -89,7 +89,7 @@ bool general_reduction::try_neighborhood_reduction(NodeID v, branch_and_reduce_a
     }
     return false;
 }
-bool general_reduction::solve_induced_subgraph_from_set(NodeWeight& solution, graph_access& graph, branch_and_reduce_algorithm* br_alg, sized_vector<NodeID>& nodes_vec, const fast_set& nodes_set, sized_vector<NodeID>& reverse_mapping, bool apply_solution) {
+bool general_reduction::solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight& solution, graph_access& graph, branch_and_reduce_algorithm* br_alg, sized_vector<NodeID>& nodes_vec, const fast_set& nodes_set, sized_vector<NodeID>& reverse_mapping, bool apply_solution) {
     if (nodes_vec.size() == 0) {
         solution = 0;
         return true;
@@ -100,13 +100,13 @@ bool general_reduction::solve_induced_subgraph_from_set(NodeWeight& solution, gr
     }
     reverse_mapping.set_size(br_alg->status.n);
     br_alg->build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
-    return solve_graph(solution, graph, br_alg->config, apply_solution);
+    return solve_graph(solution, graph, br_alg->config, weight_bound, apply_solution);
 }
-bool general_reduction::solve_induced_neighborhood_subgraph(NodeWeight& solution, graph_access& neighborhood_graph, branch_and_reduce_algorithm* br_alg, NodeID v, bool apply_solution) {
+bool general_reduction::solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight& solution, graph_access& neighborhood_graph, branch_and_reduce_algorithm* br_alg, NodeID v, bool apply_solution) {
     br_alg->build_induced_neighborhood_subgraph(neighborhood_graph, v);
-    return solve_graph(solution, neighborhood_graph, br_alg->config, apply_solution);
+    return solve_graph(solution, neighborhood_graph, br_alg->config, weight_bound, apply_solution);
 }
-bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, ReductionConfig &config, bool apply_solution) {
+bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution) {
     if (graph.number_of_nodes() == 0 ){
         solution = 0;
         return true;
@@ -128,8 +128,11 @@ bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, R
 
     branch_and_reduce_algorithm solver(graph, config, true);
 	solver.ch.disable_cout();
-    if (!solver.run_branch_reduce()) {
-        std::cerr << "%br_call time out" << std::endl;
+    if (config.disable_early_termination) 
+        weight_bound = std::numeric_limits<NodeWeight>::max();
+
+    if (!solver.run_branch_reduce(weight_bound)) {
+	    solver.ch.enable_cout();
         return false;
     }
     if (apply_solution) {
@@ -881,8 +884,9 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
             cut_component.push_back(cut_v);
             cut_component_set.add(cut_v);
             NodeWeight MWIS_weight = 0;
+            NodeWeight no_limit = std::numeric_limits<NodeWeight>::max();
             graph_access component_graph;
-            if (!solve_induced_subgraph_from_set(MWIS_weight, component_graph, br_alg, cut_component, cut_component_set, reverse_mapping, true))
+            if (!solve_induced_subgraph_from_set(no_limit, MWIS_weight, component_graph, br_alg, cut_component, cut_component_set, reverse_mapping, true))
                 return false;
 
             for (NodeID node : cut_component)
@@ -1171,8 +1175,9 @@ bool cut_vertex_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, No
             cut_component.push_back(cut_v);
             cut_component_set.add(cut_v);
             NodeWeight MWIS_weight = 0;
+            NodeWeight no_limit = std::numeric_limits<NodeWeight>::max();
             graph_access component_graph;
-            if (!solve_induced_subgraph_from_set(MWIS_weight, component_graph, br_alg, cut_component, cut_component_set, reverse_mapping, true))
+            if (!solve_induced_subgraph_from_set(no_limit, MWIS_weight, component_graph, br_alg, cut_component, cut_component_set, reverse_mapping, true))
                 return false;
 
             for (NodeID node : cut_component)
@@ -1209,9 +1214,10 @@ bool cut_vertex_reduction::get_fold_data(branch_and_reduce_algorithm* br_alg, No
     auto& cut_component = br_alg->buffers[0];
     graph_access cut_graph;
     reverse_mapping.assign(status.n, status.n);
+    NodeWeight bound = std::numeric_limits<NodeWeight>::max();
 
     // graph including neighborhood of cut_v
-    if (!solve_induced_subgraph_from_set(large_cutMWIS_weight, cut_graph, br_alg, cut_component, cut_component_set, reverse_mapping, true))
+    if (!solve_induced_subgraph_from_set(bound, large_cutMWIS_weight, cut_graph, br_alg, cut_component, cut_component_set, reverse_mapping, true))
         return false;
 
     // save solution for later reduce
@@ -1234,7 +1240,7 @@ bool cut_vertex_reduction::get_fold_data(branch_and_reduce_algorithm* br_alg, No
         cut_graph.setNodeWeight(reverse_mapping[neighbor], 0);
         cut_graph.setPartitionIndex(reverse_mapping[neighbor], 0);
     } 
-    if (!solve_graph(small_cutMWIS_weight, cut_graph, config, true))
+    if (!solve_graph(small_cutMWIS_weight, cut_graph, config, bound, true))
         return false;
 
     if (status.weights[cut_v] + small_cutMWIS_weight <= large_cutMWIS_weight) // cut_vertex is excluded -> directly apply
@@ -1468,8 +1474,9 @@ bool component_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, Nod
             cut_component.push_back(cut_v);
             cut_component_set.add(cut_v);
             NodeWeight MWIS_weight = 0;
+            NodeWeight no_limit = std::numeric_limits<NodeWeight>::max();
             graph_access component_graph;
-            if (!solve_induced_subgraph_from_set(MWIS_weight, component_graph, br_alg, cut_component, cut_component_set, reverse_mapping, true))
+            if (!solve_induced_subgraph_from_set(no_limit, MWIS_weight, component_graph, br_alg, cut_component, cut_component_set, reverse_mapping, true))
                 return false;
 
             for (NodeID node : cut_component)
@@ -2541,7 +2548,7 @@ bool heavy_vertex_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, 
 
     // compute MWIS in N(v) 
     ::NodeWeight MWIS_weight = 0;
-    bool solved_exact = solve_induced_subgraph_from_set(MWIS_weight, subgraph, br_alg, build_graph_neighbors, build_graph_neighbors_set, reverse_mapping);
+    bool solved_exact = solve_induced_subgraph_from_set(status.weights[v], MWIS_weight, subgraph, br_alg, build_graph_neighbors, build_graph_neighbors_set, reverse_mapping);
     if (!solved_exact) return false; 
 
     if (status.weights[v] >= MWIS_weight) {
@@ -2643,9 +2650,9 @@ bool heavy_set_reduction::is_heavy_set(NodeID v, fast_set& v_neighbors_set, Node
 
     std::vector<NodeWeight> MWIS_weights(4,0);
     assert(graph_nodes.size() > 2 && "ERROR: heavy_set_reduction::is_heavy_set: graph_nodes must have at least 3 nodes");
-    // compute MWIS in N(v) + N(u) + N(w):
-    if (!solve_induced_subgraph_from_set(MWIS_weights[v_combination::oo], subgraph, br_alg, graph_nodes, graph_nodes_set, reverse_mapping)) return false;
     MWIS_weights[v_combination::uv] = weights[u] + weights[v] ;
+    // compute MWIS in N(v) + N(u) + N(w):
+    if (!solve_induced_subgraph_from_set(MWIS_weights[v_combination::uv], MWIS_weights[v_combination::oo], subgraph, br_alg, graph_nodes, graph_nodes_set, reverse_mapping)) return false;
 
     if (std::min(weights[v], weights[u]) >= MWIS_weights[v_combination::oo]) {
         br_alg->set(v, IS_status::included);
@@ -2655,16 +2662,17 @@ bool heavy_set_reduction::is_heavy_set(NodeID v, fast_set& v_neighbors_set, Node
         return false;
     }
     bool original_heavy_set = false;
+    NodeWeight no_limit = std::numeric_limits<NodeWeight>::max();
     // compute MWIS[uo] in N(v)\N(u): (included u)
     unset_weights(subgraph, u_neighbors_vec, reverse_mapping);
-    if (!solve_graph(MWIS_weights[v_combination::uo], subgraph, config)) return false;
+    if (!solve_graph( MWIS_weights[v_combination::uo], subgraph, config, no_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::uo] > weights[v] ) return false;
     MWIS_weights[v_combination::uo] += weights[u];
 
-    // compute MWIS[5] in N(u)\N(v): (included v)
+    // compute MWIS[ov] in N(u)\N(v): (included v)
     set_weights(subgraph, u_neighbors_vec, reverse_mapping, weights);
     unset_weights(subgraph, v_neighbors_vec, reverse_mapping);
-    if (!solve_graph(MWIS_weights[v_combination::ov], subgraph, config)) return false;
+    if (!solve_graph(MWIS_weights[v_combination::ov], subgraph, config, no_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::ov] > weights[u]) return false;
     MWIS_weights[v_combination::ov] += weights[v];
 
@@ -2833,10 +2841,10 @@ bool heavy_set3_reduction::is_heavy_set(NodeID v, fast_set& v_neighbors_set, Nod
     assert(graph_nodes.size() > 2 && "ERROR: heavy_set_reduction::is_heavy_set: graph_nodes must have at least 3 nodes");
 
     std::vector<NodeWeight> MWIS_weights(8,0);
-
+    NodeWeight max_weight_limit = std::numeric_limits<NodeWeight>::max();
     // compute MWIS in N(v) + N(u) + N(w):
-    if (!solve_induced_subgraph_from_set(MWIS_weights[v_combination::ooo], subgraph, br_alg, graph_nodes, graph_nodes_set, reverse_mapping)) return false;
     MWIS_weights[v_combination::uvw] = weights[u] + weights[v] + weights[w];
+    if (!solve_induced_subgraph_from_set(MWIS_weights[v_combination::uvw], MWIS_weights[v_combination::ooo], subgraph, br_alg, graph_nodes, graph_nodes_set, reverse_mapping)) return false;
 
     if (std::min(std::min(weights[v], weights[u]), weights[w]) >= MWIS_weights[v_combination::ooo]) {
         br_alg->set(v, IS_status::included);
@@ -2849,40 +2857,40 @@ bool heavy_set3_reduction::is_heavy_set(NodeID v, fast_set& v_neighbors_set, Nod
     bool original_heavy_set = false;
     // compute MWIS[2] in N(v)+N(w)\N(u): (included u)
     unset_weights(subgraph, u_neighbors_vec, reverse_mapping);
-    if (!solve_graph(MWIS_weights[v_combination::uoo], subgraph, config)) return false;
+    if (!solve_graph(MWIS_weights[v_combination::uoo], subgraph, config, max_weight_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::uoo] > weights[v] + weights[w]) return false;
     MWIS_weights[v_combination::uoo] += weights[u];
 
     // compute MWIS[3] in N(v)\N(u)+N(w): (included u and w)
     unset_weights(subgraph, w_neighbors_vec, reverse_mapping);
-    if (!solve_graph(MWIS_weights[v_combination::uow], subgraph, config)) return false;
+    if (!solve_graph(MWIS_weights[v_combination::uow], subgraph, config, max_weight_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::uow] > weights[v]) return false;
     MWIS_weights[v_combination::uow] += weights[u] + weights[w];
 
     // compute MWIS[4] in N(v) + N(u) \ N(w): (included w )
     set_weights(subgraph, u_neighbors_vec, reverse_mapping, weights);
     unset_weights(subgraph, w_neighbors_vec, reverse_mapping);
-    if (!solve_graph(MWIS_weights[v_combination::oow], subgraph, config)) return false;
+    if (!solve_graph(MWIS_weights[v_combination::oow], subgraph, config, max_weight_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::oow] > weights[u] + weights[v]) return false;
     MWIS_weights[v_combination::oow] += weights[w];
 
     // compute MWIS[5] in N(u)+N(w)\N(v): (included v)
     set_weights(subgraph, w_neighbors_vec, reverse_mapping, weights);
     unset_weights(subgraph, v_neighbors_vec, reverse_mapping);
-    if (!solve_graph(MWIS_weights[v_combination::ovo], subgraph, config)) return false;
+    if (!solve_graph(MWIS_weights[v_combination::ovo], subgraph, config, max_weight_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::ovo] > weights[u] + weights[w]) return false;
     MWIS_weights[v_combination::ovo] += weights[v];
 
     // compute MWIS in N(u)\N(v)+N(w): (included v and w)
     unset_weights(subgraph, w_neighbors_vec, reverse_mapping);
-    if (!solve_graph(MWIS_weights[v_combination::ovw], subgraph, config)) return false;
+    if (!solve_graph(MWIS_weights[v_combination::ovw], subgraph, config, max_weight_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::ovw] > weights[u]) return false;
     MWIS_weights[v_combination::ovw] += weights[v] + weights[w];
 
     // compute MWIS in N(w)\N(v)+N(u): 
     set_weights(subgraph, w_neighbors_vec, reverse_mapping, weights);
     unset_weights(subgraph, v_neighbors_vec, reverse_mapping);
-    if (!solve_graph(MWIS_weights[v_combination::uvo], subgraph, config)) return false;
+    if (!solve_graph(MWIS_weights[v_combination::uvo], subgraph, config, max_weight_limit)) return false;
     if (original_heavy_set && MWIS_weights[v_combination::uvo] > weights[w]) return false;
     MWIS_weights[v_combination::uvo] += weights[v] + weights[u];
     size_t oldn = status.remaining_nodes;
@@ -3000,7 +3008,8 @@ bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
     // compute MWIS in N(v)
 
     NodeWeight MWIS_weight = 0;
-    bool solved_exact = solve_induced_subgraph_from_set(MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping, true); 
+    NodeWeight min_MWIS_neighbor_weight = std::numeric_limits<NodeWeight>::max();
+    bool solved_exact = solve_induced_subgraph_from_set(min_MWIS_neighbor_weight, MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping, true); 
     if (!solved_exact)  {
         reduction_time += br_alg->reduction_timer.elapsed();
         return false;
@@ -3015,7 +3024,6 @@ bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
         br_alg->set(v, IS_status::included);
         return oldn != status.remaining_nodes;
     }
-    NodeWeight min_MWIS_neighbor_weight = std::numeric_limits<NodeWeight>::max();
 
     MWIS_set.clear();
 
@@ -3045,7 +3053,7 @@ bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
         neighbors_set.remove(neighbor);
 
         NodeWeight MWIS_weight = 0;
-        bool solved_exact = solve_induced_subgraph_from_set(MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping);
+        bool solved_exact = solve_induced_subgraph_from_set(status.weights[v], MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping);
         if (!solved_exact) {
             check_failed = true;
         } else if (MWIS_weight >= status.weights[v]) {
@@ -3090,13 +3098,20 @@ bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
                 }
             }
 
-            NodeWeight MWIS_weight = 0;
-            bool solved_exact = solve_induced_subgraph_from_set(MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping);
-            if (!solved_exact) {
+            if (status.weights[v] < status.weights[node])
+            {
                 remove_node = false;
             } else {
-                // if the weight of every MWIS in N(v) which contains "node" is smaller than w(v) then we can remove "node"
-                remove_node = MWIS_weight + status.weights[node] <= status.weights[v];
+                assert(status.weights[v] > status.weights[node] && "ERROR: generalized_fold_reduction::reduce_vertex: v must have larger weight than node");
+                NodeWeight MWIS_weight = 0;
+                NodeWeight bound = status.weights[v] - status.weights[node];
+                bool solved_exact = solve_induced_subgraph_from_set(bound, MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping);
+                if (!solved_exact) {
+                    remove_node = false;
+                } else {
+                    // if the weight of every MWIS in N(v) which contains "node" is smaller than w(v) then we can remove "node"
+                    remove_node = MWIS_weight <= bound;
+                }
             }
 
             for (const NodeID neighbor : status.graph[node]) {

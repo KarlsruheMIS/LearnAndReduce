@@ -71,6 +71,9 @@ struct ReductionConfig : public Config {
     // apply every reduction to one vertex
     bool reduce_by_vertex;
 
+    // early terminate solving subgraphs is best weight found is already to large for reduction to be applied
+    bool disable_early_termination;
+
     // filter reductions before adding to marker
     bool initial_filter;
     bool gnn_filter;

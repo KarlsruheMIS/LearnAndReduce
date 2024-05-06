@@ -706,7 +706,6 @@ void branch_and_reduce_algorithm::initial_reduce()
 {
 	std::swap(global_transformation_map, local_transformation_map);
 	status = std::move(global_status);
-	// if (config.initial_filter) initial_filter_vertices_for_reduction();
 	if (config.disable_blow_up)
 	{
 		reduce_graph_internal(true);
@@ -715,10 +714,8 @@ void branch_and_reduce_algorithm::initial_reduce()
 	else
 	{
 		reduce_graph_internal(true);
-		if (config.print_reduction_info)
-		{
-			print_reduction_info();
-			// std::cout << "reduced to " << status.remaining_nodes << " nodes" << std::endl;
+		if (config.print_reduction_info) {
+		    print_reduction_info();
 		}
 		bool further_impovement = status.remaining_nodes > 0;
 		min_kernel = status.remaining_nodes;
@@ -730,7 +727,6 @@ void branch_and_reduce_algorithm::initial_reduce()
 			if (!config.disable_blow_up && status.transformations.size() != status.num_reductions)
 				cyclic_blow_up();
 
-			// std::cout << "reduced to " << status.remaining_nodes << " nodes" << std::endl;
 			if (status.remaining_nodes == 0)
 				break;
 			size_t oldn = status.remaining_nodes;
@@ -1004,6 +1000,12 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 
 	if (status.n > ILS_SIZE_LIMIT)
 		compute_ils_pruning_bound();
+	
+	if (best_weight > weight_bound)
+	{
+		// std::cerr << "pruning for solving subgraphs in reducion" << std::endl;
+		return;
+	}
 
 	size_t i = 0;
 	while (i < status.n)
@@ -1121,6 +1123,11 @@ graph_access &branch_and_reduce_algorithm::kernelize()
 	return global_graph;
 }
 
+bool branch_and_reduce_algorithm::run_branch_reduce(NodeWeight bound)
+{
+	weight_bound = bound;
+	return run_branch_reduce();
+}
 bool branch_and_reduce_algorithm::run_branch_reduce()
 {
 	t.restart();
@@ -1206,6 +1213,13 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 
 		branch_reduce_single_component();
 
+		if (best_weight > weight_bound)
+		{
+			// std::cout << "pruning for solving subgraphs in reducion" << std::endl;
+			// struction_log::instance()->set_best(get_current_is_weight(), t.elapsed());
+			// restore_best_global_solution();
+			return false;
+		}
 		for (size_t node = 0; node < local_mapping.size(); node++)
 		{
 			global_status.node_status[global_mapping[local_mapping[node]]] = status.node_status[node];
