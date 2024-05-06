@@ -78,6 +78,7 @@ class ReductionArguments : public BaseArguments {
 	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
 	        reduce_by_vertex    = arg_lit0(NULL, "reduce_by_vertex", "Reduce by vertex instead of by edge.");
             initial_filter      = arg_lit0(NULL, "initial_filter", "Use initial filter on vertices to apply reductions on.");
+            gnn_filter          = arg_lit0(NULL, "gnn_filter", "Use GNNs for initial filter on vertices to apply reductions on.");
 
             // single reduction parameters
             disable_neighborhood        = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -138,6 +139,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_dbl * reduction_time_limit;
         struct arg_lit * reduce_by_vertex;
         struct arg_lit * initial_filter;
+        struct arg_lit * gnn_filter;
         struct arg_str * reduction_config;
         struct arg_str * kernel_filename;
         struct arg_lit * print_reduction_info;
@@ -267,6 +269,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         print_reduction_info,
         reduce_by_vertex,
         initial_filter,
+        gnn_filter,
         kernel_filename,
         reduction_config,
         reduction_time_limit,
@@ -390,6 +393,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         config.initial_filter = true;
     } else {
         config.initial_filter = false;
+    }
+    if (gnn_filter->count > 0) {
+        config.gnn_filter = true;
+    } else {
+        config.gnn_filter = false;
     }
     if (print_reduction_info->count > 0) {
         config.print_reduction_info = true;

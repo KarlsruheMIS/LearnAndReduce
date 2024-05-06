@@ -73,6 +73,7 @@ struct ReductionConfig : public Config {
 
     // filter reductions before adding to marker
     bool initial_filter;
+    bool gnn_filter;
 
     // Lower bound for the change rate between best individuals
     double best_limit;
