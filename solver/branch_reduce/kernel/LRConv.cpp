@@ -163,6 +163,11 @@ const float *LRConv::predict_light(graph_access &g)
     return y;
 }
 
+const float *LRConv::predict_light_blas(graph_access &g)
+{
+    
+}
+
 const float *LRConv::predict(const float *node_attr, const float *edge_attr, graph_access &g)
 {
     // iterate over edges
@@ -327,6 +332,38 @@ void LRConv::compute_attr(float **node_attr, float **edge_attr, graph_access &g)
         ua[0] = (float)d / scale;
         ua[1] = (float)g.getNodeWeight(u) / scale;
         ua[2] = (float)Wn / scale;
-        ua[3] = (d < 2) ? 1.0f : (float)C / (float)((d * d) - d);
+        ua[3] = (float)u / scale;
+        // ua[3] = (d < 2) ? 1.0f : (float)C / (float)((d * d) - d);
+    }
+}
+
+unsigned int hash(unsigned int x)
+{
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return x;
+}
+
+void LRConv::compute_node_attr(float **node_attr, graph_access &g)
+{
+    free(*node_attr);
+    *node_attr = (float *)aligned_alloc(32, sizeof(float) * g.number_of_nodes() * node_features);
+
+    for (int u = 0; u < g.number_of_nodes(); u++)
+    {
+        int d = g.getNodeDegree(u), Wn = 0;
+
+        for (int i = g.get_first_edge(u); i != g.get_first_invalid_edge(u); i++)
+        {
+            int v = g.getEdgeTarget(i);
+            Wn += g.getNodeWeight(v);
+        }
+
+        float *ua = *node_attr + (u * node_features);
+        ua[0] = (float)d / scale;
+        ua[1] = (float)g.getNodeWeight(u) / scale;
+        ua[2] = (float)Wn / scale;
+        ua[3] = (float)(hash(u) % 1000000) / id_scale;
     }
 }

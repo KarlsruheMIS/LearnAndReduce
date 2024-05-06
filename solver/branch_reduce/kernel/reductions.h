@@ -643,12 +643,18 @@ private:
 template <typename struction_type, reduction_type type, int vertex_increase>
 struct iterative_struction : public general_reduction
 {
-    iterative_struction(size_t n) : general_reduction(n) {}
+    iterative_struction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
     ~iterative_struction() {}
     virtual iterative_struction *clone() const final { return new iterative_struction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return type; }
     virtual void print_reduction_type() final { std::cout << "struction: \t\t"; }
+    virtual std::string get_model_path() final { 
+        if (type == struction_decrease) 
+            return "models/decreasing_struction.gnn";
+        else
+            return ""; 
+    }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final { s.restore(br_alg); };

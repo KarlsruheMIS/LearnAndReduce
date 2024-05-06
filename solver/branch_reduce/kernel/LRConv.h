@@ -8,6 +8,7 @@ const int node_features = 4;
 const int edge_features = 8;
 const int hidden_dim = 16;
 const float scale = 100.0f;
+const double id_scale = 1000000.0;
 
 class LRConv
 {
@@ -21,7 +22,11 @@ public:
 
     const float *predict_light(graph_access &g);
 
+    const float *predict_light_blas(graph_access &g);
+
     static void compute_attr(float **node_attr, float **edge_attr, graph_access &g);
+
+    static void compute_node_attr(float **node_attr, graph_access &g);
 
 private:
     int params;

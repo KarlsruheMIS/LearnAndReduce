@@ -24,6 +24,7 @@
 #include <fstream>
 #include <chrono>
 #include <random>
+#include <iomanip>
 
 #include "timer.h"
 #include "cout_handler.h"
@@ -35,6 +36,7 @@
 #include "branch_and_reduce_algorithm.h"
 #include "graph_operations.h"
 #include "solution_check.h"
+#include "LRConv.h"
 
 bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::string filename, sized_vector<std::string> &reduction_names)
 {
@@ -72,98 +74,6 @@ bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::s
     return true;
 }
 
-std::vector<float> get_cluster_coefficient(graph_access &G)
-{
-    std::vector<int> marks(G.number_of_nodes(), -1);
-    std::vector<float> C(G.number_of_nodes(), 0.0f);
-
-    for (int u = 0; u < G.number_of_nodes(); u++)
-    {
-        int deg = G.getNodeDegree(u);
-        if (deg < 2)
-        {
-            C[u] = 1.0f;
-            continue;
-        }
-
-        for (int e = G.get_first_edge(u); e != G.get_first_invalid_edge(u); e++)
-            marks[G.getEdgeTarget(e)] = u;
-
-        int c = 0;
-        for (int i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
-        {
-            int v = G.getEdgeTarget(i);
-            for (int j = G.get_first_edge(v); j != G.get_first_invalid_edge(v) && G.getEdgeTarget(j) < v; j++)
-                if (marks[G.getEdgeTarget(j)] == u)
-                    c++;
-        }
-        C[u] = (float)c / (float)(((deg * deg) - deg) / 2);
-    }
-
-    return C;
-}
-
-struct edge_data
-{
-    int uc, vc, ic;
-    int uw, vw, iw;
-};
-
-std::vector<edge_data> get_edge_data(graph_access &G)
-{
-    std::vector<edge_data> ed(G.get_first_invalid_edge(G.number_of_nodes() - 1));
-    for (int u = 0; u < G.number_of_nodes(); u++)
-    {
-        for (int i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
-        {
-            int v = G.getEdgeTarget(i);
-
-            int _i = G.get_first_edge(u), _j = G.get_first_edge(v);
-            while (_i != G.get_first_invalid_edge(u) && _j != G.get_first_invalid_edge(v))
-            {
-                if (G.getEdgeTarget(_i) == G.getEdgeTarget(_j))
-                {
-                    ed[i].ic++;
-                    ed[i].iw += G.getNodeWeight(G.getEdgeTarget(_i));
-                    _i++, _j++;
-                }
-                else if (G.getEdgeTarget(_i) < G.getEdgeTarget(_j))
-                {
-                    ed[i].uc++;
-                    ed[i].uw += G.getNodeWeight(G.getEdgeTarget(_i));
-                    _i++;
-                }
-                else
-                {
-                    ed[i].vc++;
-                    ed[i].vw += G.getNodeWeight(G.getEdgeTarget(_j));
-                    _j++;
-                }
-            }
-
-            while (_i != G.get_first_invalid_edge(u))
-            {
-                ed[i].uc++;
-                ed[i].uw += G.getNodeWeight(G.getEdgeTarget(_i));
-                _i++;
-            }
-
-            while (_j < G.get_first_invalid_edge(v))
-            {
-                ed[i].vc++;
-                ed[i].vw += G.getNodeWeight(G.getEdgeTarget(_j));
-                _j++;
-            }
-
-            ed[i].uc--;
-            ed[i].uw -= G.getNodeWeight(v);
-            ed[i].vc--;
-            ed[i].vw -= G.getNodeWeight(u);
-        }
-    }
-    return ed;
-}
-
 bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &reduction_data, std::string filename, sized_vector<std::string> &reduction_names)
 {
     std::vector<bool> used_reduction(reduction_data.size(), 0);
@@ -178,27 +88,45 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
         count_data_per_graph++;
         used_reduction[i] = true;
     }
-    if (count_data_per_graph < 2)
+    if (count_data_per_graph < 2 || G.number_of_nodes() < 100)
         return false; // specify how much data per graph needed
 
-    std::vector<float> C = get_cluster_coefficient(G);
-    std::vector<edge_data> ed = get_edge_data(G);
+    for (int i = 0; i < reduction_data.size(); i++)
+    {
+        if (used_reduction[i])
+            std::cout << reduction_names[i] << std::endl;
+    }
+
+    float *node_attr = NULL, *edge_attr = NULL;
+    LRConv::compute_node_attr(&node_attr, G);
+    // LRConv::compute_attr(&node_attr, &edge_attr, G);
 
     std::ofstream file;
     file.open(filename + ".csv");
-    file << "source;target;uc;vc;ic;uw;vw;iw" << std::endl;
+    // file << "source;target;uc;vc;ic;uw;vw;iw;twin;dom" << std::endl;
+    // for (int u = 0; u < G.number_of_nodes(); u++)
+    // {
+    //     for (int i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
+    //     {
+    //         float *ed = edge_attr + (edge_features * i);
+    //         file << u << ";" << G.getEdgeTarget(i);
+    //         for (int j = 0; j < edge_features; j++)
+    //             file << ";" << ed[j];
+    //         file << std::endl;
+    //     }
+    file << "source;target" << std::endl;
     for (int u = 0; u < G.number_of_nodes(); u++)
     {
         for (int i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
         {
-            file << u << ";" << G.getEdgeTarget(i) << ";" << ed[i].uc << ";" << ed[i].vc << ";"
-                 << ed[i].ic << ";" << ed[i].uw << ";" << ed[i].vw << ";" << ed[i].iw << std::endl;
+            float *ed = edge_attr + (edge_features * i);
+            file << u << ";" << G.getEdgeTarget(i) << std::endl;
         }
     }
     file.close();
 
     file.open(filename + "_meta.csv");
-    file << "id;w";
+    file << "id;d;w;nw;l";
     for (int i = 0; i < reduction_data.size(); i++)
         if (used_reduction[i])
             file << ";" << reduction_names[i];
@@ -206,13 +134,18 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
 
     for (int u = 0; u < G.number_of_nodes(); u++)
     {
-        file << u << ";" << G.getNodeWeight(u);
+        file << u;
+        float *nd = node_attr + (u * node_features);
+        for (int i = 0; i < node_features; i++)
+            file << ";" << nd[i];
         for (int i = 0; i < reduction_data.size(); i++)
             if (used_reduction[i])
                 file << ";" << reduction_data[i][u];
         file << std::endl;
     }
     file.close();
+    free(node_attr);
+    free(edge_attr);
     return true;
 }
 
@@ -299,8 +232,10 @@ int main(int argn, char **argv)
 
     std::vector<std::vector<bool>> reduction_data(num_of_reductions, std::vector<bool>(config.size_of_subgraph, false));
     graph_access subgraph;
+    config.seed = time(NULL);
     for (int i = 0; i < config.num_of_subgraphs; i++)
-    {                                                                                                   // number of different subgraphs out of one graph
+    {
+        // number of different subgraphs out of one graph
         reducer.get_training_data_for_graph_size(subgraph, config.size_of_subgraph, reduction_data, i); // size of the subgraph
 
         write_reduction_data_csv(subgraph, reduction_data, "training_data/csv/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i), reduction_names);
