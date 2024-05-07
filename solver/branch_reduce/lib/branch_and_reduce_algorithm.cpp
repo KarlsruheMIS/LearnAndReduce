@@ -44,7 +44,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		is_excluded_vertex = std::vector<bool>(global_status.n, false);	
 	}
 	// others are locally applied if config.reduce_by_vertex
-	global_transformations = {fold1, neighborhood, critical_set, struction_plateau, struction_blow};
+	global_transformations = {critical_set, struction_plateau, struction_blow};
 	expensive_transformations = {};
     if (config.reduction_style == ReductionConfig::Reduction_Style::test1)
 	    expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};

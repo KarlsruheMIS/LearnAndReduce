@@ -231,8 +231,8 @@ int main(int argn, char **argv)
     int num_of_reductions = reduction_names.size();
 
     std::vector<std::vector<bool>> reduction_data(num_of_reductions, std::vector<bool>(config.size_of_subgraph, false));
-    std::vector<bool> exclude_data(std::vector<bool>(config.size_of_subgraph, false));
-    std::vector<bool> include_data(std::vector<bool>(config.size_of_subgraph, false));
+    std::vector<bool> exclude_data(config.size_of_subgraph, false);
+    std::vector<bool> include_data(config.size_of_subgraph, false);
     graph_access subgraph;
     config.seed = time(NULL);
     for (int i = 0; i < config.num_of_subgraphs; i++)
