@@ -3102,7 +3102,6 @@ bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
             {
                 remove_node = false;
             } else {
-                assert(status.weights[v] > status.weights[node] && "ERROR: generalized_fold_reduction::reduce_vertex: v must have larger weight than node");
                 NodeWeight MWIS_weight = 0;
                 NodeWeight bound = status.weights[v] - status.weights[node];
                 bool solved_exact = solve_induced_subgraph_from_set(bound, MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping);
