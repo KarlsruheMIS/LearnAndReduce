@@ -78,7 +78,10 @@ struct general_reduction
     virtual general_reduction *clone() const = 0;
 
     virtual reduction_type get_reduction_type() const = 0;
-    virtual void print_reduction_type() = 0;
+    virtual void print_reduction_type() {
+        std::cout << get_reduction_name() << ": \t" ;
+    };
+    virtual std::string get_reduction_name() = 0;
     virtual std::string get_model_path() { return ""; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) = 0;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) {}
@@ -119,7 +122,7 @@ struct neighborhood_reduction : public general_reduction
     virtual reduction_type get_reduction_type() const final { return reduction_type::neighborhood; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
-    virtual void print_reduction_type() final { std::cout << "neighborhood: \t"; }
+    virtual std::string get_reduction_name() final { return "neighborhood"; }
 
     bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg);
 };
@@ -134,7 +137,7 @@ struct fold1_reduction : public general_reduction
     virtual fold1_reduction *clone() const final { return new fold1_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::fold1; }
-    virtual void print_reduction_type() final { std::cout << "fold1: \t\t"; }
+    virtual std::string get_reduction_name() final { return "fold1"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
@@ -167,7 +170,7 @@ struct fold2_reduction : public general_reduction
     virtual fold2_reduction *clone() const final { return new fold2_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::fold2; }
-    virtual void print_reduction_type() final { std::cout << "fold2: \t\t"; }
+    virtual std::string get_reduction_name() final { return "fold2"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
@@ -216,7 +219,7 @@ struct clique_neighborhood_reduction_fast : public general_reduction
     virtual clique_neighborhood_reduction_fast *clone() const final { return new clique_neighborhood_reduction_fast(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::clique_neighborhood_fast; }
-    virtual void print_reduction_type() final { std::cout << "clique_nbh_fast: \t"; }
+    virtual std::string get_reduction_name() final { return "clique_nbh_fast"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
 };
@@ -228,7 +231,7 @@ struct clique_neighborhood_reduction : public general_reduction
     virtual clique_neighborhood_reduction *clone() const final { return new clique_neighborhood_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::clique_neighborhood; }
-    virtual void print_reduction_type() final { std::cout << "clique_nbh: \t\t"; }
+    virtual std::string get_reduction_name() final { return "clique_nbh"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
 
@@ -246,7 +249,7 @@ struct clique_reduction : public general_reduction
     virtual clique_reduction *clone() const final { return new clique_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::clique; }
-    virtual void print_reduction_type() final { std::cout << "clique: \t\t"; }
+    virtual std::string get_reduction_name() final { return "clique"; }
     virtual std::string get_model_path() final { return "models/clique.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
@@ -281,7 +284,7 @@ struct funnel_reduction : public general_reduction
     virtual funnel_reduction *clone() const final { return new funnel_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::funnel; }
-    virtual void print_reduction_type() final { std::cout << "funnel: \t\t"; }
+    virtual std::string get_reduction_name() final { return "funnel"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
@@ -315,7 +318,7 @@ struct funnel_fold_reduction : public general_reduction
     virtual funnel_fold_reduction *clone() const final { return new funnel_fold_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::funnel_fold; }
-    virtual void print_reduction_type() final { std::cout << "funnel_fold: \t\t"; }
+    virtual std::string get_reduction_name() final { return "funnel fold"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
@@ -351,7 +354,7 @@ struct critical_set_reduction : public general_reduction
     virtual critical_set_reduction *clone() const final { return new critical_set_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::critical_set; }
-    virtual void print_reduction_type() final { std::cout << "critical_set: \t"; }
+    virtual std::string get_reduction_name() final { return "critical_set"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
 };
 
@@ -362,7 +365,7 @@ struct component_reduction : public general_reduction
     virtual component_reduction *clone() const final { return new component_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::component; }
-    virtual void print_reduction_type() final { std::cout << "component: \t\t"; }
+    virtual std::string get_reduction_name() final { return "component"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
 
@@ -379,7 +382,7 @@ struct cut_vertex_reduction : public general_reduction
     virtual cut_vertex_reduction *clone() const final { return new cut_vertex_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::cut_vertex; }
-    virtual void print_reduction_type() final { std::cout << "cut_vertex: \t\t"; }
+    virtual std::string get_reduction_name() final { return "cut_vertex"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
@@ -423,7 +426,7 @@ struct single_edge_reduction : public general_reduction
     virtual single_edge_reduction *clone() const final { return new single_edge_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::single_edge; }
-    virtual void print_reduction_type() final { std::cout << "single_edge: \t\t"; }
+    virtual std::string get_reduction_name() final { return "single_edge"; }
     virtual std::string get_model_path() final { return "models/single_edge.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
@@ -436,7 +439,7 @@ struct extended_single_edge_reduction : public general_reduction
     virtual extended_single_edge_reduction *clone() const final { return new extended_single_edge_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::extended_single_edge; }
-    virtual void print_reduction_type() final { std::cout << "extended_single_edge: "; }
+    virtual std::string get_reduction_name() final { return "extended_single_edge"; }
     virtual std::string get_model_path() final { return "models/extended_single_edge.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
@@ -449,7 +452,7 @@ struct twin_reduction : public general_reduction
     virtual twin_reduction *clone() const final { return new twin_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::twin; }
-    virtual void print_reduction_type() final { std::cout << "twin: \t\t"; }
+    virtual std::string get_reduction_name() final { return "twin"; }
     virtual std::string get_model_path() final { return "models/twin.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
@@ -475,7 +478,7 @@ struct domination_reduction : public general_reduction
     virtual domination_reduction *clone() const final { return new domination_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::domination; }
-    virtual void print_reduction_type() final { std::cout << "domination: \t\t"; }
+    virtual std::string get_reduction_name() final { return "domination"; }
     virtual std::string get_model_path() final { return "models/domination.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
@@ -488,7 +491,7 @@ struct generalized_fold_reduction : public general_reduction
     virtual generalized_fold_reduction *clone() const final { return new generalized_fold_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::generalized_fold; }
-    virtual void print_reduction_type() final { std::cout << "generalized_fold: \t"; }
+    virtual std::string get_reduction_name() final { return "generalized_fold"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
@@ -522,7 +525,7 @@ struct heavy_vertex_reduction : public general_reduction
     virtual heavy_vertex_reduction *clone() const final { return new heavy_vertex_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::heavy_vertex; }
-    virtual void print_reduction_type() final { std::cout << "heavy_vertex: \t"; }
+    virtual std::string get_reduction_name() final { return "heavy_vertex"; }
     virtual std::string get_model_path() final { return "models/heavy_vertex.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
@@ -535,7 +538,7 @@ struct heavy_set_reduction : public general_reduction
     virtual heavy_set_reduction *clone() const final { return new heavy_set_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::heavy_set; }
-    virtual void print_reduction_type() final { std::cout << "heavy_set: \t\t"; }
+    virtual std::string get_reduction_name() final { return "heavy_set"; }
     virtual std::string get_model_path() final { return "models/heavy_set.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
@@ -560,7 +563,7 @@ struct heavy_set3_reduction : public general_reduction
     virtual heavy_set3_reduction *clone() const final { return new heavy_set3_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::heavy_set3; }
-    virtual void print_reduction_type() final { std::cout << "heavy_set3: \t\t"; }
+    virtual std::string get_reduction_name() final { return "heavy_set3"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
 
@@ -592,7 +595,7 @@ struct path_reduction : public general_reduction
     virtual path_reduction *clone() const final { return new path_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::path; }
-    virtual void print_reduction_type() final { std::cout << "path: \t\t\t"; }
+    virtual std::string get_reduction_name() final { return "path"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
@@ -648,7 +651,7 @@ struct iterative_struction : public general_reduction
     virtual iterative_struction *clone() const final { return new iterative_struction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return type; }
-    virtual void print_reduction_type() final { std::cout << "struction: \t\t"; }
+    virtual std::string get_reduction_name() final { return "struction"; }
     virtual std::string get_model_path() final { 
         if (type == struction_decrease) 
             return "models/decreasing_struction.gnn";
@@ -676,7 +679,7 @@ struct blow_up_struction : public general_reduction
     virtual blow_up_struction *clone() const final { return new blow_up_struction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return type; }
-    virtual void print_reduction_type() final { std::cout << "blow up struction: \t"; }
+    virtual std::string get_reduction_name() final { return "blow_up_struction"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     // virtual bool reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;

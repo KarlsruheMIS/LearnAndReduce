@@ -56,8 +56,11 @@ public:
     double best_is_time;
     bool timeout = false;
 	cout_handler ch;
+
+	//generate training data
 	std::vector<bool> is_included_vertex;
 	std::vector<bool> is_excluded_vertex;
+    void get_transformation_names(std::vector<std::string> &names);
 
 private:
     friend general_reduction;
@@ -290,6 +293,7 @@ public:
     void pick_nodes_by_BFS(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void pick_nodes_by_nodeID(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void generate_initial_reduce_data(std::vector<std::vector<bool>> &reduction_data, size_t i);
+
 
     // printing
     void print_reduction_info();

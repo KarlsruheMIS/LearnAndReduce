@@ -1800,6 +1800,15 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 	global_status = std::move(status);
 	std::swap(global_transformation_map, local_transformation_map);
 }
+// function to get transformations
+void branch_and_reduce_algorithm::get_transformation_names(std::vector<std::string>& names)
+{
+	names.clear();
+	for (size_t i = 0; i < global_status.num_reductions; i++)
+	{
+		names.push_back(global_status.transformations[i]->get_reduction_name());
+	}
+}
 
 void branch_and_reduce_algorithm::print_reduction_info()
 {
