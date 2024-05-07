@@ -98,7 +98,7 @@ from torch.nn import Linear, Parameter, Sequential, ReLU, Sigmoid
 from torch_geometric.nn import MessagePassing
 
 class LRConv(MessagePassing):
-    def __init__(self, in_channels, out_channels, edge_channels):
+    def __init__(self, in_channels, out_channels):
         super().__init__(flow='target_to_source', aggr='max')  # "Add" aggregation (Step 5).
         self.seq = Sequential(
           Linear(in_channels * 2, 16),
@@ -113,14 +113,14 @@ class LRConv(MessagePassing):
             if hasattr(layer, 'reset_parameters'):
                 layer.reset_parameters()
 
-    def forward(self, x, edge_index, edge_attr):
-        out = self.propagate(edge_index, x=x, edge_attr=edge_attr)
+    def forward(self, x, edge_index):
+        out = self.propagate(edge_index, x=x)
         #out = torch.cat([out, x], dim=-1)
         #out = out + self.bias
 
         return out
 
-    def message(self, x_i, x_j, edge_attr):
+    def message(self, x_i, x_j):
         return self.seq(torch.cat([x_i, x_j], dim=-1))
 
 from torch_geometric.nn import GCNConv, SAGEConv, GENConv, GINEConv, TransformerConv, PNAConv
@@ -128,16 +128,16 @@ from torch_geometric.nn import GCNConv, SAGEConv, GENConv, GINEConv, Transformer
 class LR_GCN(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = LRConv(4, 16, 8)
-        self.conv2 = LRConv(16, 16, 8)
+        self.conv1 = LRConv(4, 16)
+        self.conv2 = LRConv(16, 16)
         self.lin1 = Linear(16, 16)
         self.a1 = ReLU()
         self.lin2 = Linear(16, 1)
 
     def forward(self, data):
-        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
-        x = self.conv1(x, edge_index, edge_attr)
-        x = self.conv2(x, edge_index, edge_attr)
+        x, edge_index = data.x, data.edge_index
+        x = self.conv1(x, edge_index)
+        x = self.conv2(x, edge_index)
         x = self.lin1(x)
         x = self.a1(x)
         x = self.lin2(x)
