@@ -21,20 +21,20 @@ def parse_data(filename):
 
     with open(path + '_meta' + ext) as f:
         reader = csv.DictReader(f, delimiter=';')
-        x = torch.tensor([[float(r['d']), float(r['w']), float(r['nw']), float(r['id']) / 100.0] for r in reader], dtype=torch.float)
+        x = torch.tensor([[float(r['d']), float(r['w']), float(r['nw']), float(r['l'])] for r in reader], dtype=torch.float)
     
     with open(filename) as f:
         reader = csv.DictReader(f, delimiter=';')
         edge_index = torch.tensor([[int(r['source']), int(r['target'])] for r in reader], dtype=torch.long)
 
-    with open(filename) as f:
-        reader = csv.DictReader(f, delimiter=';')
-        edge_attr = torch.tensor([[float(r['uc']), float(r['vc']), float(r['ic']), 
-                                   float(r['uw']), float(r['vw']), float(r['iw']),
-                                   float(r['twin']), float(r['dom'])] for r in reader], dtype=torch.float)
+    # with open(filename) as f:
+    #     reader = csv.DictReader(f, delimiter=';')
+    #     edge_attr = torch.tensor([[float(r['uc']), float(r['vc']), float(r['ic']), 
+    #                                float(r['uw']), float(r['vw']), float(r['iw']),
+    #                                float(r['twin']), float(r['dom'])] for r in reader], dtype=torch.float)
 
     if x.size()[0] > 100:
-        dataset.append(Data(x=x, y=y, edge_index=edge_index.t().contiguous(), edge_attr=edge_attr))
+        dataset.append(Data(x=x, y=y, edge_index=edge_index.t().contiguous())) #, edge_attr=edge_attr
 
 path = sys.argv[2]
 #path = 'csv/'
