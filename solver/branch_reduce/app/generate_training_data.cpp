@@ -74,7 +74,9 @@ bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::s
     return true;
 }
 
-bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &reduction_data, std::string filename, std::vector<std::string> &reduction_names)
+bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &reduction_data,
+                              std::string filename, std::vector<std::string> &reduction_names,
+                              std::vector<bool> &exclude_data, std::vector<bool> &include_data)
 {
     std::vector<bool> used_reduction(reduction_data.size(), 0);
     int count_data_per_graph = 0;
@@ -126,7 +128,7 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
     file.close();
 
     file.open(filename + "_meta.csv");
-    file << "id;d;w;nw;l";
+    file << "id;d;w;nw;l;i;e";
     for (int i = 0; i < reduction_data.size(); i++)
         if (used_reduction[i])
             file << ";" << reduction_names[i];
@@ -138,6 +140,7 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
         float *nd = node_attr + (u * node_features);
         for (int i = 0; i < node_features; i++)
             file << ";" << nd[i];
+        file << ";" << include_data[u] << ";" << exclude_data[u];
         for (int i = 0; i < reduction_data.size(); i++)
             if (used_reduction[i])
                 file << ";" << reduction_data[i][u];
@@ -243,7 +246,7 @@ int main(int argn, char **argv)
         // number of different subgraphs out of one graph
         reducer.get_training_data_for_graph_size(subgraph, config.size_of_subgraph, reduction_data, include_data, exclude_data, i); // size of the subgraph
 
-        write_reduction_data_csv(subgraph, reduction_data, "training_data/csv/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i), transformation_names);
+        write_reduction_data_csv(subgraph, reduction_data, "training_data/csv/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i), transformation_names, exclude_data, include_data);
 
         // if (write_reduction_data(reduction_data, "training_data/reduction_data/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i) + "_", reduction_names))
         //     graph_io::writeGraphWeighted(subgraph, "training_data/graph/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i) + ".graph");
