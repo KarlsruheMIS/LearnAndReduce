@@ -56,6 +56,8 @@ public:
     double best_is_time;
     bool timeout = false;
 	cout_handler ch;
+	std::vector<bool> is_included_vertex;
+	std::vector<bool> is_excluded_vertex;
 
 private:
     friend general_reduction;
@@ -190,6 +192,7 @@ private:
 	std::vector<size_t> global_transformation_map;
 	std::vector<reduction_type> global_transformations;
 	std::vector<reduction_type> expensive_transformations;
+
 	size_t total_ils_node_count;
 
 	graph_status status;
@@ -282,7 +285,8 @@ public:
     void update_independent_set(std::vector<bool> & independent_set);
     void set_node_status(std::vector<bool> & independent_set , graph_access & G, graph_access & reduced, std::vector<NodeID> & reverse_mapping);
     // added for training data
-    void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, size_t i);
+    // void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, size_t i);
+    void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, std::vector<bool> &include_data, std::vector<bool> &exclude_data, size_t i);
     void pick_nodes_by_BFS(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void pick_nodes_by_nodeID(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void generate_initial_reduce_data(std::vector<std::vector<bool>> &reduction_data, size_t i);

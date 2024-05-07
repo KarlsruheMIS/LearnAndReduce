@@ -38,6 +38,11 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	: config(config), global_status(G), set_1(global_status.n), set_2(global_status.n), double_set(global_status.n * 2),
 	  buffers(4, sized_vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0)
 {
+	if (config.generate_training_data)
+	{ 
+		is_included_vertex = std::vector<bool>(global_status.n, false);
+		is_excluded_vertex = std::vector<bool>(global_status.n, false);	
+	}
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {fold1, neighborhood, critical_set, struction_plateau, struction_blow};
 	expensive_transformations = {};
@@ -347,6 +352,14 @@ void branch_and_reduce_algorithm::set(NodeID node, IS_status mis_status, bool pu
 	assert(status.node_status[node] == IS_status::not_set && "Node status set");
 	assert(status.remaining_nodes > 0 && "No nodes remaining to set");
 	status.node_status[node] = mis_status;
+	if (config.generate_training_data)
+	{
+		if (mis_status == IS_status::included)
+			is_included_vertex[node] = true;
+		else if (mis_status == IS_status::excluded)
+			is_excluded_vertex[node] = true;
+	}
+
 	status.remaining_nodes--;
 	status.graph.hide_node(node);
 
@@ -1656,7 +1669,7 @@ void branch_and_reduce_algorithm::update_independent_set(std::vector<bool> &inde
  * added for generating training_data
  * ************************************************/
 
-void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, size_t i)
+void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, std::vector<bool> &include_data, std::vector<bool>& exclude_data, size_t i)
 {
 	status = std::move(global_status);
 	auto &reverse_mapping = buffers[0];
@@ -1692,12 +1705,14 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access 
 	endfor
 #endif
 
-		graph_access modifiable_graph;
+	graph_access modifiable_graph;
 	build_induced_subgraph(modifiable_graph, nodes_vec, nodes_set, reverse_mapping);
 	global_status = std::move(status);
 
 	branch_and_reduce_algorithm br_alg(modifiable_graph, config, false);
 	br_alg.generate_initial_reduce_data(reduction_data, i);
+	exclude_data = br_alg.is_excluded_vertex;
+	include_data = br_alg.is_included_vertex;
 }
 
 void branch_and_reduce_algorithm::pick_nodes_by_BFS(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set)

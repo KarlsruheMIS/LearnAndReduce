@@ -231,12 +231,14 @@ int main(int argn, char **argv)
     int num_of_reductions = reduction_names.size();
 
     std::vector<std::vector<bool>> reduction_data(num_of_reductions, std::vector<bool>(config.size_of_subgraph, false));
+    std::vector<bool> exclude_data(std::vector<bool>(config.size_of_subgraph, false));
+    std::vector<bool> include_data(std::vector<bool>(config.size_of_subgraph, false));
     graph_access subgraph;
     config.seed = time(NULL);
     for (int i = 0; i < config.num_of_subgraphs; i++)
     {
         // number of different subgraphs out of one graph
-        reducer.get_training_data_for_graph_size(subgraph, config.size_of_subgraph, reduction_data, i); // size of the subgraph
+        reducer.get_training_data_for_graph_size(subgraph, config.size_of_subgraph, reduction_data, include_data, exclude_data, i); // size of the subgraph
 
         write_reduction_data_csv(subgraph, reduction_data, "training_data/csv/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i), reduction_names);
 
