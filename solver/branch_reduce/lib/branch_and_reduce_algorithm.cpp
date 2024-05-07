@@ -39,22 +39,22 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	  buffers(4, sized_vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0)
 {
 	if (config.generate_training_data)
-	{ 
+	{
 		is_included_vertex = std::vector<bool>(global_status.n, false);
-		is_excluded_vertex = std::vector<bool>(global_status.n, false);	
+		is_excluded_vertex = std::vector<bool>(global_status.n, false);
 	}
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {critical_set, struction_plateau, struction_blow};
 	expensive_transformations = {};
-    if (config.reduction_style == ReductionConfig::Reduction_Style::test1)
-	    expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
-    if (config.reduction_style == ReductionConfig::Reduction_Style::test2)
-	    expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+	if (config.reduction_style == ReductionConfig::Reduction_Style::test1)
+		expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+	if (config.reduction_style == ReductionConfig::Reduction_Style::test2)
+		expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
 
 	if (called_from_fold)
 	{
-        if (config.reduction_style == ReductionConfig::Reduction_Style::test1|| config.reduction_style == ReductionConfig::Reduction_Style::test2 )
-        {
+		if (config.reduction_style == ReductionConfig::Reduction_Style::test1 || config.reduction_style == ReductionConfig::Reduction_Style::test2)
+		{
 			global_status.transformations = make_reduction_vector<
 				neighborhood_reduction,
 				fold1_reduction,
@@ -65,8 +65,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				extended_single_edge_reduction,
 				twin_reduction>(global_status.n);
 			global_status.num_reductions = global_status.transformations.size();
-        }
-        else if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
+		}
+		else if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
 		{
 			global_status.transformations = make_reduction_vector<
 				neighborhood_reduction,
@@ -626,25 +626,40 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 		if (reduction->get_model_path() != "" && status.remaining_nodes > 500 && config.gnn_filter)
 		{
 			timer t;
-
 			LRConv gnn(reduction->get_model_path());
+			double t_parse = t.elapsed();
+			t.restart();
 
-			graph_access G;
-			std::vector<NodeID> reverse_mapping(status.n);
-			build_graph_access(G, reverse_mapping);
+			// graph_access G;
+			// std::vector<NodeID> reverse_mapping(status.n);
+			// build_graph_access(G, reverse_mapping);
+			// double t_graph = t.elapsed();
+			// t.restart();
 
 			// float *node_attr = NULL, *edge_attr = NULL;
 			// LRConv::compute_attr(&node_attr, &edge_attr, G);
 
-			const float *y = gnn.predict_light(G);
+			const float *y = gnn.predict_light_dynamic_blas(this);
+			int c = 0;
 
-			for (int u = 0; u < G.number_of_nodes(); u++)
+			for (int u = 0; u < this->status.graph.size(); u++)
 			{
+				if (status.node_status[u] != IS_status::not_set)
+					continue;
+				c++;
 				if (y[u] > 0.0f)
-					reduction->marker.current.push_back(reverse_mapping[u]);
+					reduction->marker.current.push_back(u);
 			}
 
-			printf("%s added %d/%d in %lf seconds\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), G.number_of_nodes(), t.elapsed());
+			// for (int u = 0; u < G.number_of_nodes(); u++)
+			// {
+			// 	if (y[u] > 0.0f)
+			// 		reduction->marker.current.push_back(reverse_mapping[u]);
+			// }
+
+			printf("%s %lf parse, added %d/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, reduction->marker.current.size(), c, t.elapsed());
+
+			// printf("%s %lf parse, %lf graph, added %d/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, t_graph, reduction->marker.current.size(), G.number_of_nodes(), t.elapsed());
 
 			// free(node_attr);
 			// free(edge_attr);
@@ -743,8 +758,9 @@ void branch_and_reduce_algorithm::initial_reduce()
 	else
 	{
 		reduce_graph_internal(true);
-		if (config.print_reduction_info) {
-		    print_reduction_info();
+		if (config.print_reduction_info)
+		{
+			print_reduction_info();
 		}
 		bool further_impovement = status.remaining_nodes > 0;
 		min_kernel = status.remaining_nodes;
@@ -1029,7 +1045,7 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 
 	if (status.n > ILS_SIZE_LIMIT)
 		compute_ils_pruning_bound();
-	
+
 	if (best_weight > weight_bound)
 	{
 		// std::cerr << "pruning for solving subgraphs in reducion" << std::endl;
@@ -1669,7 +1685,7 @@ void branch_and_reduce_algorithm::update_independent_set(std::vector<bool> &inde
  * added for generating training_data
  * ************************************************/
 
-void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, std::vector<bool> &include_data, std::vector<bool>& exclude_data, size_t i)
+void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, std::vector<bool> &include_data, std::vector<bool> &exclude_data, size_t i)
 {
 	status = std::move(global_status);
 	auto &reverse_mapping = buffers[0];
@@ -1705,7 +1721,7 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access 
 	endfor
 #endif
 
-	graph_access modifiable_graph;
+		graph_access modifiable_graph;
 	build_induced_subgraph(modifiable_graph, nodes_vec, nodes_set, reverse_mapping);
 	global_status = std::move(status);
 
@@ -1801,7 +1817,7 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 	std::swap(global_transformation_map, local_transformation_map);
 }
 // function to get transformations
-void branch_and_reduce_algorithm::get_transformation_names(std::vector<std::string>& names)
+void branch_and_reduce_algorithm::get_transformation_names(std::vector<std::string> &names)
 {
 	names.clear();
 	for (size_t i = 0; i < global_status.num_reductions; i++)

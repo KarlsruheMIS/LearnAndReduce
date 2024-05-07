@@ -107,6 +107,7 @@ private:
 		node_pos(NodeID node = 0, size_t pos = 0) : node(node), pos(pos) {}
 	};
 
+public:
 	struct graph_status {
 		size_t n = 0;
 		size_t remaining_nodes = 0;
