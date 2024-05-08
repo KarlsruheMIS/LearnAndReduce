@@ -36,7 +36,7 @@ constexpr NodeID branch_and_reduce_algorithm::MODIFIED_TOKEN;
 
 branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const ReductionConfig &config, bool called_from_fold)
 	: config(config), global_status(G), set_1(global_status.n), set_2(global_status.n), double_set(global_status.n * 2),
-	  buffers(4, sized_vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0)
+	  buffers(4, sized_vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0), gnn(G.number_of_nodes())
 {
 	if (config.generate_training_data)
 	{
@@ -309,6 +309,12 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		if (config.reduce_by_vertex)
 			status.reduction_node_status = std::vector<std::vector<bool>>(status.n, std::vector<bool>(status.num_reductions, true));
 	};
+
+	for (auto &re : status.transformations)
+	{
+		if (re->get_model_path() != "")
+			gnn.change_parameters(re->get_model_path());
+	}
 }
 
 branch_and_reduce_algorithm::~branch_and_reduce_algorithm() {}
@@ -626,7 +632,8 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 		if (reduction->get_model_path() != "" && status.remaining_nodes > 500 && config.gnn_filter)
 		{
 			timer t;
-			LRConv gnn(reduction->get_model_path());
+			gnn.change_parameters(reduction->get_model_path());
+			// LRConv gnn(reduction->get_model_path());
 			double t_parse = t.elapsed();
 			t.restart();
 
@@ -639,7 +646,9 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 			// float *node_attr = NULL, *edge_attr = NULL;
 			// LRConv::compute_attr(&node_attr, &edge_attr, G);
 
-			const float *y = gnn.predict_light_dynamic_blas(this);
+			const float *y = gnn.predict(this);
+
+			// const float *y = gnn.predict_light_dynamic_blas(this);
 			int c = 0;
 
 			for (int u = 0; u < this->status.graph.size(); u++)

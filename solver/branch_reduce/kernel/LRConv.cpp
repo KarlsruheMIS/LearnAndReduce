@@ -1,4 +1,5 @@
 #include "LRConv.h"
+#include "branch_and_reduce_algorithm.h"
 
 #include <iostream>
 #include <fstream>
@@ -6,150 +7,77 @@
 #include <stdlib.h>
 #include <immintrin.h>
 
-LRConv::LRConv(const std::string path)
-    : params(0), param(NULL), allocated(0), x(NULL), y(NULL)
+const int W_OFF[6] = {0, 144, 416, 944, 1216, 1488};
+const int B_OFF[6] = {128, 400, 928, 1200, 1472, 1504};
+
+const int total_params = 1520;
+
+LRConv::LRConv(int N)
+    : params(), W(NULL), B(NULL), param(NULL), allocated(0), x(NULL), y(NULL)
 {
-    change_parameters(path);
+    W = (float **)malloc(sizeof(float *) * 6);
+    B = (float **)malloc(sizeof(float *) * 6);
+    param = (float *)aligned_alloc(32, sizeof(float) * total_params);
+
+    for (int i = 0; i < 6; i++)
+    {
+        W[i] = param + W_OFF[i];
+        B[i] = param + B_OFF[i];
+    }
+
+    allocated = N * hidden_dim;
+    x = (float *)aligned_alloc(32, sizeof(float) * allocated);
+    y = (float *)aligned_alloc(32, sizeof(float) * allocated);
 }
 
 LRConv::~LRConv()
 {
+    free(W);
+    free(B);
     free(param);
     free(x);
     free(y);
 }
 
+void transpose(std::vector<float> &in, int offset, float *out, int N, int M)
+{
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < M; j++)
+            out[i * M + j] = in[offset + j * N + i];
+}
+
 void LRConv::change_parameters(const std::string path)
 {
-    free(param);
-
-    std::ifstream file;
-    file.open(path);
-
-    file >> params;
-    param = (float *)aligned_alloc(32, sizeof(float) * params);
-
-    for (int i = 0; i < params; i++)
-        file >> param[i];
-
-    file.close();
-}
-
-void LRConv_message(const float *x, int dim_in,
-                    float *y, int dim_out,
-                    const float *param1, const float *bias1,
-                    const float *param2, const float *bias2,
-                    graph_access &g)
-{
-    float *buff = (float *)aligned_alloc(32, sizeof(float) * dim_in * 2);
-    float *tmp1 = (float *)aligned_alloc(32, sizeof(float) * dim_out);
-    float *tmp2 = (float *)aligned_alloc(32, sizeof(float) * dim_out);
-
-    for (int u = 0; u < g.number_of_nodes(); u++)
+    if (params.find(path) == params.end())
     {
-        float *agg = y + dim_out * u;
-        for (int i = 0; i < dim_out; i++)
-            agg[i] = 0.0f;
+        int n_params;
+        std::ifstream file;
+        file.open(path);
 
-        for (int i = 0; i < dim_in; i++)
-            buff[i] = x[u * dim_in + i];
+        file >> n_params;
+        std::vector<float> res(total_params, 0.0f);
 
-        for (int e = g.get_first_edge(u); e != g.get_first_invalid_edge(u); e++)
-        {
-            int v = g.getEdgeTarget(e);
-            for (int i = 0; i < dim_in; i++)
-                buff[dim_in + i] = x[v * dim_in + i];
+        for (int i = 0; i < n_params; i++)
+            file >> res[i];
 
-            for (int i = 0; i < dim_out; i++)
-            {
-                tmp1[i] = bias1[i];
-                tmp2[i] = bias2[i];
-            }
-
-            // Layer 1
-            for (int i = 0; i < dim_out; i++)
-                for (int j = 0; j < dim_in * 2; j++)
-                    tmp1[i] += buff[j] * param1[i * (dim_in * 2) + j];
-
-            for (int i = 0; i < dim_out; i++)
-                tmp1[i] = tmp1[i] >= 0.0f ? tmp1[i] : 0.0f;
-
-            // Layer 2
-            for (int i = 0; i < dim_out; i++)
-                for (int j = 0; j < dim_out; j++)
-                    tmp2[i] += tmp1[j] * param2[i * dim_out + j];
-
-            for (int i = 0; i < dim_out; i++)
-                tmp2[i] = tmp2[i] >= 0.0f ? tmp2[i] : 0.0f;
-
-            // Aggregate
-            for (int i = 0; i < dim_out; i++)
-                agg[i] = agg[i] < tmp2[i] ? tmp2[i] : agg[i];
-        }
+        file.close();
+        params[path] = res;
     }
 
-    free(buff);
-    free(tmp1);
-    free(tmp2);
-}
+    auto &p = params[path];
 
-const float *LRConv::predict_light(graph_access &g)
-{
-    if (allocated < g.number_of_nodes() * hidden_dim)
-    {
-        allocated = g.number_of_nodes() * hidden_dim;
-        free(x);
-        free(y);
-        x = (float *)aligned_alloc(32, sizeof(float) * allocated);
-        y = (float *)aligned_alloc(32, sizeof(float) * allocated);
-    }
-
-    float *node_attr = NULL;
-    compute_node_attr(&node_attr, g);
-
-    int p_input = (node_features * 2) * hidden_dim;
-    int b = hidden_dim;
-    int p_hidden_large = (hidden_dim * 2) * hidden_dim;
-    int p_hidden = hidden_dim * hidden_dim;
-
-    float *p1 = param;
-    float *p2 = param + p_input + b;
-    LRConv_message(node_attr, node_features, y, hidden_dim,
-                   p1, p1 + p_input, p2, p2 + p_hidden, g);
-
-    float *p3 = p2 + p_hidden + b;
-    float *p4 = p3 + p_hidden_large + b;
-    LRConv_message(y, hidden_dim, x, hidden_dim,
-                   p3, p3 + p_hidden_large, p4, p4 + p_hidden, g);
-
-    float *p5 = p4 + p_hidden + b;
-    float *p6 = p5 + p_hidden + b;
-    float *tmp = (float *)aligned_alloc(32, sizeof(float) * hidden_dim);
-
-    for (int u = 0; u < g.number_of_nodes(); u++)
-    {
-        y[u] = *(p6 + hidden_dim);
-
-        for (int i = 0; i < hidden_dim; i++)
-            tmp[i] = p5[p_hidden + i];
-
-        // Layer 1
-        for (int i = 0; i < hidden_dim; i++)
-            for (int j = 0; j < hidden_dim; j++)
-                tmp[i] += x[u * hidden_dim + j] * p5[i * hidden_dim + j];
-
-        for (int i = 0; i < hidden_dim; i++)
-            tmp[i] = tmp[i] >= 0.0f ? tmp[i] : 0.0f;
-
-        // Layer 2
-        for (int i = 0; i < hidden_dim; i++)
-            y[u] += tmp[i] * p6[i];
-    }
-
-    free(tmp);
-    free(node_attr);
-
-    return y;
+    transpose(p, W_OFF[0], W[0], 8, 16);
+    transpose(p, B_OFF[0], B[0], 1, 16);
+    transpose(p, W_OFF[1], W[1], 16, 16);
+    transpose(p, B_OFF[1], B[1], 1, 16);
+    transpose(p, W_OFF[2], W[2], 32, 16);
+    transpose(p, B_OFF[2], B[2], 1, 16);
+    transpose(p, W_OFF[3], W[3], 16, 16);
+    transpose(p, B_OFF[3], B[3], 1, 16);
+    transpose(p, W_OFF[4], W[4], 16, 16);
+    transpose(p, B_OFF[4], B[4], 1, 16);
+    transpose(p, W_OFF[5], W[5], 1, 16);
+    transpose(p, B_OFF[5], B[5], 1, 16);
 }
 
 static inline void blas_kernel_6_16(const float *A, int lda, const float *B, const float *bias, float *C)
@@ -226,111 +154,11 @@ static inline void blas_kernel_6_16(const float *A, int lda, const float *B, con
     _mm256_store_ps(C + 88, c51);
 }
 
-void LRConv_message_blas(const float *x, int dim, float *y,
-                         const float *param1, const float *bias1,
-                         const float *param2, const float *bias2,
-                         graph_access &g)
-{
-    float *W1 = (float *)aligned_alloc(32, sizeof(float) * (dim * 2) * 16);
-    float *B1 = (float *)aligned_alloc(32, sizeof(float) * 16);
-
-    // Transpose W1
-    for (int i = 0; i < dim * 2; i++)
-        for (int j = 0; j < 16; j++)
-            W1[i * 16 + j] = param1[j * (dim * 2) + i];
-    for (int i = 0; i < 16; i++)
-        B1[i] = bias1[i];
-
-    float *W2 = (float *)aligned_alloc(32, sizeof(float) * 16 * 16);
-    float *B2 = (float *)aligned_alloc(32, sizeof(float) * 16);
-
-    // Transpose W2
-    for (int i = 0; i < 16; i++)
-        for (int j = 0; j < 16; j++)
-            W2[i * 16 + j] = param2[j * 16 + i];
-    for (int i = 0; i < 16; i++)
-        B2[i] = bias2[i];
-
-    float *A = (float *)aligned_alloc(32, sizeof(float) * (dim * 2) * 6);
-    float *C1 = (float *)aligned_alloc(32, sizeof(float) * 16 * 6);
-    float *C2 = (float *)aligned_alloc(32, sizeof(float) * 16 * 6);
-
-    for (int u = 0; u < g.number_of_nodes(); u++)
-    {
-        for (int i = 0; i < 6; i++)
-            for (int j = 0; j < dim; j++)
-                A[i * (dim * 2) + j] = x[u * dim + j];
-
-        for (int i = 0; i < 16; i++)
-            y[u * 16 + i] = 0.0f;
-
-        int t = 0;
-        for (int e = g.get_first_edge(u); e != g.get_first_invalid_edge(u); e++)
-        {
-            int v = g.getEdgeTarget(e);
-            for (int i = 0; i < dim; i++)
-                A[t * (dim * 2) + dim + i] = x[v * dim + i];
-            t++;
-
-            if (t == 6)
-            {
-                t = 0;
-                blas_kernel_6_16(A, dim * 2, W1, B1, C1);
-                blas_kernel_6_16(C1, 16, W2, B2, C2);
-
-                for (int i = 0; i < 6; i++)
-                    for (int j = 0; j < 16; j++)
-                        if (y[u * 16 + j] < C2[i * 16 + j])
-                            y[u * 16 + j] = C2[i * 16 + j];
-            }
-        }
-
-        if (t > 0)
-        {
-            blas_kernel_6_16(A, dim * 2, W1, B1, C1);
-            blas_kernel_6_16(C1, 16, W2, B2, C2);
-
-            for (int i = 0; i < t; i++)
-                for (int j = 0; j < 16; j++)
-                    if (y[u * 16 + j] < C2[i * 16 + j])
-                        y[u * 16 + j] = C2[i * 16 + j];
-        }
-    }
-
-    free(W1);
-    free(B1);
-    free(W2);
-    free(B2);
-    free(A);
-    free(C1);
-    free(C2);
-}
-
 void LRConv_message_blas_dyn(const float *x, int dim, float *y,
-                             const float *param1, const float *bias1,
-                             const float *param2, const float *bias2,
+                             const float *W1, const float *B1,
+                             const float *W2, const float *B2,
                              dynamic_graph &g, std::vector<branch_and_reduce_algorithm::IS_status> &status)
 {
-    float *W1 = (float *)aligned_alloc(32, sizeof(float) * (dim * 2) * 16);
-    float *B1 = (float *)aligned_alloc(32, sizeof(float) * 16);
-
-    // Transpose W1
-    for (int i = 0; i < dim * 2; i++)
-        for (int j = 0; j < 16; j++)
-            W1[i * 16 + j] = param1[j * (dim * 2) + i];
-    for (int i = 0; i < 16; i++)
-        B1[i] = bias1[i];
-
-    float *W2 = (float *)aligned_alloc(32, sizeof(float) * 16 * 16);
-    float *B2 = (float *)aligned_alloc(32, sizeof(float) * 16);
-
-    // Transpose W2
-    for (int i = 0; i < 16; i++)
-        for (int j = 0; j < 16; j++)
-            W2[i * 16 + j] = param2[j * 16 + i];
-    for (int i = 0; i < 16; i++)
-        B2[i] = bias2[i];
-
     float *A = (float *)aligned_alloc(32, sizeof(float) * (dim * 2) * 6);
     float *C1 = (float *)aligned_alloc(32, sizeof(float) * 16 * 6);
     float *C2 = (float *)aligned_alloc(32, sizeof(float) * 16 * 6);
@@ -379,109 +207,21 @@ void LRConv_message_blas_dyn(const float *x, int dim, float *y,
         }
     }
 
-    free(W1);
-    free(B1);
-    free(W2);
-    free(B2);
     free(A);
     free(C1);
     free(C2);
 }
 
-const float *LRConv::predict_light_blas(graph_access &g)
-{
-    if (allocated < g.number_of_nodes() * hidden_dim)
-    {
-        allocated = g.number_of_nodes() * hidden_dim;
-        free(x);
-        free(y);
-        x = (float *)aligned_alloc(32, sizeof(float) * allocated);
-        y = (float *)aligned_alloc(32, sizeof(float) * allocated);
-    }
-
-    float *node_attr = NULL;
-    compute_node_attr(&node_attr, g);
-
-    int p_input = (node_features * 2) * hidden_dim;
-    int b = hidden_dim;
-    int p_hidden_large = (hidden_dim * 2) * hidden_dim;
-    int p_hidden = hidden_dim * hidden_dim;
-
-    float *p1 = param;
-    float *p2 = param + p_input + b;
-    LRConv_message_blas(node_attr, node_features, y,
-                        p1, p1 + p_input, p2, p2 + p_hidden, g);
-
-    float *p3 = p2 + p_hidden + b;
-    float *p4 = p3 + p_hidden_large + b;
-    LRConv_message_blas(y, hidden_dim, x,
-                        p3, p3 + p_hidden_large, p4, p4 + p_hidden, g);
-
-    float *p5 = p4 + p_hidden + b;
-    float *p6 = p5 + p_hidden + b;
-    float *tmp = (float *)aligned_alloc(32, sizeof(float) * hidden_dim);
-
-    for (int u = 0; u < g.number_of_nodes(); u++)
-    {
-        y[u] = *(p6 + hidden_dim);
-
-        for (int i = 0; i < hidden_dim; i++)
-            tmp[i] = p5[p_hidden + i];
-
-        // Layer 1
-        for (int i = 0; i < hidden_dim; i++)
-            for (int j = 0; j < hidden_dim; j++)
-                tmp[i] += x[u * hidden_dim + j] * p5[i * hidden_dim + j];
-
-        for (int i = 0; i < hidden_dim; i++)
-            tmp[i] = tmp[i] >= 0.0f ? tmp[i] : 0.0f;
-
-        // Layer 2
-        for (int i = 0; i < hidden_dim; i++)
-            y[u] += tmp[i] * p6[i];
-    }
-
-    free(tmp);
-    free(node_attr);
-
-    return y;
-}
-
-const float *LRConv::predict_light_dynamic_blas(branch_and_reduce_algorithm *br_alg)
+const float *LRConv::predict(branch_and_reduce_algorithm *br_alg)
 {
     auto &g = br_alg->status.graph;
     auto &status = br_alg->status.node_status;
-    auto &weights = br_alg->status.weights;
 
-    if (allocated < g.size() * hidden_dim)
-    {
-        allocated = g.size() * hidden_dim;
-        free(x);
-        free(y);
-        x = (float *)aligned_alloc(32, sizeof(float) * allocated);
-        y = (float *)aligned_alloc(32, sizeof(float) * allocated);
-    }
+    compute_node_attr_dynamic(br_alg);
 
-    float *node_attr = NULL;
-    compute_node_attr_dynamic(&node_attr, br_alg);
+    LRConv_message_blas_dyn(x, node_features, y, W[0], B[0], W[1], B[1], g, status);
+    LRConv_message_blas_dyn(y, hidden_dim, x, W[2], B[2], W[3], B[3], g, status);
 
-    int p_input = (node_features * 2) * hidden_dim;
-    int b = hidden_dim;
-    int p_hidden_large = (hidden_dim * 2) * hidden_dim;
-    int p_hidden = hidden_dim * hidden_dim;
-
-    float *p1 = param;
-    float *p2 = param + p_input + b;
-    LRConv_message_blas_dyn(node_attr, node_features, y,
-                            p1, p1 + p_input, p2, p2 + p_hidden, g, status);
-
-    float *p3 = p2 + p_hidden + b;
-    float *p4 = p3 + p_hidden_large + b;
-    LRConv_message_blas_dyn(y, hidden_dim, x,
-                            p3, p3 + p_hidden_large, p4, p4 + p_hidden, g, status);
-
-    float *p5 = p4 + p_hidden + b;
-    float *p6 = p5 + p_hidden + b;
     float *tmp = (float *)aligned_alloc(32, sizeof(float) * hidden_dim);
 
     for (int u = 0; u < g.size(); u++)
@@ -489,125 +229,25 @@ const float *LRConv::predict_light_dynamic_blas(branch_and_reduce_algorithm *br_
         if (status[u] != branch_and_reduce_algorithm::IS_status::not_set)
             continue;
 
-        y[u] = *(p6 + hidden_dim);
+        y[u] = *B[5];
 
         for (int i = 0; i < hidden_dim; i++)
-            tmp[i] = p5[p_hidden + i];
+            tmp[i] = B[4][i];
 
         // Layer 1
         for (int i = 0; i < hidden_dim; i++)
             for (int j = 0; j < hidden_dim; j++)
-                tmp[i] += x[u * hidden_dim + j] * p5[i * hidden_dim + j];
+                tmp[j] += x[u * hidden_dim + i] * W[4][i * hidden_dim + j];
 
         for (int i = 0; i < hidden_dim; i++)
             tmp[i] = tmp[i] >= 0.0f ? tmp[i] : 0.0f;
 
         // Layer 2
         for (int i = 0; i < hidden_dim; i++)
-            y[u] += tmp[i] * p6[i];
+            y[u] += tmp[i] * W[5][i];
     }
 
     free(tmp);
-    free(node_attr);
-
-    return y;
-}
-
-const float *LRConv::predict(const float *node_attr, const float *edge_attr, graph_access &g)
-{
-    // iterate over edges
-    // kernel matmul (bias)
-    // max aggr
-    // transform twice
-    // output
-
-    int dim = node_features * 2 + edge_features;
-    float *buff = (float *)aligned_alloc(32, sizeof(float) * dim);
-    float *tmp1 = (float *)aligned_alloc(32, sizeof(float) * dim);
-    float *tmp2 = (float *)aligned_alloc(32, sizeof(float) * dim);
-    float *agg = (float *)aligned_alloc(32, sizeof(float) * dim);
-    if (allocated < g.number_of_nodes())
-    {
-        allocated = g.number_of_nodes();
-        free(y);
-        y = (float *)aligned_alloc(32, sizeof(float) * g.number_of_nodes());
-    }
-
-    float *w1 = param;
-    float *b1 = w1 + dim * dim;
-    float *w2 = b1 + dim;
-    float *b2 = w2 + dim * dim;
-    float *w3 = b2 + dim;
-    float *b3 = w3 + dim * dim;
-    float *w4 = b3 + dim;
-    float *b4 = w4 + dim;
-
-    for (int u = 0; u < g.number_of_nodes(); u++)
-    {
-        for (int i = 0; i < dim; i++)
-            agg[i] = 0.0f;
-
-        for (int i = 0; i < node_features; i++)
-            buff[i] = node_attr[u * node_features + i];
-
-        for (int e = g.get_first_edge(u); e != g.get_first_invalid_edge(u); e++)
-        {
-            int v = g.getEdgeTarget(e);
-            for (int i = 0; i < node_features; i++)
-                buff[node_features + i] = node_attr[v * node_features + i];
-
-            for (int i = 0; i < edge_features; i++)
-                buff[2 * node_features + i] = edge_attr[e * edge_features + i];
-
-            for (int i = 0; i < dim; i++)
-            {
-                tmp1[i] = b1[i];
-                tmp2[i] = b2[i];
-            }
-
-            // Layer 1
-            for (int i = 0; i < dim; i++)
-                for (int j = 0; j < dim; j++)
-                    tmp1[i] += buff[j] * w1[i * dim + j];
-
-            for (int i = 0; i < dim; i++)
-                tmp1[i] = tmp1[i] >= 0.0f ? tmp1[i] : 0.0f;
-
-            // Layer 2
-            for (int i = 0; i < dim; i++)
-                for (int j = 0; j < dim; j++)
-                    tmp2[i] += tmp1[j] * w2[i * dim + j];
-
-            for (int i = 0; i < dim; i++)
-                tmp2[i] = tmp2[i] >= 0.0f ? tmp2[i] : 0.0f;
-
-            // Aggregate
-            for (int i = 0; i < dim; i++)
-                agg[i] = agg[i] < tmp2[i] ? tmp2[i] : agg[i];
-        }
-
-        for (int i = 0; i < dim; i++)
-            tmp1[i] = b3[i];
-
-        y[u] = *b4;
-
-        // Layer 3
-        for (int i = 0; i < dim; i++)
-            for (int j = 0; j < dim; j++)
-                tmp1[i] += agg[j] * w3[i * dim + j];
-
-        for (int i = 0; i < dim; i++)
-            tmp1[i] = tmp1[i] >= 0.0f ? tmp1[i] : 0.0f;
-
-        // Layer 4
-        for (int i = 0; i < dim; i++)
-            y[u] += tmp1[i] * w4[i];
-    }
-
-    free(buff);
-    free(tmp1);
-    free(tmp2);
-    free(agg);
 
     return y;
 }
@@ -686,40 +326,14 @@ void LRConv::compute_attr(float **node_attr, float **edge_attr, graph_access &g)
         ua[1] = (float)g.getNodeWeight(u) / scale;
         ua[2] = (float)Wn / scale;
         ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
-        // ua[3] = (d < 2) ? 1.0f : (float)C / (float)((d * d) - d);
     }
 }
 
-void LRConv::compute_node_attr(float **node_attr, graph_access &g)
-{
-    free(*node_attr);
-    *node_attr = (float *)aligned_alloc(32, sizeof(float) * g.number_of_nodes() * node_features);
-
-    for (int u = 0; u < g.number_of_nodes(); u++)
-    {
-        int d = g.getNodeDegree(u), Wn = 0;
-
-        for (int i = g.get_first_edge(u); i != g.get_first_invalid_edge(u); i++)
-        {
-            int v = g.getEdgeTarget(i);
-            Wn += g.getNodeWeight(v);
-        }
-
-        float *ua = *node_attr + (u * node_features);
-        ua[0] = (float)d / scale;
-        ua[1] = (float)g.getNodeWeight(u) / scale;
-        ua[2] = (float)Wn / scale;
-        ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
-    }
-}
-
-void LRConv::compute_node_attr_dynamic(float **node_attr, branch_and_reduce_algorithm *br_alg)
+void LRConv::compute_node_attr_dynamic(branch_and_reduce_algorithm *br_alg)
 {
     auto &g = br_alg->status.graph;
     auto &status = br_alg->status.node_status;
     auto &weights = br_alg->status.weights;
-    free(*node_attr);
-    *node_attr = (float *)aligned_alloc(32, sizeof(float) * g.size() * node_features);
 
     for (int u = 0; u < g.size(); u++)
     {
@@ -727,13 +341,10 @@ void LRConv::compute_node_attr_dynamic(float **node_attr, branch_and_reduce_algo
             continue;
 
         int d = g[u].size(), Wn = 0;
-
         for (auto v : g[u])
-        {
             Wn += weights[v];
-        }
 
-        float *ua = *node_attr + (u * node_features);
+        float *ua = x + (u * node_features);
         ua[0] = (float)d / scale;
         ua[1] = (float)weights[u] / scale;
         ua[2] = (float)Wn / scale;
