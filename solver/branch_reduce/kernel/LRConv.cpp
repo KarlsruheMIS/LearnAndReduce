@@ -612,6 +612,14 @@ const float *LRConv::predict(const float *node_attr, const float *edge_attr, gra
     return y;
 }
 
+static inline unsigned int hash(unsigned int x)
+{
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return x;
+}
+
 void LRConv::compute_attr(float **node_attr, float **edge_attr, graph_access &g)
 {
     free(*node_attr);
@@ -677,17 +685,9 @@ void LRConv::compute_attr(float **node_attr, float **edge_attr, graph_access &g)
         ua[0] = (float)d / scale;
         ua[1] = (float)g.getNodeWeight(u) / scale;
         ua[2] = (float)Wn / scale;
-        ua[3] = (float)u / scale;
+        ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
         // ua[3] = (d < 2) ? 1.0f : (float)C / (float)((d * d) - d);
     }
-}
-
-static inline unsigned int hash(unsigned int x)
-{
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = (x >> 16) ^ x;
-    return x;
 }
 
 void LRConv::compute_node_attr(float **node_attr, graph_access &g)
@@ -709,7 +709,7 @@ void LRConv::compute_node_attr(float **node_attr, graph_access &g)
         ua[0] = (float)d / scale;
         ua[1] = (float)g.getNodeWeight(u) / scale;
         ua[2] = (float)Wn / scale;
-        ua[3] = (float)(hash(u) % 1000000) / id_scale;
+        ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
     }
 }
 
@@ -737,6 +737,6 @@ void LRConv::compute_node_attr_dynamic(float **node_attr, branch_and_reduce_algo
         ua[0] = (float)d / scale;
         ua[1] = (float)weights[u] / scale;
         ua[2] = (float)Wn / scale;
-        ua[3] = (float)(hash(u) % 1000000) / id_scale;
+        ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
     }
 }

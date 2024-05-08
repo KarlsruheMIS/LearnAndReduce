@@ -100,29 +100,21 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
     }
 
     float *node_attr = NULL, *edge_attr = NULL;
-    LRConv::compute_node_attr(&node_attr, G);
-    // LRConv::compute_attr(&node_attr, &edge_attr, G);
+    // LRConv::compute_node_attr(&node_attr, G);
+    LRConv::compute_attr(&node_attr, &edge_attr, G);
 
     std::ofstream file;
     file.open(filename + ".csv");
-    // file << "source;target;uc;vc;ic;uw;vw;iw;twin;dom" << std::endl;
-    // for (int u = 0; u < G.number_of_nodes(); u++)
-    // {
-    //     for (int i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
-    //     {
-    //         float *ed = edge_attr + (edge_features * i);
-    //         file << u << ";" << G.getEdgeTarget(i);
-    //         for (int j = 0; j < edge_features; j++)
-    //             file << ";" << ed[j];
-    //         file << std::endl;
-    //     }
-    file << "source;target" << std::endl;
+    file << "source;target;uc;vc;ic;uw;vw;iw;twin;dom" << std::endl;
     for (int u = 0; u < G.number_of_nodes(); u++)
     {
         for (int i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
         {
             float *ed = edge_attr + (edge_features * i);
-            file << u << ";" << G.getEdgeTarget(i) << std::endl;
+            file << u << ";" << G.getEdgeTarget(i);
+            for (int j = 0; j < edge_features; j++)
+                file << ";" << ed[j];
+            file << std::endl;
         }
     }
     file.close();
