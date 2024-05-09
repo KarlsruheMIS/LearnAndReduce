@@ -51,6 +51,8 @@ struct ReductionConfig : public Config {
     bool disable_heavy_set = false;
     bool disable_heavy_set3 = false;
     bool disable_component = false;
+    bool disable_heuristic_include = false;
+    bool disable_heuristic_exclude = false;
     // bound for number of nodes in subgraphs
     NodeID subgraph_node_limit = 10;
     // Write the kernel into a file
@@ -64,7 +66,7 @@ struct ReductionConfig : public Config {
     int reduction_threshold;
     // Choose reduction order and amount for given graph type
     Reduction_Style reduction_style;
-    std::string reduction_config_name = "decreasing";
+    std::string reduction_config_name = "all_decreasing";
     std::string reduction_style_name = "initial";
     double reduction_time_limit;
 

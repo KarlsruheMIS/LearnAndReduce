@@ -45,11 +45,11 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	}
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {critical_set, struction_plateau, struction_blow};
-	expensive_transformations = {};
+	expensive_transformations = {heuristic_exclude, heuristic_include};
     if (config.reduction_style == ReductionConfig::Reduction_Style::test1)
-	    expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+	    expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
     if (config.reduction_style == ReductionConfig::Reduction_Style::test2)
-	    expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
+	    expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
 
 	if (called_from_fold)
 	{
@@ -194,6 +194,10 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		{
 			global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
 		}
+			if (!config.disable_heuristic_exclude)
+				global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
+			if (!config.disable_heuristic_include)
+				global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
 	}
 
 	global_transformation_map.resize(REDUCTION_NUM);
@@ -742,7 +746,7 @@ void branch_and_reduce_algorithm::initial_reduce()
 	}
 	else
 	{
-		reduce_graph_internal(true);
+		reduce_graph_internal(false);
 		if (config.print_reduction_info) {
 		    print_reduction_info();
 		}
@@ -815,7 +819,7 @@ void branch_and_reduce_algorithm::reduce_graph_internal(bool full)
 	}
 
 	size_t active_reduction_index = 0;
-	while (active_reduction_index < status.num_reductions && t.elapsed() <= config.time_limit)
+	while (active_reduction_index < status.transformations.size() && t.elapsed() <= config.time_limit)
 	{
 		if (!full && std::find(expensive_transformations.begin(), expensive_transformations.end(), status.transformations[active_reduction_index]->get_reduction_type()) != expensive_transformations.end())
 		{
@@ -827,7 +831,10 @@ void branch_and_reduce_algorithm::reduce_graph_internal(bool full)
 		init_transformation_step(reduction);
 		bool progress = reduction->reduce(this);
 		active_reduction_index = progress ? 0 : active_reduction_index + 1;
+		if (status.remaining_nodes == 0)
+			break;
 	}
+
 
 	if (!full && !config.disable_fold2)
 	{

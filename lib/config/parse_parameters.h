@@ -72,7 +72,7 @@ class ReductionArguments : public BaseArguments {
             // Unique parameters
             reduction_style     = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: full, normal, dense, test1, test2.");
             reduction_time_limit= arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
-            reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, all_decreasing]). Default: decreasing (not using increasing reductions).");
+            reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, all_decreasing, all_decreasing_heuristic, all_reductions_cyclicFast_heuristic]). Default: decreasing (not using increasing reductions).");
             kernel_filename     = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
 	        disable_reduction   = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
 	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
@@ -106,6 +106,8 @@ class ReductionArguments : public BaseArguments {
             disable_component           = arg_lit0(NULL, "disable_component", "Disable component reduction.");
             disable_funnel              = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
             disable_funnel_fold         = arg_lit0(NULL, "disable_funnel_fold", "Disable funnel fold reduction.");
+            disable_heuristic_include   = arg_lit0(NULL, "disable_heuristic_include", "Disable heuristic include reduction.");
+            disable_heursitic_exclude   = arg_lit0(NULL, "disable_heuristic_exclude", "Disable heuristic exclude reduction.");
             disable_decreasing_struction = arg_lit0(NULL, "disable_decreasing_struction", "Disable decreasing struction.");
             disable_plateau_struction   = arg_lit0(NULL, "disable_plateau_struction", "Disable plateau struction.");
             subgraph_node_limit         = arg_int0(NULL, "subgraph_node_limit", NULL, "Choose maximum number of nodes in subgraph.");
@@ -172,6 +174,8 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_funnel_fold;
         struct arg_lit * disable_decreasing_struction;
         struct arg_lit * disable_plateau_struction;
+        struct arg_lit * disable_heuristic_include;
+        struct arg_lit * disable_heursitic_exclude;
         struct arg_int * subgraph_node_limit;
         struct arg_lit * random_freenodes;
         struct arg_int * struction_degree;
@@ -304,6 +308,8 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_funnel_fold,
         disable_decreasing_struction,
         disable_plateau_struction,
+        disable_heuristic_include,
+        disable_heursitic_exclude,
         subgraph_node_limit,
         random_freenodes,
         struction_degree,
@@ -356,6 +362,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
             cfg.all_reductions_cyclicFast(config);
             config.reduction_config_name = "all_reductions_cyclicFast";
         }
+        else if (!strcmp(reduction_config->sval[0], "all_reductions_cyclicFast_heuristic")) 
+        {
+            cfg.all_reductions_cyclicFast_heuristic(config);
+            config.reduction_config_name = "all_reductions_cyclicFast_heuristic";
+        }
         else if (!strcmp(reduction_config->sval[0], "cyclicStrong")) 
         {
             cfg.original_cyclicStrong(config);
@@ -372,6 +383,10 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         {
             cfg.mmwis(config);
             config.reduction_config_name = "mmwis";
+        } else if (!strcmp(reduction_config->sval[0], "all_decreasing_heuristic")) 
+        {
+            cfg.all_decreasing_heuristic(config);
+            config.reduction_config_name = "all_decreasing_heuristic";
         } else {
             cfg.all_decreasing(config);
             config.reduction_config_name = "all_decreasing";
@@ -481,6 +496,16 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (disable_funnel->count > 0) {
         config.disable_funnel = true;
+    }
+    if (disable_heuristic_include->count > 0) {
+        config.disable_heuristic_include = true;
+    } else {
+        config.disable_heuristic_include = false;
+    }
+    if (disable_heursitic_exclude->count > 0) {
+        config.disable_heuristic_exclude = true;
+    } else {
+        config.disable_heuristic_exclude = false;
     }
 	if (random_freenodes->count > 0) {
 		config.sort_freenodes = false;

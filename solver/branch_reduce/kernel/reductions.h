@@ -67,9 +67,11 @@ enum reduction_type
     path,
     struction_decrease,
     struction_plateau,
-    struction_blow
+    struction_blow,
+    heuristic_include,
+    heuristic_exclude
 };
-constexpr size_t REDUCTION_NUM = 23;
+constexpr size_t REDUCTION_NUM = 25;
 
 struct general_reduction
 {
@@ -88,7 +90,6 @@ struct general_reduction
     virtual void restore(branch_and_reduce_algorithm *br_alg) {}
     virtual void apply(branch_and_reduce_algorithm *br_alg) {}
     virtual void reset(branch_and_reduce_algorithm *br_alg, size_t comp_size) {}
-    virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg) { return true; }
 
     bool has_run = false;
     bool has_filtered_marker = false;
@@ -107,6 +108,7 @@ struct general_reduction
     inline bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, bool apply_solution=false);
     inline bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution=false);
     inline bool is_reduced(NodeID v, branch_and_reduce_algorithm *br_alg);
+    virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg); 
 };
 
 // simple reductions:
@@ -736,6 +738,40 @@ private:
     }
 
     void update_queue(NodeID n);
+};
+
+// heuristic reductions:
+struct heuristic_include_reduction : public general_reduction
+{
+    heuristic_include_reduction(size_t n) : general_reduction(n)
+    {
+        has_filtered_marker = true;
+    }
+    ~heuristic_include_reduction() {}
+    virtual heuristic_include_reduction *clone() const final { return new heuristic_include_reduction(*this); }
+
+    virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_include; }
+    virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
+    virtual std::string get_reduction_name() final { return "heuristic_include"; }
+
+    bool has_filtered_marker = true;
+};
+struct heuristic_exclude_reduction : public general_reduction
+{
+    heuristic_exclude_reduction(size_t n) : general_reduction(n)
+    {
+        has_filtered_marker = true;
+    }
+    ~heuristic_exclude_reduction() {}
+    virtual heuristic_exclude_reduction *clone() const final { return new heuristic_exclude_reduction(*this); }
+
+    virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_exclude; }
+    virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
+    virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
+    virtual std::string get_reduction_name() final { return "heuristic_exclude"; }
+
+    bool has_filtered_marker = true;
 };
 
 struct reduction_ptr

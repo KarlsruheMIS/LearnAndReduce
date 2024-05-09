@@ -83,6 +83,8 @@ private:
     friend generalized_fold_reduction;
     friend cut_vertex_reduction;
     friend component_reduction;
+	friend heuristic_include_reduction;
+	friend heuristic_exclude_reduction;
 
     friend path_reduction;
     template<typename struction_type, reduction_type type, int new_nodes>

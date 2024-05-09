@@ -43,6 +43,9 @@ void general_reduction::for_each_changed_vertex(branch_and_reduce_algorithm* br_
         }
     }
 }
+bool general_reduction::is_suited(NodeID v, branch_and_reduce_algorithm* br_alg) {
+  return br_alg->status.node_status[v] == IS_status::not_set;
+}
 NodeID general_reduction::get_max_weight_neighbor(NodeID v, branch_and_reduce_algorithm* br_alg) { 
     auto& status = br_alg->status;
     NodeID max_neighbor = status.graph[v][0];
@@ -3698,6 +3701,69 @@ void path_reduction::apply(sized_vector<NodeID> &path) {
             include_v_i = choices[i - 1];
         }
     }
+}
+
+// heuristic reduction
+bool heuristic_include_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
+    if (br_alg->config.disable_heuristic_include) return false;
+    if (br_alg->blowing_up) return false;
+    size_t oldn = br_alg->status.remaining_nodes;
+    br_alg->reduction_timer.restart();
+    auto iter = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
+        // Handle reduced nodes by treating them as having the worst possible case for minimization
+        if (is_reduced(a, br_alg)) return false; // 'a' is not better, ignore it
+        if (is_reduced(b, br_alg)) return true;  // 'b' is reduced, prefer 'a'
+
+        auto weight_neighborhood_a = br_alg->status.weights[a] - get_neighborhood_weight(a, br_alg);
+        auto weight_neighborhood_b = br_alg->status.weights[b] - get_neighborhood_weight(b, br_alg);
+
+        return weight_neighborhood_a > weight_neighborhood_b;
+    });
+ 
+    NodeID node = *iter; 
+    assert(!is_reduced(node, br_alg)); // return if reduction was applied
+    br_alg->set(node, IS_status::included);
+    reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+    reduction_time += br_alg->reduction_timer.elapsed();
+    has_run = false;
+	return oldn != br_alg->status.remaining_nodes;
+}
+bool heuristic_include_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_heuristic_include) return false;
+    if (!is_reduced(v, br_alg)) {
+        br_alg->set(v, IS_status::included);
+	    return true;
+    }
+    return false;
+}
+bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
+    if (br_alg->config.disable_heuristic_exclude) return false;
+    if (br_alg->blowing_up) return false;
+    size_t oldn = br_alg->status.remaining_nodes;
+    br_alg->reduction_timer.restart();
+    auto iter = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
+        // Handle reduced nodes by treating them as having the worst possible case for minimization
+        if (is_reduced(a, br_alg)) return false; // 'a' is not better, ignore it
+        if (is_reduced(b, br_alg)) return true;  // 'b' is reduced, prefer 'a'
+
+        auto weight_neighborhood_a = get_neighborhood_weight(a, br_alg) - br_alg->status.weights[a];
+        auto weight_neighborhood_b = get_neighborhood_weight(b, br_alg) - br_alg->status.weights[b];
+
+        return weight_neighborhood_a > weight_neighborhood_b;
+    }); 
+    br_alg->set(*iter, IS_status::excluded);
+    reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+    reduction_time += br_alg->reduction_timer.elapsed();
+    has_run = false;
+	return oldn != br_alg->status.remaining_nodes;
+}
+bool heuristic_exclude_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
+    if (br_alg->config.disable_heuristic_exclude) return false;
+    if (!is_reduced(v, br_alg)) {
+        br_alg->set(v, IS_status::excluded);
+        return true;
+    } 
+    return false;
 }
 
 

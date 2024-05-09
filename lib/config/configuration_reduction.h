@@ -52,6 +52,8 @@ class configuration_reduction {
         void all_reductions_cyclicFast( ReductionConfig & config );
         void all_reductions_cyclicStrong( ReductionConfig & config );
         void all_decreasing( ReductionConfig & config );
+        void all_decreasing_heuristic( ReductionConfig & config );
+        void all_reductions_cyclicFast_heuristic( ReductionConfig & config );
 };
 
 
@@ -93,6 +95,8 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
     config.disable_blow_up                        = true;
     config.plain_struction                        = false;
     config.perform_hils                           = true;
+    config.disable_heuristic_exclude              = true;
+    config.disable_heuristic_include              = true;
 }
 
 inline void configuration_reduction::disable_new_reductions( ReductionConfig & config ) {
@@ -190,4 +194,15 @@ inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfi
 inline void configuration_reduction::all_decreasing( ReductionConfig & config ) {
     standard(config);
     config.disable_blow_up                        = true;
+}
+inline void configuration_reduction::all_decreasing_heuristic( ReductionConfig & config ) {
+    all_decreasing(config);
+    config.disable_heuristic_include              = false;
+    config.disable_heuristic_exclude              = false;
+}
+
+inline void configuration_reduction::all_reductions_cyclicFast_heuristic( ReductionConfig & config ) {
+    all_reductions_cyclicFast(config);
+    config.disable_heuristic_include              = false;
+    config.disable_heuristic_exclude              = false;
 }
