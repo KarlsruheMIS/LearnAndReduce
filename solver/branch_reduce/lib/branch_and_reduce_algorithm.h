@@ -42,6 +42,7 @@
 #include "extended_struction.h"
 #include "original_struction.h"
 #include "key_functions.h"
+#include "LRConv.h"
 
 
 class branch_and_reduce_algorithm {
@@ -101,6 +102,8 @@ private:
     friend ApproximateIncreaseKey;
     friend DegreeKey;
     friend IncreaseKey;
+
+	friend LRConv;
 
     struct node_pos {
 		NodeID node;
@@ -220,6 +223,8 @@ private:
     std::vector<sized_vector<NodeID>> buffers;
     std::vector<bool> bool_buffer;
     std::vector<NodeID> zero_vec;
+
+	LRConv gnn;
 
     void resize(size_t size);
 

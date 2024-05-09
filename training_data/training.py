@@ -45,11 +45,13 @@ for file in os.listdir(directory):
     if not(filename.endswith('_meta.csv')):
         parse_data(path + filename)
 
+weight_scale = float(sys.argv[3])
+
 print('Found', len(dataset))
 
 def model_fit(model, epoch):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([20.0]))
+    loss = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([weight_scale]))
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
     
     N = len(dataset)
