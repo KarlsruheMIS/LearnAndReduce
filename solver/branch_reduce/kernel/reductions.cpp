@@ -3720,12 +3720,13 @@ bool heuristic_include_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         return weight_neighborhood_a > weight_neighborhood_b;
     });
  
-    NodeID node = *iter; 
-    assert(!is_reduced(node, br_alg)); // return if reduction was applied
-    br_alg->set(node, IS_status::included);
+    assert(!is_reduced(*iter, br_alg)); // return if reduction was applied
+    br_alg->set(*iter, IS_status::included);
     reduced_nodes += (oldn - br_alg->status.remaining_nodes);
+    br_alg->status.heuristically_reduced_n += (oldn - br_alg->status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
-    has_run = false;
+    has_run = false; // check everything in next round again
+    has_filtered_marker = true; 
 	return oldn != br_alg->status.remaining_nodes;
 }
 bool heuristic_include_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
@@ -3754,7 +3755,9 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     br_alg->set(*iter, IS_status::excluded);
     reduced_nodes += (oldn - br_alg->status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
-    has_run = false;
+    br_alg->status.heuristically_reduced_n += (oldn - br_alg->status.remaining_nodes);
+    has_run = false; // check everything in next round again
+    has_filtered_marker = true; 
 	return oldn != br_alg->status.remaining_nodes;
 }
 bool heuristic_exclude_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {

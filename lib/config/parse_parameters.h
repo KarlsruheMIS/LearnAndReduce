@@ -499,13 +499,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (disable_heuristic_include->count > 0) {
         config.disable_heuristic_include = true;
-    } else {
-        config.disable_heuristic_include = false;
     }
     if (disable_heursitic_exclude->count > 0) {
         config.disable_heuristic_exclude = true;
-    } else {
-        config.disable_heuristic_exclude = false;
     }
 	if (random_freenodes->count > 0) {
 		config.sort_freenodes = false;

@@ -90,7 +90,7 @@ int main(int argn, char **argv) {
     }
 
     struction_log::instance()->print_reduction(config, reducer.kernelization_time, reducer.kernelization_offset, reducer.min_kernel, reducer.max_min_kernel_comp);
-    struction_log::instance()->print_results(!reducer.timeout);
+    struction_log::instance()->print_results(!reducer.timeout && reducer.get_heuristically_reduced_vertices() == 0);
 
 #ifndef OUTPUT_WEIGHT_CONVERGENCE
     std::cout << name << "," << G.number_of_nodes() << "," << G.number_of_edges() << ","

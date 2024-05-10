@@ -914,7 +914,12 @@ void branch_and_reduce_algorithm::reduce_graph_by_vertex_internal(bool full)
 bool branch_and_reduce_algorithm::blow_up_graph_internal()
 {
 	bool blown_up = false;
-	for (size_t active_blow_up_index = status.num_reductions; active_blow_up_index < status.transformations.size(); ++active_blow_up_index)
+	size_t heuristic_reductions = 0;
+	if (!config.disable_heuristic_exclude)
+		heuristic_reductions += 1;
+	if (!config.disable_heuristic_include)
+		heuristic_reductions += 1;
+	for (size_t active_blow_up_index = status.num_reductions; active_blow_up_index < status.transformations.size() - heuristic_reductions; ++active_blow_up_index)
 	{
 		auto &blow_up = status.transformations[active_blow_up_index];
 		init_transformation_step(blow_up);
@@ -1468,6 +1473,11 @@ void branch_and_reduce_algorithm::restore_best_global_solution()
 NodeWeight branch_and_reduce_algorithm::get_current_is_weight() const
 {
 	return global_status.is_weight + global_status.reduction_offset;
+}
+
+NodeID branch_and_reduce_algorithm::get_heuristically_reduced_vertices() const
+{
+	return global_status.heuristically_reduced_n;
 }
 
 void branch_and_reduce_algorithm::build_global_graph_access()
