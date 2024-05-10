@@ -124,6 +124,7 @@ private:
 
         std::vector<reduction_ptr> transformations; //reductions + blow_ups.
         size_t num_reductions;
+		NodeID heuristically_reduced_n = 0;
 
 		sized_vector<reduction_type> folded_stack;
 		sized_vector<node_pos> branching_stack;
@@ -284,6 +285,7 @@ public:
 	static void greedy_initial_is(graph_access& G, sized_vector<NodeID>& tmp_buffer);
 
 	NodeWeight get_current_is_weight() const;
+	NodeID get_heuristically_reduced_vertices() const;
 	void reverse_reduction(graph_access & G, graph_access & reduced_G, std::vector<NodeID> & reverse_mapping);
 	void apply_branch_reduce_solution(graph_access & G);
 

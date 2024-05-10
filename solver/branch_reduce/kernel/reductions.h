@@ -37,6 +37,7 @@
 #include <memory>
 #include <array>
 #include <data_structure/priority_queues/MaxHeap.h>
+#include <iomanip>  // For std::setw
 
 class branch_and_reduce_algorithm;
 using Struction_Type = ReductionConfig::Struction_Type;
@@ -80,9 +81,8 @@ struct general_reduction
     virtual general_reduction *clone() const = 0;
 
     virtual reduction_type get_reduction_type() const = 0;
-    virtual void print_reduction_type()
-    {
-        std::cout << get_reduction_name() << ": \t";
+    virtual void print_reduction_type() {
+        std::cout << std::left << std::setw(24) <<get_reduction_name() << " \t" ;
     };
     virtual std::string get_reduction_name() = 0;
     virtual std::string get_model_path() { return ""; }
@@ -109,7 +109,7 @@ struct general_reduction
     inline bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, bool apply_solution = false);
     inline bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution = false);
     inline bool is_reduced(NodeID v, branch_and_reduce_algorithm *br_alg);
-    virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg);
+    inline virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg); 
 };
 
 // simple reductions:
@@ -756,7 +756,6 @@ struct heuristic_include_reduction : public general_reduction
     virtual std::string get_reduction_name() final { return "heuristic_include"; }
     virtual std::string get_model_path() final { return "models/include.gnn"; }
 
-    // bool has_filtered_marker = true;
 };
 struct heuristic_exclude_reduction : public general_reduction
 {
@@ -770,7 +769,6 @@ struct heuristic_exclude_reduction : public general_reduction
     virtual std::string get_reduction_name() final { return "heuristic_exclude"; }
     virtual std::string get_model_path() final { return "models/exclude.gnn"; }
 
-    // bool has_filtered_marker = true;
 };
 
 struct reduction_ptr
