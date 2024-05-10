@@ -3709,6 +3709,7 @@ bool heuristic_include_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->blowing_up) return false;
     size_t oldn = br_alg->status.remaining_nodes;
     br_alg->reduction_timer.restart();
+    if (marker.current.empty()) return false;
     auto iter = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
         // Handle reduced nodes by treating them as having the worst possible case for minimization
         if (is_reduced(a, br_alg)) return false; // 'a' is not better, ignore it
@@ -3741,6 +3742,7 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->blowing_up) return false;
     size_t oldn = br_alg->status.remaining_nodes;
     br_alg->reduction_timer.restart();
+    if (marker.current.empty()) return false;
     auto iter = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
         // Handle reduced nodes by treating them as having the worst possible case for minimization
         if (is_reduced(a, br_alg)) return false; // 'a' is not better, ignore it

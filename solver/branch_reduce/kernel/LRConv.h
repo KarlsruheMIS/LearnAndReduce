@@ -17,6 +17,7 @@ class LRConv
 {
 public:
     LRConv(int N);
+    LRConv(const LRConv &gnn);
     ~LRConv();
 
     void change_parameters(const std::string path);

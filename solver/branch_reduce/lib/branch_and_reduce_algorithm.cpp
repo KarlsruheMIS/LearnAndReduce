@@ -36,7 +36,7 @@ constexpr NodeID branch_and_reduce_algorithm::MODIFIED_TOKEN;
 
 branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const ReductionConfig &config, bool called_from_fold)
 	: config(config), global_status(G), set_1(global_status.n), set_2(global_status.n), double_set(global_status.n * 2),
-	  buffers(4, sized_vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0), gnn(G.number_of_nodes())
+	  buffers(4, sized_vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0), gnn(called_from_fold ? 0 : G.number_of_nodes())
 {
 	if (config.generate_training_data)
 	{
@@ -46,10 +46,10 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {critical_set, struction_plateau, struction_blow};
 	expensive_transformations = {heuristic_exclude, heuristic_include};
-    if (config.reduction_style == ReductionConfig::Reduction_Style::test1)
-	    expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
-    if (config.reduction_style == ReductionConfig::Reduction_Style::test2)
-	    expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
+	if (config.reduction_style == ReductionConfig::Reduction_Style::test1)
+		expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
+	if (config.reduction_style == ReductionConfig::Reduction_Style::test2)
+		expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
 
 	if (called_from_fold)
 	{
@@ -194,10 +194,10 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		{
 			global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
 		}
-			if (!config.disable_heuristic_exclude)
-				global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
-			if (!config.disable_heuristic_include)
-				global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
+		if (!config.disable_heuristic_exclude)
+			global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
+		if (!config.disable_heuristic_include)
+			global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
 	}
 
 	global_transformation_map.resize(REDUCTION_NUM);
@@ -631,51 +631,43 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 {
 	if (config.initial_filter && !reduction->has_run && reduction->has_filtered_marker)
 	{
-		reduction->has_filtered_marker = false;
 		reduction->marker.current.clear();
-		if (reduction->get_model_path() != "" && status.remaining_nodes > 500 && config.gnn_filter)
+		if (reduction->get_model_path() != "" && status.remaining_nodes > 1 && config.gnn_filter)
 		{
+
 			timer t;
 			gnn.change_parameters(reduction->get_model_path());
-			// LRConv gnn(reduction->get_model_path());
 			double t_parse = t.elapsed();
+
 			t.restart();
-
-			// graph_access G;
-			// std::vector<NodeID> reverse_mapping(status.n);
-			// build_graph_access(G, reverse_mapping);
-			// double t_graph = t.elapsed();
-			// t.restart();
-
-			// float *node_attr = NULL, *edge_attr = NULL;
-			// LRConv::compute_attr(&node_attr, &edge_attr, G);
-
 			const float *y = gnn.predict(this);
 
-			// const float *y = gnn.predict_light_dynamic_blas(this);
-			int c = 0;
-
-			for (int u = 0; u < this->status.graph.size(); u++)
+			if (reduction->get_reduction_type() == heuristic_exclude || reduction->get_reduction_type() == heuristic_include)
 			{
-				if (status.node_status[u] != IS_status::not_set)
-					continue;
-				c++;
-				if (y[u] > 0.0f)
-					reduction->marker.current.push_back(u);
+				for (int u = 0; u < this->status.graph.size(); u++)
+				{
+					if (status.node_status[u] != IS_status::not_set)
+						continue;
+
+					if (y[u] > 0.0f)
+						reduction->marker.current.push_back(u);
+				}
+				printf("%s added %d vertices from %d\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
 			}
+			else
+			{
+				int c = 0;
+				for (int u = 0; u < this->status.graph.size(); u++)
+				{
+					if (status.node_status[u] != IS_status::not_set)
+						continue;
+					c++;
+					if (y[u] > 0.0f)
+						reduction->marker.current.push_back(u);
+				}
 
-			// for (int u = 0; u < G.number_of_nodes(); u++)
-			// {
-			// 	if (y[u] > 0.0f)
-			// 		reduction->marker.current.push_back(reverse_mapping[u]);
-			// }
-
-			printf("%s %lf parse, added %d/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, reduction->marker.current.size(), c, t.elapsed());
-
-			// printf("%s %lf parse, %lf graph, added %d/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, t_graph, reduction->marker.current.size(), G.number_of_nodes(), t.elapsed());
-
-			// free(node_attr);
-			// free(edge_attr);
+				printf("%s %lf parse, added %d/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, reduction->marker.current.size(), c, t.elapsed());
+			}
 		}
 		else
 		{
@@ -688,10 +680,11 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 					reduction->marker.current.push_back(node);
 				}
 			}
+			reduction->has_run = true;
+			reduction->has_filtered_marker = false;
 		}
 
 		reduction->marker.clear_next();
-		reduction->has_run = true;
 		return;
 	}
 	if (!reduction->has_run)
@@ -771,8 +764,9 @@ void branch_and_reduce_algorithm::initial_reduce()
 	else
 	{
 		reduce_graph_internal(false);
-		if (config.print_reduction_info) {
-		    print_reduction_info();
+		if (config.print_reduction_info)
+		{
+			print_reduction_info();
 		}
 		bool further_impovement = status.remaining_nodes > 0;
 		min_kernel = status.remaining_nodes;
@@ -858,7 +852,6 @@ void branch_and_reduce_algorithm::reduce_graph_internal(bool full)
 		if (status.remaining_nodes == 0)
 			break;
 	}
-
 
 	if (!full && !config.disable_fold2)
 	{

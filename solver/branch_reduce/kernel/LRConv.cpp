@@ -30,6 +30,26 @@ LRConv::LRConv(int N)
     y = (float *)aligned_alloc(32, sizeof(float) * allocated);
 }
 
+LRConv::LRConv(const LRConv &gnn)
+    : params(), W(NULL), B(NULL), param(NULL), allocated(gnn.allocated), x(NULL), y(NULL)
+{
+    W = (float **)malloc(sizeof(float *) * 6);
+    B = (float **)malloc(sizeof(float *) * 6);
+    param = (float *)aligned_alloc(32, sizeof(float) * total_params);
+
+    for (int i = 0; i < total_params; i++)
+        param[i] = gnn.param[i];
+
+    for (int i = 0; i < 6; i++)
+    {
+        W[i] = param + W_OFF[i];
+        B[i] = param + B_OFF[i];
+    }
+
+    x = (float *)aligned_alloc(32, sizeof(float) * allocated);
+    y = (float *)aligned_alloc(32, sizeof(float) * allocated);
+}
+
 LRConv::~LRConv()
 {
     free(W);
@@ -178,6 +198,9 @@ void LRConv_message_blas_dyn(const float *x, int dim, float *y,
         int t = 0;
         for (auto v : g[u])
         {
+            if (status[v] != branch_and_reduce_algorithm::IS_status::not_set)
+                continue;
+
             for (int i = 0; i < dim; i++)
                 A[t * (dim * 2) + dim + i] = x[v * dim + i];
             t++;
@@ -216,6 +239,15 @@ const float *LRConv::predict(branch_and_reduce_algorithm *br_alg)
 {
     auto &g = br_alg->status.graph;
     auto &status = br_alg->status.node_status;
+
+    if (br_alg->status.graph.size() * hidden_dim > allocated)
+    {
+        allocated = br_alg->status.graph.size() * hidden_dim;
+        free(x);
+        free(y);
+        x = (float *)aligned_alloc(32, sizeof(float) * allocated);
+        y = (float *)aligned_alloc(32, sizeof(float) * allocated);
+    }
 
     compute_node_attr_dynamic(br_alg);
 

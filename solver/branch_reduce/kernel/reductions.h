@@ -80,8 +80,9 @@ struct general_reduction
     virtual general_reduction *clone() const = 0;
 
     virtual reduction_type get_reduction_type() const = 0;
-    virtual void print_reduction_type() {
-        std::cout << get_reduction_name() << ": \t" ;
+    virtual void print_reduction_type()
+    {
+        std::cout << get_reduction_name() << ": \t";
     };
     virtual std::string get_reduction_name() = 0;
     virtual std::string get_model_path() { return ""; }
@@ -97,18 +98,18 @@ struct general_reduction
     double reduction_time = 0.0;
     vertex_marker marker;
 
-	template<typename F>
-	void for_each_changed_vertex(branch_and_reduce_algorithm* br_alg, F f);
-    inline NodeWeight get_neighborhood_weight(NodeID v, branch_and_reduce_algorithm* br_alg);
-    inline NodeID get_max_weight_neighbor(NodeID v, branch_and_reduce_algorithm* br_alg);
-    inline void get_neighborhood_set(NodeID v, branch_and_reduce_algorithm* br_alg, fast_set& neighborhood_set);
-    inline void get_neighborhood_vector(NodeID v, branch_and_reduce_algorithm* br_alg, sized_vector<NodeID>& neighborhood_vec);
-    inline bool try_neighborhood_reduction(NodeID v, branch_and_reduce_algorithm* br_alg, NodeWeight neighborhood_weight);
-    inline bool solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &nodes_vec, const fast_set &nodes_set, sized_vector<NodeID> &reverse_mapping, bool apply_solution=false);
-    inline bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, bool apply_solution=false);
-    inline bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution=false);
+    template <typename F>
+    void for_each_changed_vertex(branch_and_reduce_algorithm *br_alg, F f);
+    inline NodeWeight get_neighborhood_weight(NodeID v, branch_and_reduce_algorithm *br_alg);
+    inline NodeID get_max_weight_neighbor(NodeID v, branch_and_reduce_algorithm *br_alg);
+    inline void get_neighborhood_set(NodeID v, branch_and_reduce_algorithm *br_alg, fast_set &neighborhood_set);
+    inline void get_neighborhood_vector(NodeID v, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &neighborhood_vec);
+    inline bool try_neighborhood_reduction(NodeID v, branch_and_reduce_algorithm *br_alg, NodeWeight neighborhood_weight);
+    inline bool solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &nodes_vec, const fast_set &nodes_set, sized_vector<NodeID> &reverse_mapping, bool apply_solution = false);
+    inline bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, bool apply_solution = false);
+    inline bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution = false);
     inline bool is_reduced(NodeID v, branch_and_reduce_algorithm *br_alg);
-    virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg); 
+    virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg);
 };
 
 // simple reductions:
@@ -246,7 +247,7 @@ struct clique_neighborhood_reduction : public general_reduction
 
 struct clique_reduction : public general_reduction
 {
-    clique_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    clique_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
     ~clique_reduction() {}
     virtual clique_reduction *clone() const final { return new clique_reduction(*this); }
 
@@ -423,7 +424,7 @@ private:
 
 struct single_edge_reduction : public general_reduction
 {
-    single_edge_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    single_edge_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
     ~single_edge_reduction() {}
     virtual single_edge_reduction *clone() const final { return new single_edge_reduction(*this); }
 
@@ -436,7 +437,7 @@ struct single_edge_reduction : public general_reduction
 
 struct extended_single_edge_reduction : public general_reduction
 {
-    extended_single_edge_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    extended_single_edge_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
     ~extended_single_edge_reduction() {}
     virtual extended_single_edge_reduction *clone() const final { return new extended_single_edge_reduction(*this); }
 
@@ -449,7 +450,7 @@ struct extended_single_edge_reduction : public general_reduction
 
 struct twin_reduction : public general_reduction
 {
-    twin_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    twin_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
     ~twin_reduction() {}
     virtual twin_reduction *clone() const final { return new twin_reduction(*this); }
 
@@ -475,7 +476,7 @@ private:
 
 struct domination_reduction : public general_reduction
 {
-    domination_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    domination_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
     ~domination_reduction() {}
     virtual domination_reduction *clone() const final { return new domination_reduction(*this); }
 
@@ -522,7 +523,7 @@ private:
 
 struct heavy_vertex_reduction : public general_reduction
 {
-    heavy_vertex_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    heavy_vertex_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
     ~heavy_vertex_reduction() {}
     virtual heavy_vertex_reduction *clone() const final { return new heavy_vertex_reduction(*this); }
 
@@ -535,7 +536,7 @@ struct heavy_vertex_reduction : public general_reduction
 
 struct heavy_set_reduction : public general_reduction
 {
-    heavy_set_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    heavy_set_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
     ~heavy_set_reduction() {}
     virtual heavy_set_reduction *clone() const final { return new heavy_set_reduction(*this); }
 
@@ -560,12 +561,13 @@ private:
 
 struct heavy_set3_reduction : public general_reduction
 {
-    heavy_set3_reduction(size_t n) : general_reduction(n) {}
+    heavy_set3_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
     ~heavy_set3_reduction() {}
     virtual heavy_set3_reduction *clone() const final { return new heavy_set3_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::heavy_set3; }
     virtual std::string get_reduction_name() final { return "heavy_set3"; }
+    virtual std::string get_model_path() final { return "models/heavy_set3.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
 
@@ -648,17 +650,18 @@ private:
 template <typename struction_type, reduction_type type, int vertex_increase>
 struct iterative_struction : public general_reduction
 {
-    iterative_struction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    iterative_struction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
     ~iterative_struction() {}
     virtual iterative_struction *clone() const final { return new iterative_struction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return type; }
     virtual std::string get_reduction_name() final { return "struction"; }
-    virtual std::string get_model_path() final { 
-        if (type == struction_decrease) 
+    virtual std::string get_model_path() final
+    {
+        if (type == struction_decrease)
             return "models/decreasing_struction.gnn";
         else
-            return ""; 
+            return "";
     }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
@@ -743,35 +746,31 @@ private:
 // heuristic reductions:
 struct heuristic_include_reduction : public general_reduction
 {
-    heuristic_include_reduction(size_t n) : general_reduction(n)
-    {
-        has_filtered_marker = true;
-    }
-    ~heuristic_include_reduction() {}
+    heuristic_include_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    ~heuristic_include_reduction() {has_filtered_marker = true;}
     virtual heuristic_include_reduction *clone() const final { return new heuristic_include_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_include; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual std::string get_reduction_name() final { return "heuristic_include"; }
+    virtual std::string get_model_path() final { return "models/include.gnn"; }
 
-    bool has_filtered_marker = true;
+    // bool has_filtered_marker = true;
 };
 struct heuristic_exclude_reduction : public general_reduction
 {
-    heuristic_exclude_reduction(size_t n) : general_reduction(n)
-    {
-        has_filtered_marker = true;
-    }
-    ~heuristic_exclude_reduction() {}
+    heuristic_exclude_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
+    ~heuristic_exclude_reduction() {has_filtered_marker = true;}
     virtual heuristic_exclude_reduction *clone() const final { return new heuristic_exclude_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_exclude; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual std::string get_reduction_name() final { return "heuristic_exclude"; }
+    virtual std::string get_model_path() final { return "models/exclude.gnn"; }
 
-    bool has_filtered_marker = true;
+    // bool has_filtered_marker = true;
 };
 
 struct reduction_ptr
