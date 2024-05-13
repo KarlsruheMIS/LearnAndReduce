@@ -195,6 +195,7 @@ private:
 	bool is_ils_best_solution = false;
 
 	bool blowing_up = false;
+	bool heuristically_reducing = false;
 
 	graph_status global_status;
 	std::vector<NodeID> global_mapping;

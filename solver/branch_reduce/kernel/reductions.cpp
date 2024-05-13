@@ -126,10 +126,12 @@ bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, R
         return true;
     }
     auto c = config;
+    c.disable_heuristic_exclude = true;
+    c.disable_heuristic_include = true;
     c.time_limit = graph.number_of_nodes() / 10.0;
     // c.time_limit = config.reduction_time_limit*0.1;
 
-    branch_and_reduce_algorithm solver(graph, config, true);
+    branch_and_reduce_algorithm solver(graph, c, true);
 	solver.ch.disable_cout();
     if (config.disable_early_termination) 
         weight_bound = std::numeric_limits<NodeWeight>::max();
@@ -1750,6 +1752,7 @@ bool clique_neighborhood_reduction::expand_clique(NodeID max_neighbor, sized_vec
 
 bool critical_set_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->blowing_up) return false;
+    if (br_alg->heuristically_reducing) return false;
     if (br_alg->config.disable_critical_set) return false;
     br_alg->reduction_timer.restart();
 
@@ -2509,6 +2512,7 @@ void twin_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 }
 
 bool heavy_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
+    if (br_alg->heuristically_reducing) return false;
     if (br_alg->config.disable_heavy_vertex) return false;
     br_alg->reduction_timer.restart();
 
@@ -2562,6 +2566,7 @@ bool heavy_vertex_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, 
 
 bool heavy_set_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_heavy_set) return false;
+    if (br_alg->heuristically_reducing) return false;
     br_alg->reduction_timer.restart();
 
 	auto& status = br_alg->status;
@@ -2726,6 +2731,7 @@ void heavy_set_reduction::set_weights(graph_access& graph, sized_vector<NodeID>&
 
 bool heavy_set3_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_heavy_set) return false;
+    if (br_alg->heuristically_reducing) return false;
 
 	auto& status = br_alg->status;
     size_t oldn = status.remaining_nodes;
@@ -3709,7 +3715,11 @@ bool heuristic_include_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->blowing_up) return false;
     size_t oldn = br_alg->status.remaining_nodes;
     br_alg->reduction_timer.restart();
-    if (marker.current.empty()) return false;
+    if (marker.current.empty()) {
+        br_alg->heuristically_reducing = false;
+        return false;
+    }
+    br_alg->heuristically_reducing = true;
     auto iter = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
         // Handle reduced nodes by treating them as having the worst possible case for minimization
         if (is_reduced(a, br_alg)) return false; // 'a' is not better, ignore it
@@ -3730,20 +3740,17 @@ bool heuristic_include_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     has_filtered_marker = true; 
 	return oldn != br_alg->status.remaining_nodes;
 }
-bool heuristic_include_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
-    if (br_alg->config.disable_heuristic_include) return false;
-    if (!is_reduced(v, br_alg)) {
-        br_alg->set(v, IS_status::included);
-	    return true;
-    }
-    return false;
-}
+
 bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_heuristic_exclude) return false;
     if (br_alg->blowing_up) return false;
     size_t oldn = br_alg->status.remaining_nodes;
     br_alg->reduction_timer.restart();
-    if (marker.current.empty()) return false;
+    if (marker.current.empty()) {
+        br_alg->heuristically_reducing = false;
+        return false;
+    }
+    br_alg->heuristically_reducing = true;
     auto iter = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
         // Handle reduced nodes by treating them as having the worst possible case for minimization
         if (is_reduced(a, br_alg)) return false; // 'a' is not better, ignore it
@@ -3762,15 +3769,6 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     has_filtered_marker = true; 
 	return oldn != br_alg->status.remaining_nodes;
 }
-bool heuristic_exclude_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
-    if (br_alg->config.disable_heuristic_exclude) return false;
-    if (!is_reduced(v, br_alg)) {
-        br_alg->set(v, IS_status::excluded);
-        return true;
-    } 
-    return false;
-}
-
 
 template<reduction_type type, int new_nodes>
 reduction_ptr make_iterative_struction(const ReductionConfig &config, size_t n) {

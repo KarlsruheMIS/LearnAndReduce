@@ -752,7 +752,6 @@ struct heuristic_include_reduction : public general_reduction
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_include; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
-    virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual std::string get_reduction_name() final { return "heuristic_include"; }
     virtual std::string get_model_path() final { return "models/include.gnn"; }
 
@@ -765,7 +764,6 @@ struct heuristic_exclude_reduction : public general_reduction
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_exclude; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
-    virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual std::string get_reduction_name() final { return "heuristic_exclude"; }
     virtual std::string get_model_path() final { return "models/exclude.gnn"; }
 
