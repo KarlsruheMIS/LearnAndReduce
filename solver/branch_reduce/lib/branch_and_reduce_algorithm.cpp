@@ -347,7 +347,7 @@ void branch_and_reduce_algorithm::resize(size_t size)
 	for (auto &transformation : status.transformations)
 	{
 		transformation->marker.resize(size);
-		// transformation->marker.clear_next();
+		transformation->marker.clear_next();
 	}
 }
 

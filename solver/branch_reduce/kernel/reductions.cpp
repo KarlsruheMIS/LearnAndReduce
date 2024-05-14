@@ -128,8 +128,8 @@ bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, R
     auto c = config;
     c.disable_heuristic_exclude = true;
     c.disable_heuristic_include = true;
-    c.time_limit = graph.number_of_nodes() / 10.0;
-    // c.time_limit = config.reduction_time_limit*0.1;
+    // c.time_limit = graph.number_of_nodes() / 10.0;
+    c.time_limit = config.reduction_time_limit*0.1;
 
     branch_and_reduce_algorithm solver(graph, c, true);
 	solver.ch.disable_cout();
@@ -3719,20 +3719,35 @@ bool heuristic_include_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         br_alg->heuristically_reducing = false;
         return false;
     }
+    auto& weights = br_alg->status.weights;
     br_alg->heuristically_reducing = true;
-    auto iter = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
-        // Handle reduced nodes by treating them as having the worst possible case for minimization
-        if (is_reduced(a, br_alg)) return false; // 'a' is not better, ignore it
-        if (is_reduced(b, br_alg)) return true;  // 'b' is reduced, prefer 'a'
 
-        auto weight_neighborhood_a = br_alg->status.weights[a] - get_neighborhood_weight(a, br_alg);
-        auto weight_neighborhood_b = br_alg->status.weights[b] - get_neighborhood_weight(b, br_alg);
-
-        return weight_neighborhood_a > weight_neighborhood_b;
+    auto& unsafe_to_reduce = br_alg->set_1;
+    unsafe_to_reduce.clear();
+    br_alg->heuristically_reducing = true;
+    std::sort(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
+        return weights[a] - get_neighborhood_weight(a, br_alg) > weights[b] - get_neighborhood_weight(b, br_alg);
     });
- 
-    assert(!is_reduced(*iter, br_alg)); // return if reduction was applied
-    br_alg->set(*iter, IS_status::included);
+
+    for (NodeID v : marker.current) 
+    {
+        if (unsafe_to_reduce.get(v)) continue;
+        if (is_reduced(v, br_alg)) continue;
+
+        br_alg->set(v, IS_status::included);
+        unsafe_to_reduce.add(v);
+        for(NodeID u : br_alg->status.graph[v]) {
+            unsafe_to_reduce.add(u);
+            for(NodeID w : br_alg->status.graph[u]) {
+                unsafe_to_reduce.add(w);
+                for (NodeID x : br_alg->status.graph[w]) {
+                    unsafe_to_reduce.add(x);
+                }
+            }
+        }
+
+    }
+
     reduced_nodes += (oldn - br_alg->status.remaining_nodes);
     br_alg->status.heuristically_reduced_n += (oldn - br_alg->status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
@@ -3745,23 +3760,36 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->config.disable_heuristic_exclude) return false;
     if (br_alg->blowing_up) return false;
     size_t oldn = br_alg->status.remaining_nodes;
+    auto& weights = br_alg->status.weights;
     br_alg->reduction_timer.restart();
     if (marker.current.empty()) {
         br_alg->heuristically_reducing = false;
         return false;
     }
+
+    auto& unsafe_to_reduce = br_alg->set_1;
+    unsafe_to_reduce.clear();
     br_alg->heuristically_reducing = true;
-    auto iter = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
-        // Handle reduced nodes by treating them as having the worst possible case for minimization
-        if (is_reduced(a, br_alg)) return false; // 'a' is not better, ignore it
-        if (is_reduced(b, br_alg)) return true;  // 'b' is reduced, prefer 'a'
+    std::sort(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
+        return weights[a] - get_neighborhood_weight(a, br_alg) < weights[b] - get_neighborhood_weight(b, br_alg);
+    });
 
-        auto weight_neighborhood_a = get_neighborhood_weight(a, br_alg) - br_alg->status.weights[a];
-        auto weight_neighborhood_b = get_neighborhood_weight(b, br_alg) - br_alg->status.weights[b];
+    for (NodeID v : marker.current) 
+    {
+        if (unsafe_to_reduce.get(v)) continue;
+        if (is_reduced(v, br_alg)) continue;
 
-        return weight_neighborhood_a > weight_neighborhood_b;
-    }); 
-    br_alg->set(*iter, IS_status::excluded);
+        br_alg->set(v, IS_status::excluded);
+        unsafe_to_reduce.add(v);
+        for(NodeID u : br_alg->status.graph[v]) {
+            unsafe_to_reduce.add(u);
+            for(NodeID w : br_alg->status.graph[u]) {
+                unsafe_to_reduce.add(w);
+            }
+        }
+
+    }
+
     reduced_nodes += (oldn - br_alg->status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
     br_alg->status.heuristically_reduced_n += (oldn - br_alg->status.remaining_nodes);
