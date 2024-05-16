@@ -680,10 +680,10 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 					reduction->marker.current.push_back(node);
 				}
 			}
-			reduction->has_run = true;
-			reduction->has_filtered_marker = false;
 		}
 
+		reduction->has_run = true;
+		reduction->has_filtered_marker = false;
 		reduction->marker.clear_next();
 		return;
 	}

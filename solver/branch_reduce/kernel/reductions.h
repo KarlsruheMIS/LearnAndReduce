@@ -536,7 +536,7 @@ struct heavy_vertex_reduction : public general_reduction
 
 struct heavy_set_reduction : public general_reduction
 {
-    heavy_set_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
+    heavy_set_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
     ~heavy_set_reduction() {}
     virtual heavy_set_reduction *clone() const final { return new heavy_set_reduction(*this); }
 
@@ -561,7 +561,7 @@ private:
 
 struct heavy_set3_reduction : public general_reduction
 {
-    heavy_set3_reduction(size_t n) : general_reduction(n) { has_filtered_marker = false; }
+    heavy_set3_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
     ~heavy_set3_reduction() {}
     virtual heavy_set3_reduction *clone() const final { return new heavy_set3_reduction(*this); }
 
