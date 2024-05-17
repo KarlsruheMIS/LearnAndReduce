@@ -880,7 +880,10 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         bool real_cut_v = false;
         for (NodeID neighbor : status.graph[cut_v]) {
             if (!cut_component_set.get(neighbor))
+            {
                 real_cut_v = true;
+                break;
+            }
         }
 
         if (!real_cut_v) { //directly solve the component without fold

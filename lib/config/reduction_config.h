@@ -17,7 +17,7 @@ struct ReductionConfig : public Config {
     // enum Reduction_Style {initial, time_ordering, weight_ordering, time_and_weight_ordering};
     enum Struction_Type {ORIGINAL, MODIFIED, EXTENDED, EXTENDED_REDUCED, NONE};
     enum Backtrack_Type {IMMEDIATE_TIE_BREAKING, IMMEDIATE_EXCLUDE, END_MIN_KERNEL, NO_BACKTRACK};
-    enum Reduction_Style {NORMAL, DENSE, FULL, test1, test2};
+    enum Reduction_Style {NORMAL, DENSE, FULL, test1, test2, fast};
     enum Key_Type {RANDOM, DEGREE, INCREASE, APPROXIMATE_INCREASE};
 
     // Name of the kernel file.

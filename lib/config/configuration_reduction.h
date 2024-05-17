@@ -54,6 +54,11 @@ class configuration_reduction {
         void all_decreasing( ReductionConfig & config );
         void all_decreasing_heuristic( ReductionConfig & config );
         void all_reductions_cyclicFast_heuristic( ReductionConfig & config );
+
+        void fast( ReductionConfig & config );
+        void fast_heuristic( ReductionConfig & config );
+        void very_fast( ReductionConfig & config );
+        void very_fast_heuristic( ReductionConfig & config );
 };
 
 
@@ -175,6 +180,47 @@ inline void configuration_reduction::mmwis( ReductionConfig & config ) {
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
     config.subgraph_node_limit                    = 150;
+}
+
+inline void configuration_reduction::fast( ReductionConfig & config ) {
+    all_reductions_cyclicFast(config);
+    config.disable_heavy_set                      = true;
+    config.disable_heavy_set3                     = true;
+    config.disable_heavy_vertex                   = true;
+    config.disable_cut_vertex                     = true;
+    config.disable_clique_neighborhood            = true;
+    config.disable_heuristic_exclude              = true;
+    config.disable_heuristic_include              = true;
+    config.subgraph_node_limit                    = 20;
+    config.reduction_style                        = ReductionConfig::Reduction_Style::fast;
+    config.reduction_style_name                   = 'fast';
+}
+inline void configuration_reduction::very_fast( ReductionConfig & config ) {
+    all_reductions_cyclicFast(config);
+    config.disable_generalized_fold               = true;
+    config.disable_cut_vertex                     = true;
+    config.disable_heavy_set                      = true;
+    config.disable_heavy_set3                     = true;
+    config.disable_heavy_vertex                   = true;
+    config.disable_critical_set                   = true;
+    config.disable_clique_neighborhood            = true;
+    config.disable_clique_neighborhood_fast       = true;
+    config.disable_heuristic_exclude              = true;
+    config.disable_heuristic_include              = true;
+    config.subgraph_node_limit                    = 20;
+    config.reduction_style                        = ReductionConfig::Reduction_Style::fast;
+    config.reduction_style_name                   = 'very_fast';
+}
+
+inline void configuration_reduction::fast_heuristic( ReductionConfig & config ) {
+    fast(config);
+    config.disable_heuristic_exclude              = false;
+    config.disable_heuristic_include              = false;
+}
+inline void configuration_reduction::very_fast_heuristic( ReductionConfig & config ) {
+    very_fast(config);
+    config.disable_heuristic_exclude              = false;
+    config.disable_heuristic_include              = false;
 }
 
 inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig & config ) {

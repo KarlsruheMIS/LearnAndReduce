@@ -72,7 +72,7 @@ class ReductionArguments : public BaseArguments {
             // Unique parameters
             reduction_style     = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: full, normal, dense, test1, test2.");
             reduction_time_limit= arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
-            reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, all_decreasing, all_decreasing_heuristic, all_reductions_cyclicFast_heuristic]). Default: decreasing (not using increasing reductions).");
+            reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, all_decreasing, all_decreasing_heuristic, all_reductions_cyclicFast_heuristic, fast, fast_heuristic]). Default: decreasing (not using increasing reductions).");
             kernel_filename     = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
 	        disable_reduction   = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
 	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
@@ -356,6 +356,26 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         {   
             cfg.original_cyclicFast(config);
             config.reduction_config_name = "cyclicFast";
+        }
+        else if (!strcmp(reduction_config->sval[0], "fast_heuristic")) 
+        {
+            cfg.fast_heuristic(config);
+            config.reduction_config_name = "fast_heuristic";
+        }
+        else if (!strcmp(reduction_config->sval[0], "fast")) 
+        {
+            cfg.fast(config);
+            config.reduction_config_name = "fast";
+        }
+        else if (!strcmp(reduction_config->sval[0], "very_fast_heuristic")) 
+        {
+            cfg.very_fast_heuristic(config);
+            config.reduction_config_name = "very_fast_heuristic";
+        }
+        else if (!strcmp(reduction_config->sval[0], "very_fast")) 
+        {
+            cfg.very_fast(config);
+            config.reduction_config_name = "very_fast";
         }
         else if (!strcmp(reduction_config->sval[0], "all_reductions_cyclicFast")) 
         {
