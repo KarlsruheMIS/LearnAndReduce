@@ -59,6 +59,8 @@ class configuration_reduction {
         void fast_heuristic( ReductionConfig & config );
         void very_fast( ReductionConfig & config );
         void very_fast_heuristic( ReductionConfig & config );
+        void extended_cyclicFast( ReductionConfig & config );
+        void extended_cyclicFast_heuristic( ReductionConfig & config );
 };
 
 
@@ -189,6 +191,7 @@ inline void configuration_reduction::fast( ReductionConfig & config ) {
     config.disable_heavy_vertex                   = true;
     config.disable_cut_vertex                     = true;
     config.disable_clique_neighborhood            = true;
+    config.disable_generalized_fold               = true;
     config.disable_heuristic_exclude              = true;
     config.disable_heuristic_include              = true;
     config.subgraph_node_limit                    = 20;
@@ -204,6 +207,7 @@ inline void configuration_reduction::very_fast( ReductionConfig & config ) {
     config.disable_heavy_vertex                   = true;
     config.disable_critical_set                   = true;
     config.disable_clique_neighborhood            = true;
+    config.disable_generalized_fold               = true;
     config.disable_clique_neighborhood_fast       = true;
     config.disable_heuristic_exclude              = true;
     config.disable_heuristic_include              = true;
@@ -249,6 +253,26 @@ inline void configuration_reduction::all_decreasing_heuristic( ReductionConfig &
 
 inline void configuration_reduction::all_reductions_cyclicFast_heuristic( ReductionConfig & config ) {
     all_reductions_cyclicFast(config);
+    config.disable_heuristic_include              = false;
+    config.disable_heuristic_exclude              = false;
+}
+
+inline void configuration_reduction::extended_cyclicFast( ReductionConfig & config ) {
+    original_cyclicFast(config);
+    config.disable_fold1                          = false;
+    config.disable_v_shape_min                    = false;
+    config.disable_v_shape_mid                    = false;
+    config.disable_triangle_mid                   = false;
+    config.disable_triangle_min                   = false;
+    config.disable_basic_se                       = false;
+    config.disable_extended_se                    = false;
+    config.disable_cut_vertex                     = false;
+    config.disable_funnel                         = false;
+    config.disable_funnel_fold                    = false;
+}
+
+inline void configuration_reduction::extended_cyclicFast_heuristic( ReductionConfig & config ) {
+    extended_cyclicFast(config);
     config.disable_heuristic_include              = false;
     config.disable_heuristic_exclude              = false;
 }
