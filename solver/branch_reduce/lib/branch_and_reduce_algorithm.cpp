@@ -50,12 +50,12 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
 	if (config.reduction_style == ReductionConfig::Reduction_Style::test2)
 		expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
-	if (config.reduction_style == ReductionConfig::Reduction_Style::fast)
-		expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
+	if (config.reduction_style == ReductionConfig::Reduction_Style::fast_heuristic)
+		expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
 
 	if (called_from_fold)
 	{
-		if (config.reduction_style == ReductionConfig::Reduction_Style::test1 || config.reduction_style == ReductionConfig::Reduction_Style::test2 || config.reduction_style == ReductionConfig::Reduction_Style::fast)
+		if (config.reduction_style == ReductionConfig::Reduction_Style::test1 || config.reduction_style == ReductionConfig::Reduction_Style::test2 || config.reduction_style == ReductionConfig::Reduction_Style::fast_heuristic)
 		{
 			global_status.transformations = make_reduction_vector<
 				neighborhood_reduction,
@@ -104,7 +104,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			generalized_fold_reduction>(global_status.n);
 		global_status.num_reductions = global_status.transformations.size();
 	}
-	else if (config.reduction_style == ReductionConfig::Reduction_Style::fast)
+	else if (config.reduction_style == ReductionConfig::Reduction_Style::fast_heuristic)
 	{
 			if (!config.disable_neighborhood)
 				global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
@@ -126,14 +126,14 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
 			if (!config.disable_funnel_fold)
 				global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
-			if (!config.disable_clique_neighborhood_fast)
-				global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
-			if (!config.disable_decreasing_struction)
-				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 			if (!config.disable_heuristic_include)
 				global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
 			if (!config.disable_heuristic_exclude)
 				global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
+			if (!config.disable_clique_neighborhood_fast)
+				global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
+			if (!config.disable_decreasing_struction)
+				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 
 			if (!config.disable_critical_set)
 				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
@@ -837,36 +837,7 @@ void branch_and_reduce_algorithm::initial_reduce()
 	std::swap(global_transformation_map, local_transformation_map);
 }
 
-// filter vertices for simple reductions
-// void branch_and_reduce_algorithm::initial_filter_vertices_for_reduction()
-// {
-// 	auto& neighborhood = status.transformations[local_transformation_map[reduction_type::neighborhood]];
-// 	auto& fold1 = status.transformations[local_transformation_map[reduction_type::fold1]];
-// 	auto& fold2 = status.transformations[local_transformation_map[reduction_type::fold2]];
-// 	neighborhood->marker.clear_next();
-// 	fold1->marker.clear_next();
-// 	fold2->marker.clear_next();
-// 	for (NodeID node = 0; node < status.n; node++)
-// 	{
-// 		assert(status.node_status[node] == branch_and_reduce_algorithm::IS_status::not_set);
-// 		if (deg(node) <= 1)
-// 		{
-// 			fold1->marker.current.push_back(node);
-// 		}
-// 		else if (status.weights[node] >= std::accumulate(status.graph[node].begin(), status.graph[node].end(), 0, [&](NodeWeight sum, NodeID neighbor) {
-// 			if (status.node_status[neighbor] == IS_status::not_set) return sum + status.weights[neighbor];
-// 			else return sum;}))
-// 		{
-// 			neighborhood->marker.current.push_back(node);
-// 		} else if (deg(node) == 2)
-// 		{
-// 			fold2->marker.current.push_back(node);
-// 		}
-// 	}
-// 	neighborhood->has_filtered_marker = true;
-// 	fold1->has_filtered_marker = true;
-// 	fold2->has_filtered_marker = true;
-// }
+
 void branch_and_reduce_algorithm::reduce_graph_internal(bool full)
 {
 	// if not full skip the expensive reductions and disable triangle and v_shape mid since they interfere with the blow up
@@ -1188,7 +1159,9 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 		// if (config.reduce_by_vertex)
 		// 	reduce_graph_by_vertex_internal(true);
 		// else
+		// ch.enable_cout();
 		reduce_graph_internal(true);
+		// ch.disable_cout();
 
 		assert(status.remaining_nodes <= status.n && "Graph size and remaining nodes mismatch");
 		status.modified_stack.push_back(BRANCHING_TOKEN);

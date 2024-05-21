@@ -195,8 +195,8 @@ inline void configuration_reduction::fast( ReductionConfig & config ) {
     config.disable_heuristic_exclude              = true;
     config.disable_heuristic_include              = true;
     config.subgraph_node_limit                    = 20;
-    config.reduction_style                        = ReductionConfig::Reduction_Style::fast;
-    config.reduction_style_name                   = 'fast';
+    config.reduction_style                        = ReductionConfig::Reduction_Style::fast_heuristic;
+    config.reduction_style_name                   = 'fast_heuristic';
 }
 inline void configuration_reduction::very_fast( ReductionConfig & config ) {
     all_reductions_cyclicFast(config);
@@ -212,8 +212,8 @@ inline void configuration_reduction::very_fast( ReductionConfig & config ) {
     config.disable_heuristic_exclude              = true;
     config.disable_heuristic_include              = true;
     config.subgraph_node_limit                    = 20;
-    config.reduction_style                        = ReductionConfig::Reduction_Style::fast;
-    config.reduction_style_name                   = 'very_fast';
+    config.reduction_style                        = ReductionConfig::Reduction_Style::fast_heuristic;
+    config.reduction_style_name                   = 'very_fast_heuristic';
 }
 
 inline void configuration_reduction::fast_heuristic( ReductionConfig & config ) {
@@ -267,7 +267,6 @@ inline void configuration_reduction::extended_cyclicFast( ReductionConfig & conf
     config.disable_triangle_min                   = false;
     config.disable_basic_se                       = false;
     config.disable_extended_se                    = false;
-    // config.disable_cut_vertex                     = false;
     config.disable_funnel                         = false;
     config.disable_funnel_fold                    = false;
 }
