@@ -259,6 +259,7 @@ inline void configuration_reduction::all_reductions_cyclicFast_heuristic( Reduct
 
 inline void configuration_reduction::extended_cyclicFast( ReductionConfig & config ) {
     original_cyclicFast(config);
+    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
     config.disable_fold1                          = false;
     config.disable_v_shape_min                    = false;
     config.disable_v_shape_mid                    = false;
@@ -266,7 +267,7 @@ inline void configuration_reduction::extended_cyclicFast( ReductionConfig & conf
     config.disable_triangle_min                   = false;
     config.disable_basic_se                       = false;
     config.disable_extended_se                    = false;
-    config.disable_cut_vertex                     = false;
+    // config.disable_cut_vertex                     = false;
     config.disable_funnel                         = false;
     config.disable_funnel_fold                    = false;
 }
