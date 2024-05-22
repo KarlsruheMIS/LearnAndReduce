@@ -357,6 +357,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
             cfg.original_cyclicFast(config);
             config.reduction_config_name = "cyclicFast";
         }
+        if (!strcmp(reduction_config->sval[0], "cyclicFast_heuristic")) 
+        {   
+            cfg.original_cyclicFast_heuristic(config);
+            config.reduction_config_name = "cyclicFast_heuristic";
+        }
         else if (!strcmp(reduction_config->sval[0], "fast_heuristic")) 
         {
             cfg.fast_heuristic(config);

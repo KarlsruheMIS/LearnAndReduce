@@ -46,6 +46,7 @@ class configuration_reduction {
         void disable_new_reductions( ReductionConfig & config );
         void enable_new_reductions( ReductionConfig & config );
         void original_cyclicFast( ReductionConfig & config );
+        void original_cyclicFast_heuristic( ReductionConfig & config );
         void original_cyclicStrong( ReductionConfig & config );
         void original_kamis( ReductionConfig & config );
         void mmwis( ReductionConfig & config );
@@ -150,6 +151,12 @@ inline void configuration_reduction::original_cyclicFast( ReductionConfig & conf
     config.max_unimproving_phases                 = 25;
     config.set_limit                              = 512;
     config.subgraph_node_limit                    = 150;
+}
+
+inline void configuration_reduction::original_cyclicFast_heuristic( ReductionConfig & config ) {
+    original_cyclicFast(config);
+    config.disable_heuristic_exclude              = false;
+    config.disable_heuristic_include              = false;
 }
 
 
