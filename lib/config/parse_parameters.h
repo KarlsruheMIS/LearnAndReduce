@@ -71,6 +71,7 @@ class ReductionArguments : public BaseArguments {
 
             // Unique parameters
             reduction_style     = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: full, normal, dense, test1, test2.");
+            heuristic_style     = arg_str0(NULL, "heuristic_style", NULL, "Configuration to use in the heuristic reductions. ([single, multiple_very_safe, multiple_safe, all (if no gnn_filter this is the same as multiple_safe)]). Default: multiple_safe.");
             reduction_time_limit= arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
             reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, extended_cyclicFast, all_decreasing, all_decreasing_heuristic, all_reductions_cyclicFast_heuristic, fast, fast_heuristic]). Default: decreasing (not using increasing reductions).");
             kernel_filename     = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
@@ -145,6 +146,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * initial_filter;
         struct arg_lit * gnn_filter;
         struct arg_str * reduction_config;
+        struct arg_str * heuristic_style;
         struct arg_str * kernel_filename;
         struct arg_lit * print_reduction_info;
         struct arg_lit * disable_reduction;
@@ -279,6 +281,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         gnn_filter,
         kernel_filename,
         reduction_config,
+        heuristic_style,
         reduction_time_limit,
         reduction_style,
         disable_reduction,
@@ -357,7 +360,7 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
             cfg.original_cyclicFast(config);
             config.reduction_config_name = "cyclicFast";
         }
-        if (!strcmp(reduction_config->sval[0], "cyclicFast_heuristic")) 
+        else if (!strcmp(reduction_config->sval[0], "cyclicFast_heuristic")) 
         {   
             cfg.original_cyclicFast_heuristic(config);
             config.reduction_config_name = "cyclicFast_heuristic";
@@ -427,6 +430,29 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
             config.reduction_config_name = "all_decreasing";
         }
     }
+
+    if (heuristic_style->count > 0) {
+        if (!strcmp(heuristic_style->sval[0], "single")) 
+        {   
+            config.heuristic_style_name = "single";
+            config.heuristic_style      = ReductionConfig::Heuristic_Style::single;
+        }
+        else if (!strcmp(reduction_config->sval[0], "all")) 
+        {   
+            config.heuristic_style_name = "all";
+            config.heuristic_style      = ReductionConfig::Heuristic_Style::all;
+        }
+        else if (!strcmp(reduction_config->sval[0], "multiple_very_safe")) 
+        {
+            config.heuristic_style_name = "multiple_very_safe";
+            config.heuristic_style      = ReductionConfig::Heuristic_Style::multiple_very_safe;
+        }
+        else { // default
+            config.heuristic_style_name = "multiple_safe";
+            config.heuristic_style      = ReductionConfig::Heuristic_Style::multiple_safe;
+        }
+    }
+
     BaseArguments::parseParameters(config);
 
     if (reduction_style->count > 0) {
@@ -456,6 +482,10 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         config.gnn_filter = true;
     } else {
         config.gnn_filter = false;
+        if (config.heuristic_style == ReductionConfig::Heuristic_Style::all)
+        {
+            config.heuristic_style      = ReductionConfig::Heuristic_Style::multiple_safe;
+        }
     }
     if (print_reduction_info->count > 0) {
         config.print_reduction_info = true;

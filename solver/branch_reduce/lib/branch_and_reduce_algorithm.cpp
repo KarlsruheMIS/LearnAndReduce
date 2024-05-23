@@ -686,6 +686,7 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 			t.restart();
 			const float *y = gnn.predict(this);
 
+			reduction->marker.current.clear();
 			if (reduction->get_reduction_type() == heuristic_exclude || reduction->get_reduction_type() == heuristic_include)
 			{
 				for (int u = 0; u < this->status.graph.size(); u++)

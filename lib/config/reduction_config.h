@@ -18,6 +18,7 @@ struct ReductionConfig : public Config {
     enum Struction_Type {ORIGINAL, MODIFIED, EXTENDED, EXTENDED_REDUCED, NONE};
     enum Backtrack_Type {IMMEDIATE_TIE_BREAKING, IMMEDIATE_EXCLUDE, END_MIN_KERNEL, NO_BACKTRACK};
     enum Reduction_Style {NORMAL, DENSE, FULL, test1, test2, fast_heuristic};
+    enum Heuristic_Style {single, multiple_safe, multiple_very_safe, all};
     enum Key_Type {RANDOM, DEGREE, INCREASE, APPROXIMATE_INCREASE};
 
     // Name of the kernel file.
@@ -66,7 +67,9 @@ struct ReductionConfig : public Config {
     int reduction_threshold;
     // Choose reduction order and amount for given graph type
     Reduction_Style reduction_style;
+    Heuristic_Style heuristic_style = Heuristic_Style::multiple_safe;
     std::string reduction_config_name = "all_decreasing";
+    std::string heuristic_style_name = "multiple_safe";
     std::string reduction_style_name = "initial";
     double reduction_time_limit;
 
