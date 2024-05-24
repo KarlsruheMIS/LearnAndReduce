@@ -107,6 +107,7 @@ void struction_log::print_graph() {
     filebuffer_string << "Time limit:\t\t\t"         << log_config.time_limit                   << std::endl; 
     filebuffer_string << "Seed:\t\t\t\t"             << log_config.seed                         << std::endl; 
     filebuffer_string << "Reduction Style:\t\t"      << log_config.reduction_style_name         << std::endl; 
+    filebuffer_string << "Heuristic Style:\t\t"      << log_config.heuristic_style_name         << std::endl; 
     filebuffer_string << "Reduction Config: \t\t"    << log_config.reduction_config_name        << std::endl;
     filebuffer_string                                                                           << std::endl;
     
@@ -115,6 +116,7 @@ void struction_log::print_graph() {
     std::cout << "Time limit:\t\t\t"         << log_config.time_limit                           << std::endl; 
     std::cout << "Seed:\t\t\t\t"             << log_config.seed                                 << std::endl; 
     std::cout << "Reduction Style:\t\t"      << log_config.reduction_style_name                 << std::endl;
+    std::cout << "Heuristic Style:\t\t"      << log_config.heuristic_style_name                 << std::endl;
     std::cout << "Reduction Config: \t\t"    << log_config.reduction_config_name                << std::endl;
     std::cout                                                                                   << std::endl;
 } 

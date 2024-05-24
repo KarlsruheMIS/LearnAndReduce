@@ -3805,7 +3805,11 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
             if (unsafe_to_reduce.get(v)) continue;
             if (is_reduced(v, br_alg)) continue;
 
-            br_alg->set(v, IS_status::excluded);
+            if (br_alg->status.weights[v] > get_neighborhood_weight(v, br_alg)) {
+                br_alg->set(v, IS_status::included);
+            } else {
+                br_alg->set(v, IS_status::excluded);
+            }
             unsafe_to_reduce.add(v);
             for(NodeID u : br_alg->status.graph[v]) {
                 unsafe_to_reduce.add(u);
@@ -3820,7 +3824,11 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         assert(config.gnn_filter);
         for (NodeID v : marker.current) {
             assert(is_reduced(v, br_alg) == false);
-            br_alg->set(v, IS_status::excluded);
+            if (br_alg->status.weights[v] > get_neighborhood_weight(v, br_alg)) {
+                br_alg->set(v, IS_status::included);
+            } else {
+                br_alg->set(v, IS_status::excluded);
+            }
         }
     } else { // only exclude single vertex with smallest score
         NodeID v = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
@@ -3832,6 +3840,7 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 
     reduced_nodes += (oldn - br_alg->status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
+    std::cout << "heuristic excluded: " << oldn - br_alg->status.remaining_nodes << " in " << br_alg->reduction_timer.elapsed() << std::endl;
     br_alg->status.heuristically_reduced_n += (oldn - br_alg->status.remaining_nodes);
     has_run = false; // check everything in next round again
     has_filtered_marker = true; 

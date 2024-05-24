@@ -437,12 +437,12 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
             config.heuristic_style_name = "single";
             config.heuristic_style      = ReductionConfig::Heuristic_Style::single;
         }
-        else if (!strcmp(reduction_config->sval[0], "all")) 
+        else if (!strcmp(heuristic_style->sval[0], "all")) 
         {   
             config.heuristic_style_name = "all";
             config.heuristic_style      = ReductionConfig::Heuristic_Style::all;
         }
-        else if (!strcmp(reduction_config->sval[0], "multiple_very_safe")) 
+        else if (!strcmp(heuristic_style->sval[0], "multiple_very_safe")) 
         {
             config.heuristic_style_name = "multiple_very_safe";
             config.heuristic_style      = ReductionConfig::Heuristic_Style::multiple_very_safe;

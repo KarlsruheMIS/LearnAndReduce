@@ -50,12 +50,12 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
 	if (config.reduction_style == ReductionConfig::Reduction_Style::test2)
 		expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
-	if (config.reduction_style == ReductionConfig::Reduction_Style::fast_heuristic)
+	if (config.reduction_style == ReductionConfig::Reduction_Style::test3)
 		expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
 
 	if (called_from_fold)
 	{
-		if (config.reduction_style == ReductionConfig::Reduction_Style::test1 || config.reduction_style == ReductionConfig::Reduction_Style::test2 || config.reduction_style == ReductionConfig::Reduction_Style::fast_heuristic)
+		if (config.reduction_style == ReductionConfig::Reduction_Style::test1 || config.reduction_style == ReductionConfig::Reduction_Style::test2 || config.reduction_style == ReductionConfig::Reduction_Style::test3)
 		{
 			global_status.transformations = make_reduction_vector<
 				neighborhood_reduction,
@@ -104,7 +104,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			generalized_fold_reduction>(global_status.n);
 		global_status.num_reductions = global_status.transformations.size();
 	}
-	else if (config.reduction_style == ReductionConfig::Reduction_Style::fast_heuristic)
+	else if (config.reduction_style == ReductionConfig::Reduction_Style::test3)
 	{
 			if (!config.disable_neighborhood)
 				global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
