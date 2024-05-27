@@ -45,13 +45,6 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	}
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {critical_set, struction_plateau, struction_blow};
-	expensive_transformations = {heuristic_exclude, heuristic_include};
-	if (config.reduction_style == ReductionConfig::Reduction_Style::test1)
-		expensive_transformations = {funnel, funnel_fold, single_edge, critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
-	if (config.reduction_style == ReductionConfig::Reduction_Style::test2)
-		expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex, heuristic_exclude, heuristic_include};
-	if (config.reduction_style == ReductionConfig::Reduction_Style::test3)
-		expensive_transformations = {critical_set, generalized_fold, heavy_set3, heavy_set, heavy_vertex, clique_neighborhood_fast, cut_vertex};
 
 	if (called_from_fold)
 	{
@@ -104,48 +97,48 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			generalized_fold_reduction>(global_status.n);
 		global_status.num_reductions = global_status.transformations.size();
 	}
-	else if (config.reduction_style == ReductionConfig::Reduction_Style::test3)
-	{
-			if (!config.disable_neighborhood)
-				global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
-			if (!config.disable_fold1)
-				global_status.transformations.emplace_back(new fold1_reduction(global_status.n));
-			if (!config.disable_fold2)
-				global_status.transformations.emplace_back(new fold2_reduction(global_status.n));
-			if (!config.disable_clique)
-				global_status.transformations.emplace_back(new clique_reduction(global_status.n));
-			if (!config.disable_domination)
-				global_status.transformations.emplace_back(new domination_reduction(global_status.n));
-			if (!config.disable_basic_se)
-				global_status.transformations.emplace_back(new single_edge_reduction(global_status.n));
-			if (!config.disable_extended_se)
-				global_status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
-			if (!config.disable_twin)
-				global_status.transformations.emplace_back(new twin_reduction(global_status.n));
-			if (!config.disable_funnel)
-				global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
-			if (!config.disable_funnel_fold)
-				global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
-			if (!config.disable_heuristic_include)
-				global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
-			if (!config.disable_heuristic_exclude)
-				global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
-			if (!config.disable_clique_neighborhood_fast)
-				global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
-			if (!config.disable_decreasing_struction)
-				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
+	// else if (config.reduction_style == ReductionConfig::Reduction_Style::test3)
+	// {
+	// 		if (!config.disable_neighborhood)
+	// 			global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
+	// 		if (!config.disable_fold1)
+	// 			global_status.transformations.emplace_back(new fold1_reduction(global_status.n));
+	// 		if (!config.disable_fold2)
+	// 			global_status.transformations.emplace_back(new fold2_reduction(global_status.n));
+	// 		if (!config.disable_clique)
+	// 			global_status.transformations.emplace_back(new clique_reduction(global_status.n));
+	// 		if (!config.disable_domination)
+	// 			global_status.transformations.emplace_back(new domination_reduction(global_status.n));
+	// 		if (!config.disable_basic_se)
+	// 			global_status.transformations.emplace_back(new single_edge_reduction(global_status.n));
+	// 		if (!config.disable_extended_se)
+	// 			global_status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
+	// 		if (!config.disable_twin)
+	// 			global_status.transformations.emplace_back(new twin_reduction(global_status.n));
+	// 		if (!config.disable_funnel)
+	// 			global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
+	// 		if (!config.disable_funnel_fold)
+	// 			global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
+	// 		if (!config.disable_heuristic_include)
+	// 			global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
+	// 		if (!config.disable_heuristic_exclude)
+	// 			global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
+	// 		if (!config.disable_clique_neighborhood_fast)
+	// 			global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
+	// 		if (!config.disable_decreasing_struction)
+	// 			global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 
-			if (!config.disable_critical_set)
-				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
-			if (!config.disable_generalized_fold)
-				global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
-			if (!config.disable_heavy_set)
-				global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
-			if (!config.disable_heavy_set3)
-				global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
-			if (!config.disable_cut_vertex)
-				global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
-	}
+	// 		if (!config.disable_critical_set)
+	// 			global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
+	// 		if (!config.disable_generalized_fold)
+	// 			global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
+	// 		if (!config.disable_heavy_set)
+	// 			global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
+	// 		if (!config.disable_heavy_set3)
+	// 			global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
+	// 		if (!config.disable_cut_vertex)
+	// 			global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
+	// }
 	else if (config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
 	{
 		if (!config.plain_struction)
@@ -238,11 +231,11 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		{
 			global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
 		}
-		if (!config.disable_heuristic_exclude)
-			global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
-		if (!config.disable_heuristic_include)
-			global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
 	}
+	if (!config.disable_heuristic_exclude)
+		global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
+	if (!config.disable_heuristic_include)
+		global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
 
 	global_transformation_map.resize(REDUCTION_NUM);
 	for (size_t i = 0; i < global_status.transformations.size(); i++)
@@ -391,7 +384,8 @@ void branch_and_reduce_algorithm::resize(size_t size)
 	for (auto &transformation : status.transformations)
 	{
 		transformation->marker.resize(size);
-		transformation->marker.clear_next();
+		assert(std::all_of(transformation->marker.next.begin(), transformation->marker.next.end(), [&](const auto &m) { return m < status.n; }) && "Marker contains too large nodes");
+  		// transformation->marker.clear_next();
 	}
 }
 
@@ -801,65 +795,52 @@ void branch_and_reduce_algorithm::initial_reduce()
 {
 	std::swap(global_transformation_map, local_transformation_map);
 	status = std::move(global_status);
-	if (config.disable_blow_up)
-	{
-		reduce_graph_internal(true);
-		min_kernel = status.remaining_nodes;
-	}
-	else
-	{
-		reduce_graph_internal(false);
-		if (config.print_reduction_info)
-		{
-			print_reduction_info();
-		}
-		bool further_impovement = status.remaining_nodes > 0;
-		min_kernel = status.remaining_nodes;
-		while (further_impovement && status.remaining_nodes > 0 && t.elapsed() <= config.time_limit)
-		{
-			further_impovement = false;
 
-			min_kernel = status.remaining_nodes;
-			if (!config.disable_blow_up && status.transformations.size() != status.num_reductions)
-				cyclic_blow_up();
+	bool further_impovement = status.remaining_nodes > 0;
+	min_kernel = status.remaining_nodes;
 
-			if (status.remaining_nodes == 0)
-				break;
-			size_t oldn = status.remaining_nodes;
-			reduce_graph_internal(true);
-			further_impovement = oldn != status.remaining_nodes;
+	while (further_impovement && status.remaining_nodes > 0 && t.elapsed() <= config.time_limit)
+	{
+		reduce_graph_internal_before_blow_up();
+
+		further_impovement = false;
+
+		if (!config.disable_blow_up && status.transformations.size() != status.num_reductions && !heuristically_reducing)
+			cyclic_blow_up();
+
+		if (status.remaining_nodes == 0) break;
+
+		size_t oldn = status.remaining_nodes;
+		reduce_graph_internal_after_blow_up();
+		further_impovement = oldn != status.remaining_nodes;
+		if (!further_impovement && heuristically_reducing) { // testing all again after heuristic reductions finished
+        	heuristically_reducing = false;
+			further_impovement = true;
 		}
+		if (config.print_reduction_info) print_reduction_info();
 	}
 	status.modified_stack.push_back(BRANCHING_TOKEN);
 
-	if (config.print_reduction_info)
-		print_reduction_info();
 	global_status = std::move(status);
 	std::swap(global_transformation_map, local_transformation_map);
 }
 
 
-void branch_and_reduce_algorithm::reduce_graph_internal(bool full)
+void branch_and_reduce_algorithm::reduce_graph_internal_before_blow_up()
 {
-	// if not full skip the expensive reductions and disable triangle and v_shape mid since they interfere with the blow up
-	if (!full)
-	{
-		if (!config.disable_fold2)
-		{
-			config.disable_triangle_mid = true;
-			config.disable_triangle_min = true;
-			config.disable_v_shape_mid = true;
-		}
-	}
+	// if (!config.disable_fold2)
+	// {
+	// 	config.disable_triangle_mid = true;
+	// 	config.disable_triangle_min = true;
+	// 	config.disable_v_shape_mid = true;
+	// }
 
 	size_t active_reduction_index = 0;
 	while (active_reduction_index < status.transformations.size() && t.elapsed() <= config.time_limit)
 	{
-		if (!full && std::find(expensive_transformations.begin(), expensive_transformations.end(), status.transformations[active_reduction_index]->get_reduction_type()) != expensive_transformations.end())
-		{
-			active_reduction_index++;
-			continue;
-		}
+		if (status.transformations[active_reduction_index]->get_reduction_type() == struction_blow)
+			break;
+
 		auto &reduction = status.transformations[active_reduction_index];
 
 		init_transformation_step(reduction);
@@ -869,12 +850,32 @@ void branch_and_reduce_algorithm::reduce_graph_internal(bool full)
 			break;
 	}
 
-	if (!full && !config.disable_fold2)
+	timeout |= t.elapsed() > config.time_limit;
+	// std::cout << "\ncurrent weight: " << status.is_weight << "  weight offset: " << status.reduction_offset << "  remaining nodes: " << status.remaining_nodes << std::endl;
+}
+
+
+void branch_and_reduce_algorithm::reduce_graph_internal_after_blow_up()
+{
+	// get struction_blow index
+	auto it = std::find_if(status.transformations.begin(), status.transformations.end(), [&](auto &reduction) { 
+		return reduction->get_reduction_type() == struction_blow; });
+	if (it == status.transformations.end()) return;
+
+	size_t active_reduction_index = std::distance(status.transformations.begin(), it)+1;
+
+	while (active_reduction_index < status.transformations.size() && t.elapsed() <= config.time_limit)
 	{
-		config.disable_triangle_min = false;
-		config.disable_triangle_mid = false;
-		config.disable_v_shape_mid = false;
+		auto &reduction = status.transformations[active_reduction_index];
+
+		init_transformation_step(reduction);
+		bool progress = reduction->reduce(this);
+		if (progress) return; 
+		active_reduction_index ++;
+		if (status.remaining_nodes == 0)
+			break;
 	}
+
 	timeout |= t.elapsed() > config.time_limit;
 	// std::cout << "\ncurrent weight: " << status.is_weight << "  weight offset: " << status.reduction_offset << "  remaining nodes: " << status.remaining_nodes << std::endl;
 }
@@ -955,7 +956,7 @@ void branch_and_reduce_algorithm::cyclic_blow_up()
 		if (timeout || !blow_up_graph_internal())
 			break;
 		// REDUCE
-		reduce_graph_internal(false);
+		reduce_graph_internal_before_blow_up();
 
 		if (status.remaining_nodes < min_kernel)
 		{
@@ -1157,12 +1158,7 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 		}
 
 		size_t old_n = status.n;
-		// if (config.reduce_by_vertex)
-		// 	reduce_graph_by_vertex_internal(true);
-		// else
-		// ch.enable_cout();
-		reduce_graph_internal(true);
-		// ch.disable_cout();
+		reduce_graph_internal_before_blow_up();
 
 		assert(status.remaining_nodes <= status.n && "Graph size and remaining nodes mismatch");
 		status.modified_stack.push_back(BRANCHING_TOKEN);

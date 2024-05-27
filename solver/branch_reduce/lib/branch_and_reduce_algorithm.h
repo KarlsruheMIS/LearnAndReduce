@@ -246,13 +246,15 @@ private:
 
     // void initial_filter_vertices_for_reduction();
 
-    void reduce_graph_internal(bool full = true);
+	void reduce_graph_internal_before_blow_up();
+    void reduce_graph_internal_after_blow_up();
     void reduce_graph_by_vertex_internal(bool full);
     bool blow_up_graph_internal();
     void cyclic_blow_up();
 	bool branch_reduce_recursive();
 	void branch_reduce_single_component();
     void initial_reduce();
+
 
     void update_best_solution();
     void undo_blow_up();

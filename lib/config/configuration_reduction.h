@@ -46,22 +46,16 @@ class configuration_reduction {
         void disable_new_reductions( ReductionConfig & config );
         void enable_new_reductions( ReductionConfig & config );
         void original_cyclicFast( ReductionConfig & config );
-        void original_cyclicFast_heuristic( ReductionConfig & config );
         void original_cyclicStrong( ReductionConfig & config );
         void original_kamis( ReductionConfig & config );
         void mmwis( ReductionConfig & config );
         void all_reductions_cyclicFast( ReductionConfig & config );
         void all_reductions_cyclicStrong( ReductionConfig & config );
         void all_decreasing( ReductionConfig & config );
-        void all_decreasing_heuristic( ReductionConfig & config );
-        void all_reductions_cyclicFast_heuristic( ReductionConfig & config );
 
         void fast( ReductionConfig & config );
-        void fast_heuristic( ReductionConfig & config );
         void very_fast( ReductionConfig & config );
-        void very_fast_heuristic( ReductionConfig & config );
         void extended_cyclicFast( ReductionConfig & config );
-        void extended_cyclicFast_heuristic( ReductionConfig & config );
 };
 
 
@@ -144,6 +138,7 @@ inline void configuration_reduction::original_cyclicFast( ReductionConfig & conf
     disable_new_reductions(config);
     config.disable_blow_up                        = false;
     config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
+    config.reduction_style_name                   = "normal";
     config.disable_generalized_fold               = true;
     config.disable_clique_neighborhood            = true;
     config.global_blow_up_factor                  = 9999;
@@ -153,17 +148,11 @@ inline void configuration_reduction::original_cyclicFast( ReductionConfig & conf
     config.subgraph_node_limit                    = 150;
 }
 
-inline void configuration_reduction::original_cyclicFast_heuristic( ReductionConfig & config ) {
-    original_cyclicFast(config);
-    config.disable_heuristic_exclude              = false;
-    config.disable_heuristic_include              = false;
-}
-
-
 inline void configuration_reduction::original_cyclicStrong( ReductionConfig & config ) {
     standard(config);
     disable_new_reductions(config);
     config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
+    config.reduction_style_name                   = "normal";
     config.disable_blow_up                        = false;
     config.disable_generalized_fold               = true;
     config.disable_clique_neighborhood            = true;
@@ -223,17 +212,6 @@ inline void configuration_reduction::very_fast( ReductionConfig & config ) {
     config.reduction_style_name                   = "test3";
 }
 
-inline void configuration_reduction::fast_heuristic( ReductionConfig & config ) {
-    fast(config);
-    config.disable_heuristic_exclude              = false;
-    config.disable_heuristic_include              = false;
-}
-inline void configuration_reduction::very_fast_heuristic( ReductionConfig & config ) {
-    very_fast(config);
-    config.disable_heuristic_exclude              = false;
-    config.disable_heuristic_include              = false;
-}
-
 inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig & config ) {
     original_cyclicFast(config);
     config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
@@ -252,17 +230,6 @@ inline void configuration_reduction::all_decreasing( ReductionConfig & config ) 
     standard(config);
     config.disable_blow_up                        = true;
 }
-inline void configuration_reduction::all_decreasing_heuristic( ReductionConfig & config ) {
-    all_decreasing(config);
-    config.disable_heuristic_include              = false;
-    config.disable_heuristic_exclude              = false;
-}
-
-inline void configuration_reduction::all_reductions_cyclicFast_heuristic( ReductionConfig & config ) {
-    all_reductions_cyclicFast(config);
-    config.disable_heuristic_include              = false;
-    config.disable_heuristic_exclude              = false;
-}
 
 inline void configuration_reduction::extended_cyclicFast( ReductionConfig & config ) {
     original_cyclicFast(config);
@@ -276,10 +243,4 @@ inline void configuration_reduction::extended_cyclicFast( ReductionConfig & conf
     config.disable_extended_se                    = false;
     config.disable_funnel                         = false;
     config.disable_funnel_fold                    = false;
-}
-
-inline void configuration_reduction::extended_cyclicFast_heuristic( ReductionConfig & config ) {
-    extended_cyclicFast(config);
-    config.disable_heuristic_include              = false;
-    config.disable_heuristic_exclude              = false;
 }

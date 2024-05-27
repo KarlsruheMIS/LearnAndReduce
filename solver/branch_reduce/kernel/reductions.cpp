@@ -3720,7 +3720,6 @@ bool heuristic_include_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     auto& config = br_alg->config;
     br_alg->reduction_timer.restart();
     if (marker.current.empty()) {
-        br_alg->heuristically_reducing = false;
         has_run = false; // check everything in next round again
         has_filtered_marker = true; 
         return false;
@@ -3730,7 +3729,6 @@ bool heuristic_include_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 
     auto& unsafe_to_reduce = br_alg->set_1;
     unsafe_to_reduce.clear();
-    br_alg->heuristically_reducing = true;
     if (!config.heuristic_style == ReductionConfig::Heuristic_Style::single) {
         std::sort(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
             return weights[a] - get_neighborhood_weight(a, br_alg) > weights[b] - get_neighborhood_weight(b, br_alg);
@@ -3785,7 +3783,6 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     auto& config = br_alg->config;
     br_alg->reduction_timer.restart();
     if (marker.current.empty()) {
-        br_alg->heuristically_reducing = false;
         has_run = false; // check everything in next round again
         has_filtered_marker = true; 
         return false;
@@ -3821,7 +3818,7 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
             }
         }
     } else if (config.heuristic_style == ReductionConfig::Heuristic_Style::all) {
-        assert(config.gnn_filter);
+        // assert(config.gnn_filter);
         for (NodeID v : marker.current) {
             assert(is_reduced(v, br_alg) == false);
             if (br_alg->status.weights[v] > get_neighborhood_weight(v, br_alg)) {

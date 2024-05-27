@@ -73,7 +73,7 @@ class ReductionArguments : public BaseArguments {
             reduction_style     = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: full, normal, dense, test1, test2.");
             heuristic_style     = arg_str0(NULL, "heuristic_style", NULL, "Configuration to use in the heuristic reductions. ([single, multiple_very_safe, multiple_safe, all (if no gnn_filter this is the same as multiple_safe)]). Default: multiple_safe.");
             reduction_time_limit= arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
-            reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, extended_cyclicFast, all_decreasing, all_decreasing_heuristic, all_reductions_cyclicFast_heuristic, fast, fast_heuristic]). Default: decreasing (not using increasing reductions).");
+            reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, extended_cyclicFast, all_decreasing, fast, very_fast]). Default: decreasing (not using increasing reductions).");
             kernel_filename     = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
 	        disable_reduction   = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
 	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
@@ -81,6 +81,7 @@ class ReductionArguments : public BaseArguments {
             disable_early_termination   = arg_lit0(NULL, "disable_early_termination", "Disable early termination of solving subgraphs in reductions.");
             initial_filter      = arg_lit0(NULL, "initial_filter", "Use initial filter on vertices to apply reductions on.");
             gnn_filter          = arg_lit0(NULL, "gnn_filter", "Use GNNs for initial filter on vertices to apply reductions on.");
+            use_heuristic_reductions  = arg_lit0(NULL, "use_heuristic_reductions", "Enable heuristic reductions.");
 
             // single reduction parameters
             disable_neighborhood        = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -176,6 +177,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_funnel_fold;
         struct arg_lit * disable_decreasing_struction;
         struct arg_lit * disable_plateau_struction;
+        struct arg_lit * use_heuristic_reductions;
         struct arg_lit * disable_heuristic_include;
         struct arg_lit * disable_heursitic_exclude;
         struct arg_int * subgraph_node_limit;
@@ -279,6 +281,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_early_termination,
         initial_filter,
         gnn_filter,
+        use_heuristic_reductions,
         kernel_filename,
         reduction_config,
         heuristic_style,
@@ -360,25 +363,10 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
             cfg.original_cyclicFast(config);
             config.reduction_config_name = "cyclicFast";
         }
-        else if (!strcmp(reduction_config->sval[0], "cyclicFast_heuristic")) 
-        {   
-            cfg.original_cyclicFast_heuristic(config);
-            config.reduction_config_name = "cyclicFast_heuristic";
-        }
-        else if (!strcmp(reduction_config->sval[0], "fast_heuristic")) 
-        {
-            cfg.fast_heuristic(config);
-            config.reduction_config_name = "fast_heuristic";
-        }
         else if (!strcmp(reduction_config->sval[0], "fast")) 
         {
             cfg.fast(config);
             config.reduction_config_name = "fast";
-        }
-        else if (!strcmp(reduction_config->sval[0], "very_fast_heuristic")) 
-        {
-            cfg.very_fast_heuristic(config);
-            config.reduction_config_name = "very_fast_heuristic";
         }
         else if (!strcmp(reduction_config->sval[0], "very_fast")) 
         {
@@ -390,20 +378,10 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
             cfg.all_reductions_cyclicFast(config);
             config.reduction_config_name = "all_reductions_cyclicFast";
         }
-        else if (!strcmp(reduction_config->sval[0], "all_reductions_cyclicFast_heuristic")) 
-        {
-            cfg.all_reductions_cyclicFast_heuristic(config);
-            config.reduction_config_name = "all_reductions_cyclicFast_heuristic";
-        }
         else if (!strcmp(reduction_config->sval[0], "extended_cyclicFast")) 
         {
             cfg.extended_cyclicFast(config);
             config.reduction_config_name = "extended_cyclicFast";
-        }
-        else if (!strcmp(reduction_config->sval[0], "extended_cyclicFast_heuristic")) 
-        {
-            cfg.extended_cyclicFast_heuristic(config);
-            config.reduction_config_name = "extended_cyclicFast_heuristic";
         }
         else if (!strcmp(reduction_config->sval[0], "cyclicStrong")) 
         {
@@ -421,10 +399,6 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         {
             cfg.mmwis(config);
             config.reduction_config_name = "mmwis";
-        } else if (!strcmp(reduction_config->sval[0], "all_decreasing_heuristic")) 
-        {
-            cfg.all_decreasing_heuristic(config);
-            config.reduction_config_name = "all_decreasing_heuristic";
         } else {
             cfg.all_decreasing(config);
             config.reduction_config_name = "all_decreasing";
@@ -561,6 +535,15 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (disable_funnel->count > 0) {
         config.disable_funnel = true;
+    }
+    if (use_heuristic_reductions->count > 0) {
+        config.disable_heuristic_exclude = false;
+        config.disable_heuristic_include = false;
+        if (config.heuristic_style == ReductionConfig::Heuristic_Style::none)
+        {
+            config.heuristic_style      = ReductionConfig::Heuristic_Style::multiple_safe;
+            config.heuristic_style_name = "multiple_safe";
+        }
     }
     if (disable_heuristic_include->count > 0) {
         config.disable_heuristic_include = true;
