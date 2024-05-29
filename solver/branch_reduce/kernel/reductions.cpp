@@ -322,7 +322,7 @@ bool fold2_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID 
         this->fold_triangle_min_weight(br_alg, {v, {bigger, smaller}});
     } else if (status.weights[v] >= status.weights[bigger]) {
         if (br_alg->config.disable_v_shape_max) return false;
-        this->fold_v_shape_max_weight(br_alg, {v, {bigger, smaller}});
+        this->fold_v_shape_max_weight(br_alg, {v, {status.graph[v][0], status.graph[v][1]}});
     } else if (status.weights[v] >= status.weights[smaller]) 
     {
         if (br_alg->config.disable_v_shape_mid) return false;
@@ -384,7 +384,7 @@ void fold2_reduction::fold_v_shape_mid_weight(branch_and_reduce_algorithm* br_al
     NodeID smaller = nodes.neighbors[1];
     NodeWeight deg2_weight = status.weights[nodes.deg2_node];
 
-	restore_vec.push_back({nodes, deg2_weight, fold2_reduction::fold_case::v_shape_mid,{}});
+	restore_vec.push_back({nodes, deg2_weight, fold2_reduction::fold_case::v_shape_mid, {}});
 	br_alg->set(nodes.deg2_node, IS_status::folded);
 
 	status.reduction_offset += deg2_weight;
@@ -393,8 +393,6 @@ void fold2_reduction::fold_v_shape_mid_weight(branch_and_reduce_algorithm* br_al
 	neighbors.add(nodes.deg2_node);
 	neighbors.add(smaller);
 	neighbors.add(bigger);
-
-    std::vector<NodeID> new_neighbors;
 
     for (auto neighbor : status.graph[smaller]) {
         neighbors.add(neighbor);
@@ -420,7 +418,12 @@ void fold2_reduction::fold_v_shape_max_weight(branch_and_reduce_algorithm* br_al
     auto oldn = status.remaining_nodes;
 	size_t oldw = status.reduction_offset;
 
-	restore_vec.push_back({ nodes, status.weights[nodes.deg2_node], fold2_reduction::fold_case::v_shape_max, {}});
+	restore_vec.push_back({ nodes, status.weights[nodes.deg2_node], fold2_reduction::fold_case::v_shape_max, {} });
+
+	br_alg->set(nodes.neighbors[1], IS_status::folded, false);
+	br_alg->set(nodes.neighbors[0], IS_status::folded, true);
+
+
 	status.reduction_offset += status.weights[nodes.deg2_node];
 	status.weights[nodes.deg2_node] = status.weights[nodes.neighbors[0]] + status.weights[nodes.neighbors[1]] - status.weights[nodes.deg2_node];
 
@@ -430,19 +433,16 @@ void fold2_reduction::fold_v_shape_max_weight(branch_and_reduce_algorithm* br_al
 	for (size_t i = 0; i < 2; i++) {
 		for (auto neighbor : status.graph[nodes.neighbors[i]]) {
 			if (neighbors.add(neighbor)) {
-                // TODO: check relink
-                // status.graph.relink_directed(neighbor, nodes.neighbors[i], nodes.deg2_node);
-                // status.graph.add_edge_directed(nodes.deg2_node, neighbor);
-                status.graph.add_edge_undirected(nodes.deg2_node, neighbor);
+                status.graph.add_edge_undirected(neighbor, nodes.deg2_node);
 			    restore_vec.back().node_vecs[i].push_back(neighbor);
 			}
 		}
 	}
-	br_alg->set(nodes.neighbors[1], IS_status::folded,true);
-	br_alg->set(nodes.neighbors[0], IS_status::folded,false);
 
 	status.folded_stack.push_back(get_reduction_type());
-	br_alg->add_next_level_node(nodes.neighbors[0]);
+
+	br_alg->add_next_level_node(nodes.deg2_node);
+	br_alg->add_next_level_neighborhood(nodes.deg2_node);
 }
 void fold2_reduction::fold_v_shape_min_weight(branch_and_reduce_algorithm* br_alg, const fold_nodes& nodes) {
 	auto& status = br_alg->status;

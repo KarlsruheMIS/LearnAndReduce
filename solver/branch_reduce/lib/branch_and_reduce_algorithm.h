@@ -124,6 +124,7 @@ private:
 
         std::vector<reduction_ptr> transformations; //reductions + blow_ups.
         size_t num_reductions;
+        // int blow_up_index;
 		NodeID heuristically_reduced_n = 0;
 
 		sized_vector<reduction_type> folded_stack;
