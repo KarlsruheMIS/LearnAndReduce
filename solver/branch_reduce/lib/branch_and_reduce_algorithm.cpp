@@ -244,7 +244,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	}
 	if (config.reduce_by_vertex)
 	{
-		global_status.reduction_node_status = std::vector<std::vector<bool>>(global_status.n, std::vector<bool>(global_status.num_reductions, true));
+		global_status.reduction_node_status = std::vector<std::vector<bool>>(global_status.n, std::vector<bool>(global_status.transformations.size(), true));
 	}
 
 	set_local_reductions = [this, called_from_fold, &config]()
@@ -348,7 +348,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		}
 
 		if (config.reduce_by_vertex)
-			status.reduction_node_status = std::vector<std::vector<bool>>(status.n, std::vector<bool>(status.num_reductions, true));
+			status.reduction_node_status = std::vector<std::vector<bool>>(status.n, std::vector<bool>(status.transformations.size(), true));
 	};
 
 	for (auto &re : status.transformations)
@@ -384,7 +384,7 @@ void branch_and_reduce_algorithm::resize(size_t size)
 	for (auto &transformation : status.transformations)
 	{
 		transformation->marker.resize(size);
-		assert(std::all_of(transformation->marker.next.begin(), transformation->marker.next.end(), [&](const auto &m) { return m < status.n; }) && "Marker contains too large nodes");
+		assert(std::all_of(transformation->marker.next.begin(), transformation->marker.next.end(), [&](const auto &m) { return m <= status.n; }) && "Marker contains too large nodes");
   		// transformation->marker.clear_next();
 	}
 }
@@ -932,14 +932,15 @@ bool branch_and_reduce_algorithm::blow_up_graph_internal()
 		heuristic_reductions += 1;
 	if (!config.disable_heuristic_include)
 		heuristic_reductions += 1;
-	for (size_t active_blow_up_index = status.num_reductions; active_blow_up_index < status.transformations.size() - heuristic_reductions; ++active_blow_up_index)
-	{
+	size_t active_blow_up_index = status.num_reductions;
+	// for (size_t active_blow_up_index = status.num_reductions; active_blow_up_index < status.transformations.size() - heuristic_reductions; ++active_blow_up_index)
+	// {
 		auto &blow_up = status.transformations[active_blow_up_index];
 		init_transformation_step(blow_up);
 		blown_up |= blow_up->reduce(this);
-		if (t.elapsed() > config.time_limit)
-			break;
-	}
+		// if (t.elapsed() > config.time_limit)
+			// break;
+	// }
 	timeout |= t.elapsed() > config.time_limit;
 	return blown_up;
 }
@@ -1019,6 +1020,8 @@ bool branch_and_reduce_algorithm::branch_reduce_recursive()
 		extractor.extract_block(recursive_graph, G, i + 2, recursive_local_mapping);
 
 		config.time_limit = time_limit - t.elapsed();
+		config.disable_heuristic_exclude = true;
+		config.disable_heuristic_include = true;
 
 		branch_and_reduce_algorithm br_alg(G, config, true);
 		ch.disable_cout();
@@ -1855,7 +1858,7 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 void branch_and_reduce_algorithm::get_transformation_names(std::vector<std::string> &names)
 {
 	names.clear();
-	for (size_t i = 0; i < global_status.num_reductions; i++)
+	for (size_t i = 0; i < global_status.transformations.size(); i++)
 	{
 		names.push_back(global_status.transformations[i]->get_reduction_name());
 	}
