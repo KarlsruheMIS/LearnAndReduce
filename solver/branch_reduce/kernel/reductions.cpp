@@ -3820,7 +3820,7 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     } else if (config.heuristic_style == ReductionConfig::Heuristic_Style::all) {
         // assert(config.gnn_filter);
         for (NodeID v : marker.current) {
-            assert(is_reduced(v, br_alg) == false);
+            if(is_reduced(v, br_alg)) continue;
             if (br_alg->status.weights[v] > get_neighborhood_weight(v, br_alg)) {
                 br_alg->set(v, IS_status::included);
             } else {
