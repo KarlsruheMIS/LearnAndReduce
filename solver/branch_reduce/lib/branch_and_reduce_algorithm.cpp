@@ -1103,7 +1103,6 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 		}
 
 		NodeID branch_node = node_order[i];
-		std::cout << branch_node << std::endl;
 		if (i == status.n - 1)
 		{
 			if (status.node_status[branch_node] == IS_status::not_set)
