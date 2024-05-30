@@ -381,11 +381,8 @@ void branch_and_reduce_algorithm::resize(size_t size)
 	{
 		buffer.resize(size);
 	}
-	for (auto &transformation : status.transformations)
-	{
+	for (auto &transformation : status.transformations) {
 		transformation->marker.resize(size);
-		assert(std::all_of(transformation->marker.next.begin(), transformation->marker.next.end(), [&](const auto &m) { return m <= status.n; }) && "Marker contains too large nodes");
-  		// transformation->marker.clear_next();
 	}
 }
 
@@ -535,8 +532,10 @@ void branch_and_reduce_algorithm::compute_ils_pruning_bound()
 
 	best_weight = status.reduction_offset + status.is_weight + run_ils(config_cpy, *local_graph, buffers[0], 1000);
 	best_is_time = t.elapsed();
-	struction_log::instance()->set_best(get_current_is_weight(), best_is_time);
 	ch.enable_cout();
+	// update_best_solution();
+	struction_log::instance()->set_best(get_current_is_weight() + best_weight, best_is_time);
+	std::cout <<get_current_is_weight() + best_weight <<", " << best_is_time << std::endl;
 }
 
 NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound()
@@ -1073,6 +1072,7 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 	}
 
 	resize(status.n);
+
 	sized_vector<NodeID> node_order(status.n);
 	node_order.set_size(status.n);
 	std::iota(node_order.begin(), node_order.end(), 0);
@@ -1088,6 +1088,11 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 		return;
 	}
 
+	for (auto &transformation : status.transformations) {
+		transformation->marker.clear_next();
+		transformation->has_run = false;
+	}
+
 	size_t i = 0;
 	while (i < status.n)
 	{
@@ -1098,6 +1103,7 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 		}
 
 		NodeID branch_node = node_order[i];
+		std::cout << branch_node << std::endl;
 		if (i == status.n - 1)
 		{
 			if (status.node_status[branch_node] == IS_status::not_set)
@@ -1176,6 +1182,9 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 					  { return deg(lhs) > deg(rhs) || (deg(lhs) == deg(rhs) && status.weights[lhs] > status.weights[rhs]); });
 
 			resize(status.n);
+			for (auto &transformation : status.transformations) {
+				transformation->marker.clear_next();
+			}
 		}
 
 		if (status.remaining_nodes > SPLIT_CC_LIMIT && branch_reduce_recursive())
@@ -1227,6 +1236,7 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 		if (config.console_log)
 			std::cout << "solution weight and time: " << get_current_is_weight() << "," << t.elapsed() << std::endl;
 		max_min_kernel_comp = 0;
+
 		restore_best_global_solution();
 		return true;
 	}
@@ -1314,7 +1324,7 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 		fill_global_greedy();
 	}
 
-	struction_log::instance()->set_best(get_current_is_weight(), t.elapsed());
+	update_best_solution();
 	restore_best_global_solution();
 	return !timeout;
 }

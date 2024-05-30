@@ -68,21 +68,26 @@ public:
 	}
 
     void resize(size_t size) {
-		size_t old_cap = next.capacity();
         added_vertices.resize(size);
         current.resize(size);
         next.resize(size);
-		// remove vertices that are not in the new graph
-		if (size < old_cap) {
-			for (size_t i = 0; i < next.size(); i++) {
-				if (next[i] > size) {
-					next.remove(i);
-					i--; // next[i] is now the last element and needs to be checked again
-				}
-			}
-		}
-		assert(std::all_of(next.begin(), next.end(), [&](const auto &m) {  return m <= size; }) && "Marker contains too large nodes");
     }
+
+	// after resize old vertices might be left in the marker
+	// void remove_old_vertices() {
+		// remove vertices that are not in the new graph
+		// size_t i = 0;
+		// while (i < next.size()) {
+			// if (next[i] > next.capacity()) {
+			// 	next.remove(i);
+ 			// 	// next[i] is now the last element and needs to be checked again
+			// }
+			// else {
+				// i++;
+			// }
+		// }
+		// assert(std::all_of(next.begin(), next.end(), [&](const auto &m) {  return m <= next.capacity(); }) && "Marker contains too large nodes");
+	// }
 
     sized_vector<NodeID> &current_vec() {
 	    return current;
