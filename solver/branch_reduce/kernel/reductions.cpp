@@ -36,7 +36,7 @@ template<typename F>
 void general_reduction::for_each_changed_vertex(branch_and_reduce_algorithm* br_alg, F f) {
     auto& status = br_alg->status;
     for (size_t v_idx = 0; v_idx < marker.current_size(); v_idx++) {
-        if (br_alg->config.reduction_time_limit < br_alg->t.elapsed()) return;
+        /* if (br_alg->config.reduction_time_limit < br_alg->t.elapsed()) return; */
         NodeID v = marker.current_vertex(v_idx);
 
         if (v < status.n && !is_reduced(v, br_alg)) {
@@ -156,25 +156,23 @@ bool general_reduction::is_reduced(NodeID v, branch_and_reduce_algorithm* br_alg
 }
 
 bool neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
-    // if (br_alg->config.disable_neighborhood) return false;
-    size_t oldn = br_alg->status.remaining_nodes;
     auto& status = br_alg->status;
+    size_t oldn = br_alg->status.remaining_nodes;
     #ifdef REDUCTION_INFO
         br_alg->reduction_timer.restart();
     #endif
 
 	for_each_changed_vertex(br_alg, [&br_alg, &status](NodeID v) {
-        // reduce_vertex(br_alg, v);
         NodeWeight neighbor_weights = 0;
-        for (NodeID neighbor : status.graph[v]) {
-            /* assert(br_alg->status.node_status[neighbor] == IS_status::not_set); */
-                neighbor_weights += status.weights[neighbor];
-                if (status.weights[v] < neighbor_weights) {
-                    return;
-                }
-            // }
+        for (NodeID u : status.graph[v]) {
+           neighbor_weights += status.weights[u];
+           if (status.weights[v] < neighbor_weights) {
+               return;
+           }
         }
-        br_alg->set(v, IS_status::included);
+        // if (status.weights[v] >= neighbor_weights) {
+            br_alg->set(v, IS_status::included);
+        // }
     });
 
     #ifdef REDUCTION_INFO
@@ -183,6 +181,7 @@ bool neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     #endif
 	return oldn != br_alg->status.remaining_nodes;
 }
+
 inline bool neighborhood_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
     // if (br_alg->config.disable_neighborhood) return false;
     auto& status = br_alg->status;
@@ -1514,7 +1513,7 @@ inline bool component_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
     auto& reverse_mapping = br_alg->buffers[1];
     auto& cut_component_set = br_alg->set_1;
     auto& cut_v_neighbor_set = br_alg->double_set; // since set_2 used in later iterative function call
-    /* auto& config = br_alg->config; */
+    auto& config = br_alg->config;
 	size_t oldn = status.remaining_nodes;
     NodeID cut_v;
     if (check_components(br_alg, v, cut_v, cut_component)) {

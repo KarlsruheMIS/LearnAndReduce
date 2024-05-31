@@ -1820,13 +1820,11 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 					status.modified_stack.pop_back();
 					if (restore_node == MODIFIED_TOKEN)
 					{ // for reductions that do not reduce but only modify the graph
-      /* auto type = status.folded_stack.back(); */
 						status.folded_stack.pop_back();
 						reduction->restore(this);
 					}
 					else if (status.node_status[restore_node] == IS_status::folded)
 					{
-      /* auto type = status.folded_stack.back(); */
 						status.folded_stack.pop_back();
 						reduction->restore(this);
 					}
