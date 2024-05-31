@@ -17,7 +17,7 @@ template<bool reduced>
 bool extended_struction<reduced>::reduce(branch_and_reduce_algorithm* br_alg, NodeID n, size_t max_nodes) {
     this->br_alg = br_alg;
     auto &status = br_alg->status;
-    size_t oldn = status.remaining_nodes;
+    /* size_t oldn = status.remaining_nodes; */
 
     auto &additional_nodes = br_alg->buffers[1];
     auto &layer_prefix_count = br_alg->buffers[2];

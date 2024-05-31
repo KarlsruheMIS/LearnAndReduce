@@ -6,8 +6,8 @@
  *      Author: bruno
  */
 
-#include "random_functions.h"
 #include "Solution.h"
+#include "random_functions.h"
 
 #include <algorithm>
 #include <random>
@@ -24,24 +24,24 @@ Solution::Solution(graph_access *G) :
 	position_(G->number_of_nodes()),
 	mu_(G->number_of_nodes()),
 	weight_(0) {
-	for (int idx = 0; idx < G->number_of_nodes(); idx++) {
+	for (NodeID idx = 0; idx < G->number_of_nodes(); idx++) {
 		position_[idx] = idx;
 		solution_[idx] = idx;
 		mu_[idx] = G->getNodeWeight(idx);
 	}
 } // Solution::Solution(const Graph *g)
 
-void Solution::moveFreeToSolutionPartition(const int v) {
+void Solution::moveFreeToSolutionPartition(const NodeID v) {
 	assert(v < G->number_of_nodes());
 
 	// current position of v in the solution_ vector
-	int pos_v = position_[v];
+	NodeID pos_v = position_[v];
 
 	// new position of v in the solution_ vector
-	int new_pos_v = solution_size_;
+	NodeID new_pos_v = solution_size_;
 
 	// first vertex of the second partition
-	int j = solution_[solution_size_];
+	NodeID j = solution_[solution_size_];
 
 	// ensures v is in the free partition of the solution vector
 	assert((solution_size_ <= pos_v) && (solution_size_ + free_size_ > pos_v));
@@ -55,20 +55,20 @@ void Solution::moveFreeToSolutionPartition(const int v) {
 	// first partition
 	solution_size_++;
 	free_size_--;
-} // void Solution::moveFreeToSolutionPartition(const int v)
+} // void Solution::moveFreeToSolutionPartition(const NodeID v)
 
-void Solution::moveFreeToNonFreePartition(const int v)
+void Solution::moveFreeToNonFreePartition(const NodeID v)
 {
 	assert(v < G->number_of_nodes());
 
 	// current position of v in the solution vector
-	int pos_v = position_[v];
+	NodeID pos_v = position_[v];
 
 	// new position of v in the solution vector
-	int new_pos_v = solution_size_ + free_size_ - 1;
+	NodeID new_pos_v = solution_size_ + free_size_ - 1;
 
 	// last vertex of the second partition
-	int j = solution_[solution_size_ + free_size_ - 1];
+	NodeID j = solution_[solution_size_ + free_size_ - 1];
 
 	// ensures v is in the free partition of the solution vector
 	assert((solution_size_ <= pos_v) && (solution_size_ + free_size_ > pos_v));
@@ -81,20 +81,20 @@ void Solution::moveFreeToNonFreePartition(const int v)
 	// change the boundary between the blocks to make v the last vertex of the
 	// second partition
 	free_size_--;
-} // void Solution::moveFreeToNonFreePartition(const int v)
+} // void Solution::moveFreeToNonFreePartition(const NodeID v)
 
-void Solution::moveSolutionToFreePartition(const int v)
+void Solution::moveSolutionToFreePartition(const NodeID v)
 {
 	assert(v < G->number_of_nodes());
 
 	// current position of v in the solution vector
-	int pos_v = position_[v];
+	NodeID pos_v = position_[v];
 
 	// new position of v in the solution vector
-	int new_pos_v = solution_size_ - 1;
+	NodeID new_pos_v = solution_size_ - 1;
 
 	// last vertex of the first partition
-	int j = solution_[solution_size_ - 1];
+	NodeID j = solution_[solution_size_ - 1];
 
 	// ensures v is in the solution partition of the solution vector
 	assert(pos_v < solution_size_);
@@ -108,20 +108,20 @@ void Solution::moveSolutionToFreePartition(const int v)
 	// second partition
 	solution_size_--;
 	free_size_++;
-} // void Solution::moveSolutionToFreePartition(const int v)
+} // void Solution::moveSolutionToFreePartition(const NodeID v)
 
-void Solution::moveNonFreeToFreePartition(const int v)
+void Solution::moveNonFreeToFreePartition(const NodeID v)
 {
 	assert(v < G->number_of_nodes());
 
 	// current position of v in the solution vector
-	int pos_v = position_[v];
+	NodeID pos_v = position_[v];
 
 	// new position of v in the solution vector
-	int new_pos_v = solution_size_ + free_size_;
+	NodeID new_pos_v = solution_size_ + free_size_;
 
 	// first vertex of the third partition
-	int j = solution_[solution_size_ + free_size_];
+	NodeID j = solution_[solution_size_ + free_size_];
 
 	// ensures v is in the non free partition of the solution vector
 	assert(pos_v >= solution_size_ + free_size_);
@@ -136,9 +136,9 @@ void Solution::moveNonFreeToFreePartition(const int v)
 	free_size_++;
 } // void Solution::moveNonFreeToFreePartition(const int v)
 
-void Solution::addVertex(const int v)
+void Solution::addVertex(const NodeID v)
 {
-	int weight_v = G->getNodeWeight(v);
+	NodeWeight weight_v = G->getNodeWeight(v);
 	weight_ += weight_v;
 
 	moveFreeToSolutionPartition(v);
@@ -151,16 +151,16 @@ void Solution::addVertex(const int v)
 		mu_[neighbor] -= weight_v;
 
 		// if the neighbor is in the free partition, move to non free partition
-		int neighbor_pos = position_[neighbor];
+		NodeID neighbor_pos = position_[neighbor];
 		if ((solution_size_ <= neighbor_pos) && (solution_size_ + free_size_ > neighbor_pos)) {
 			moveFreeToNonFreePartition(neighbor);
 		}
 	endfor
-} // void Solution::addVertex(const int v)
+} // void Solution::addVertex(const NodeID v)
 
-void Solution::removeVertex(const int v)
+void Solution::removeVertex(const NodeID v)
 {
-	int weight_v = G->getNodeWeight(v);
+	NodeWeight weight_v = G->getNodeWeight(v);
 	weight_ -= weight_v;
 
 	moveSolutionToFreePartition(v);
@@ -176,13 +176,12 @@ void Solution::removeVertex(const int v)
 			moveNonFreeToFreePartition(neighbor);
 		}
 	endfor
-} // void Solution::removeVertex(const int v)
+} // void Solution::removeVertex(const NodeID v)
 
 bool Solution::integrityCheck() const
 {
-	return true;
-	for (int idx = 0; idx < solution_size_; idx++) {
-		int vertex = solution_[idx];
+	for (NodeID idx = 0; idx < solution_size_; idx++) {
+		NodeID vertex = solution_[idx];
 
 		if (tightness_[vertex] > 0) {
 			return false;
@@ -198,15 +197,15 @@ bool Solution::integrityCheck() const
 		endfor
 	}
 
-	for (int idx = solution_size_; idx < solution_size_ + free_size_; idx++) {
-		int vertex = solution_[idx];
+	for (NodeID idx = solution_size_; idx < solution_size_ + free_size_; idx++) {
+		NodeID vertex = solution_[idx];
 		if (tightness_[vertex] > 0) {
 			return false;
 		}
 	}
 
-	for (int idx = solution_size_ + free_size_; idx < G->number_of_nodes(); idx++) {
-		int vertex = solution_[idx];
+	for (NodeID idx = solution_size_ + free_size_; idx < G->number_of_nodes(); idx++) {
+		NodeID vertex = solution_[idx];
 		if (tightness_[vertex] == 0) {
 			return false;
 		}
@@ -220,19 +219,19 @@ void Solution::addRandomVertex()
 	assert(!isMaximal());
 
 	// generate a random number between [0, free_size_ - 1]
-	int free_pos = random_functions::nextInt(0, free_size_ -1);
+	NodeID free_pos = random_functions::nextInt(0, free_size_ -1);
 
-	int vertex = solution_[solution_size_ + free_pos];
+	NodeID vertex = solution_[solution_size_ + free_pos];
 
 	addVertex(vertex);
 } // void Solution::addRandomVertex()
 
 bool Solution::candOmegaImprovement(NodeID cand)
 {
-	int pos_cand = position_[cand];
+	NodeID pos_cand = position_[cand];
     if (pos_cand<solution_size_) return false; //not in solution
 
-	int v = solution_[pos_cand];
+	NodeID v = solution_[pos_cand];
 	if (mu_[v] > 0) {
         forall_out_edges((*G), e, v)
             NodeID neighbor = G->getEdgeTarget(e);
@@ -251,8 +250,8 @@ bool Solution::candOmegaImprovement(NodeID cand)
 
 bool Solution::omegaImprovement()
 {
-	for (int idx = G->number_of_nodes() - 1; idx >= solution_size_; idx--) {
-		int v = solution_[idx];
+	for (NodeID idx = G->number_of_nodes() - 1; idx >= solution_size_; idx--) {
+		NodeID v = solution_[idx];
 		if (mu_[v] > 0) {
             forall_out_edges((*G), e, v)
                 NodeID neighbor = G->getEdgeTarget(e);
@@ -271,14 +270,14 @@ bool Solution::omegaImprovement()
 bool Solution::candTwoImprovement(NodeID cand)
 {
 	assert(isMaximal());
-	int pos_cand = position_[cand];
+	NodeID pos_cand = position_[cand];
     if (pos_cand>=solution_size_) return false; //not in solution
 
 		// the candidate for removal
-		int x = solution_[pos_cand];
+		NodeID x = solution_[pos_cand];
 
 		// sorted list of 1-tight nighbors of x
-        std::vector<int> onetight_list;
+        std::vector<NodeID> onetight_list;
 
 		// build the list of 1-tight nighbors of x
         forall_out_edges((*G), e, x)
@@ -292,11 +291,11 @@ bool Solution::candTwoImprovement(NodeID cand)
 		// if x has fewer than two 1-tight neighors we are done with x
         if (onetight_list.size() < 2) return false;
 
-		int x_weight = G->getNodeWeight(x);
+		NodeWeight x_weight = G->getNodeWeight(x);
 
 		// attempt to find in onetight_list a pair {v, w} such that there
 		// is no edge between v and w
-		for (int v : onetight_list) {
+		for (NodeID v : onetight_list) {
 
 			// stores the sorted list of v neighbors
 			//vector<int> v_neighbors(g_->adj_l(v));
@@ -322,10 +321,10 @@ bool Solution::candTwoImprovement(NodeID cand)
 
 				// if this point is reached, this means we found the pair {v, w}
 				// we were looking for !!
-				int w = onetight_list[j_idx];
+				NodeID w = onetight_list[j_idx];
 
-				int weight_v = G->getNodeWeight(v);
-				int weight_w = G->getNodeWeight(w);
+				NodeWeight weight_v = G->getNodeWeight(v);
+				NodeWeight weight_w = G->getNodeWeight(w);
 
 				if (x_weight >= weight_v + weight_w) {
 					i_idx++;
@@ -346,12 +345,12 @@ bool Solution::twoImprovement()
 {
 	assert(isMaximal());
 
-	for (int idx = 0; idx < solution_size_; idx++) {
+	for (NodeID idx = 0; idx < solution_size_; idx++) {
 		// the candidate for removal
-		int x = solution_[idx];
+		NodeID x = solution_[idx];
 
 		// sorted list of 1-tight nighbors of x
-        std::vector<int> onetight_list;
+        std::vector<NodeID> onetight_list;
 
 		// build the list of 1-tight nighbors of x
         forall_out_edges((*G), e, x)
@@ -365,14 +364,14 @@ bool Solution::twoImprovement()
 		// if x has fewer than two 1-tight neighors we are done with x
 		if (onetight_list.size() < 2) continue;
 
-		int x_weight = G->getNodeWeight(x);
+		NodeWeight x_weight = G->getNodeWeight(x);
 
 		// attempt to find in onetight_list a pair {v, w} such that there
 		// is no edge between v and w
-		for (int v : onetight_list) {
+		for (NodeID v : onetight_list) {
 
 			// stores the sorted list of v neighbors
-			//vector<int> v_neighbors(g_->adj_l(v));
+			//vector<NodeID> v_neighbors(g_->adj_l(v));
 			//assert(is_sorted(v_neighbors.begin(), v_neighbors.end()));
 
 			// check if there is a vertex w in onetight_list (besides v) that
@@ -395,10 +394,10 @@ bool Solution::twoImprovement()
 
 				// if this point is reached, this means we found the pair {v, w}
 				// we were looking for !!
-				int w = onetight_list[j_idx];
+				NodeID w = onetight_list[j_idx];
 
-				int weight_v = G->getNodeWeight(v);
-				int weight_w = G->getNodeWeight(w);
+				NodeWeight weight_v = G->getNodeWeight(v);
+				NodeWeight weight_w = G->getNodeWeight(w);
 
 				if (x_weight >= weight_v + weight_w) {
 					i_idx++;
@@ -416,13 +415,13 @@ bool Solution::twoImprovement()
 	return false;
 } // bool Solution::twoImprovment()
 
-void Solution::force(int k)
+void Solution::force(NodeID k)
 {
-	for(int i = 0; i < k; i++) {
+	for(NodeID i = 0; i < k; i++) {
 		// select a non solution vertex to add
-		int nonsolution_size = G->number_of_nodes() - (solution_size_ + free_size_);
-		int nonsolution_pos = random_functions::nextInt(0, nonsolution_size -1);
-		int vertex = solution_[solution_size_ + free_size_ + nonsolution_pos];
+		NodeID nonsolution_size = G->number_of_nodes() - (solution_size_ + free_size_);
+		NodeID nonsolution_pos = random_functions::nextInt(0, nonsolution_size -1);
+		NodeID vertex = solution_[solution_size_ + free_size_ + nonsolution_pos];
 
 		// remove the neighboring vertices as necessary
 

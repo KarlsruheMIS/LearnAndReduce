@@ -45,7 +45,7 @@ void greedy_mwis::initial_partition(const unsigned int seed, graph_access & G) {
     while (pq->size()) {
         // Select the vertex with the largest weight
         NodeID start_node = pq->maxElement();
-        NodeWeight w = pq->maxValue();
+        /* NodeWeight w = pq->maxValue(); */
         pq->deleteMax();
         G.setPartitionIndex(start_node, 1);
         

@@ -88,7 +88,7 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
     config.global_blow_up_factor                  = 2;
     config.phase_blow_up_factor                   = 2;
     config.phase_blow_ups                         = 1;
-    config.max_unimproving_phases                 = 100;
+    config.max_unimproving_phases                 = 25;
     config.backtrack_style                        = ReductionConfig::Backtrack_Type::IMMEDIATE_EXCLUDE;
     config.reduce_and_peel                        = false;
     config.disable_generalized_fold               = false;

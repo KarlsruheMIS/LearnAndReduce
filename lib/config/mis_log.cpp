@@ -59,7 +59,7 @@ void mis_log::print_config() {
 
 void mis_log::print_results() {
     filebuffer_string << std::endl;
-    filebuffer_string << "\t\Results"                                                                               << std::endl;
+    filebuffer_string << "\t\t Results"                                                                               << std::endl;
     filebuffer_string << "==========================================="                                                  << std::endl;
     filebuffer_string << "Total time:\t\t\t\t"                               << total_timer.elapsed()                   << std::endl;
     filebuffer_string << "Time found:\t\t\t\t"                               << time_taken_best                         << std::endl;

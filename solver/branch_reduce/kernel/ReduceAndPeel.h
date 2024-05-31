@@ -86,15 +86,16 @@ private:
     std::stack<NodeID> deg_2_vertices;
     std::stack<NodeID> neighborhood_removal_vertices;
     std::vector<bool> marked;
-    std::vector<NodeID> active_nodes;
-    size_t edges;
 
+    NodeWeight reduction_offset;
+
+    std::vector<NodeID> active_nodes;
     std::vector<bool> choices;
+    size_t edges;
     std::stack<RestoreData> restore_stack;
 
     std::vector<NodeID> path;
 
-    size_t reduction_offset;
 
     void init(graph_access &g) {
         forall_nodes(g, n)
@@ -168,7 +169,7 @@ private:
         find_max_path(n);
 
         NodeID v = path.front(), w = path.back();
-        NodeWeight w_v = g.getNodeWeight(v), w_w = g.getNodeWeight(w);
+        /* NodeWeight w_v = g.getNodeWeight(v), w_w = g.getNodeWeight(w); */
 
         NodeWeight w_i_i,w_i_e,w_e_i,w_e_e;
         find_MIS_on_path(w_i_i, w_i_e, w_e_i, w_e_e);

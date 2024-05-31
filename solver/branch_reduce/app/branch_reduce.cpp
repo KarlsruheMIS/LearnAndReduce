@@ -38,8 +38,8 @@
 
 
 int main(int argn, char **argv) {
-    bool output_convergence = false;
-    bool output_best_solution = true;
+    /* bool output_convergence = false; */
+    /* bool output_best_solution = true; */
     struction_log::instance()->print_title();
     ReductionConfig config;
 

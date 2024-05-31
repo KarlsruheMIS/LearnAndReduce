@@ -52,7 +52,7 @@ public:
     }
 
     void direct_improvement(graph_access &G, NodeID node) {
-        double p[4] = {2, 4, 4, 1}; 
+        /* double p[4] = {2, 4, 4, 1};  */
         Solution s(&G);
 
         while (!s.isMaximal()) {
@@ -70,7 +70,7 @@ public:
     }
 
     void direct_improvement(graph_access &G, std::vector<NodeID>& candidates) {
-        double p[4] = {2, 4, 4, 1}; // intensification/exploration parameters
+        /* double p[4] = {2, 4, 4, 1}; // intensification/exploration parameters */
         Solution s(&G);
 
         make_maximal(G);
@@ -119,9 +119,9 @@ public:
 
         // run ILS iterations
 
-        int k = 1;
-        int local_best = s.weight();
-        int iter;
+        NodeID k = 1;
+        NodeWeight local_best = s.weight();
+        size_t iter;
         for (iter = 0; t.elapsed() < config.time_limit && iter < max_iterations; iter++) {
             Solution next_s(s);
 

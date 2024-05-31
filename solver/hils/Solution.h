@@ -22,11 +22,11 @@ public:
 
 	// add a vertex to the solution
 
-	void addVertex(const int v);
+	void addVertex(const NodeID v);
 
 	// remove a vertex from the solution
 
-	void removeVertex(const int v);
+	void removeVertex(const NodeID v);
 
 	// randomly add a free vertex to the solution
 
@@ -44,7 +44,7 @@ public:
 
 	// randomly insert k vertices into the solution
 
-	void force(int k);
+	void force(NodeID k);
 
 	void force_candidate(NodeID cand);
 
@@ -63,24 +63,24 @@ public:
 
 	// return the current solution weight
 
-	int weight() const
+	NodeWeight weight() const
 	{
 		return weight_;
 	}
 
 	// return the current size of the independent set
 	
-	int size() const
+	NodeID size() const
 	{
 		return solution_size_;
 	}	
 
 	// return a vector indicating the state of each vertex
 	
-	std::vector<int> solution() const
+	std::vector<NodeID> solution() const
 	{
-		std::vector<int> sol;
-		for (int idx = 0; idx < G->number_of_nodes(); idx++) {
+		std::vector<NodeID> sol;
+		for (NodeID idx = 0; idx < G->number_of_nodes(); idx++) {
 			if(position_[idx] < solution_size_) {
 				sol.push_back(1);
 			} else {
@@ -92,10 +92,10 @@ public:
 
 	// return a vector with the vertices in the solution
 
-	std::vector<int> i_set() const
+	std::vector<NodeID> i_set() const
 	{
-		std::vector<int> iset;
-		for (int idx = 0; idx < G->number_of_nodes(); idx++) {
+		std::vector<NodeID> iset;
+		for (NodeID idx = 0; idx < G->number_of_nodes(); idx++) {
 			if(position_[idx] < solution_size_) 
 				iset.push_back(idx);
 		}
@@ -113,48 +113,48 @@ private:
 	// the free vertices (i.e., vertices that are not adjacent to any vertex in the solution), and 
 	// finally the non-solution vertices that are not free
 
-	std::vector<int> solution_;
+	std::vector<NodeID> solution_;
 
 	// size of the solution verticies partition
 
-	int solution_size_;
+	NodeID solution_size_;
 
 	// size of the free vertices partition
 
-	int free_size_;
+	NodeID free_size_;
 
 	// for each vertex, the number of adjacent vertices that are on the solution
 
-	std::vector<int> tightness_;
+	std::vector<NodeID> tightness_;
 
 	// position of each vertex in the solution_ vector
 
-	std::vector<int> position_;
+	std::vector<NodeID> position_;
 
 	// weight of each vertex i minus the sum of the weights of its neighbors that
 	// are in the independent set
 
-	std::vector<int> mu_;
+	std::vector<NodeWeight> mu_;
 	
 	// current independent vertex weight
 	
-	int weight_;
+	NodeWeight weight_;
 
 	// move a vertex from the free partition to solution partition
 
-	void moveFreeToSolutionPartition(const int v);
+	void moveFreeToSolutionPartition(const NodeID v);
 
 	// move a vertex from the free patition to non free partition
 
-	void moveFreeToNonFreePartition(const int v);
+	void moveFreeToNonFreePartition(const NodeID v);
 
 	// move a vertex from the solution partition to free partition
 
-	void moveSolutionToFreePartition(const int v);
+	void moveSolutionToFreePartition(const NodeID v);
 
 	// move a vertex from the non free partition to free partition
 
-	void moveNonFreeToFreePartition(const int v);
+	void moveNonFreeToFreePartition(const NodeID v);
 
 }; // class Solution
 

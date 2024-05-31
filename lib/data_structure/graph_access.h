@@ -424,7 +424,7 @@ inline EdgeWeight graph_access::getMaxWeight() {
                 //compute it
                 basicGraph& ref = *graphref;
                 forall_nodes(ref, node) {
-                        if(getNodeWeight(node) > m_max_weight) {
+                        if(getNodeWeight(node) > static_cast<NodeWeight>(m_max_weight)) {
                                 m_max_weight = getNodeWeight(node);
                         }
                 } endfor

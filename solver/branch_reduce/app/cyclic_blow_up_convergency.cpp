@@ -67,7 +67,8 @@ int main(int argn, char **argv) {
 
     branch_and_reduce_algorithm reducer(G, config);
     std::cout << "time,graph_size" << std::endl;
-    graph_access &g = reducer.kernelize();
+    reducer.kernelize();
+
 
     return 0;
 }

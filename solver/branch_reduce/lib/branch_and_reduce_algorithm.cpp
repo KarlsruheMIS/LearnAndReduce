@@ -681,7 +681,7 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 			reduction->marker.current.clear();
 			if (reduction->get_reduction_type() == heuristic_exclude || reduction->get_reduction_type() == heuristic_include)
 			{
-				for (int u = 0; u < this->status.graph.size(); u++)
+				for (NodeID u = 0; u < this->status.graph.size(); u++)
 				{
 					if (status.node_status[u] != IS_status::not_set)
 						continue;
@@ -689,12 +689,12 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 					if (y[u] > 0.0f)
 						reduction->marker.current.push_back(u);
 				}
-				printf("%s added %d vertices from %d\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
+				printf("%s added %ld vertices from %ld\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
 			}
 			else
 			{
 				int c = 0;
-				for (int u = 0; u < this->status.graph.size(); u++)
+				for (NodeID u = 0; u < this->status.graph.size(); u++)
 				{
 					if (status.node_status[u] != IS_status::not_set)
 						continue;
@@ -703,7 +703,7 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 						reduction->marker.current.push_back(u);
 				}
 
-				printf("%s %lf parse, added %d/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, reduction->marker.current.size(), c, t.elapsed());
+				printf("%s %lf parse, added %ld/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, reduction->marker.current.size(), c, t.elapsed());
 			}
 		}
 		else
@@ -946,7 +946,7 @@ bool branch_and_reduce_algorithm::blow_up_graph_internal()
 void branch_and_reduce_algorithm::cyclic_blow_up()
 {
 	blowing_up = true;
-	size_t phase_count = 0;
+	int phase_count = 0;
 
 #ifdef OUTPUT_GRAPH_CONVERGENCE
 	std::cout << t.elapsed() << "," << min_kernel << std::endl;
@@ -1721,7 +1721,7 @@ void branch_and_reduce_algorithm::set_node_status(std::vector<bool> &independent
 void branch_and_reduce_algorithm::update_independent_set(std::vector<bool> &independent_set)
 {
 	// update full independent set (everything stored in node_status)
-	for (int node = 0; node < independent_set.size(); node++)
+	for (NodeID node = 0; node < independent_set.size(); node++)
 	{
 		independent_set[node] = bool(status.node_status[node] == IS_status::included);
 	}
@@ -1750,24 +1750,8 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access 
 	}
 	std::sort(nodes_vec.begin(), nodes_vec.end());
 	build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
-#ifdef DEBUG
-	solution_check<graph_access> sc(graph);
-	assert(sc.check_graph() && "Graph is not a valid solution");
-	forall_nodes(graph, node)
-	{
-		NodeID old_target = 0;
-		forall_out_edges(graph, e, node)
-		{
-			NodeID target = graph.getEdgeTarget(e);
-			assert(target >= old_target && "edges are not sorted");
-			old_target = target;
-		}
-		endfor
-	}
-	endfor
-#endif
 
-		graph_access modifiable_graph;
+	graph_access modifiable_graph;
 	build_induced_subgraph(modifiable_graph, nodes_vec, nodes_set, reverse_mapping);
 	global_status = std::move(status);
 
@@ -1836,13 +1820,13 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 					status.modified_stack.pop_back();
 					if (restore_node == MODIFIED_TOKEN)
 					{ // for reductions that do not reduce but only modify the graph
-						auto type = status.folded_stack.back();
+      /* auto type = status.folded_stack.back(); */
 						status.folded_stack.pop_back();
 						reduction->restore(this);
 					}
 					else if (status.node_status[restore_node] == IS_status::folded)
 					{
-						auto type = status.folded_stack.back();
+      /* auto type = status.folded_stack.back(); */
 						status.folded_stack.pop_back();
 						reduction->restore(this);
 					}

@@ -77,7 +77,7 @@ int write_weights_and_reductions_to_csv(graph_access & G, const std::string & re
 
     int num_of_reductions = reduction_names.size();
     std::vector<std::vector<bool>> reduction_data(num_of_reductions);
-    for (size_t i = 0; i < num_of_reductions; i++) {
+    for (int i = 0; i < num_of_reductions; i++) {
         std:: string reduction_file = "training_data/reduction_data/" +filename + "_" + reduction_names[i] + ".txt";
         if (reduction_file_exists(reduction_file)) {
             parse_reduction_data(reduction_file, reduction_data[i]);
@@ -88,14 +88,14 @@ int write_weights_and_reductions_to_csv(graph_access & G, const std::string & re
 
     std::ofstream f(resulting_filename.c_str());
     f << "id;node_weight";
-    for (size_t i = 0; i < num_of_reductions; i++) {
+    for (int i = 0; i < num_of_reductions; i++) {
         f << ";" << reduction_names[i];
     }
     f << std::endl;
 
     forall_nodes(G, node) {
         f << node << ";" << G.getNodeWeight(node);
-        for (size_t i = 0; i < num_of_reductions; i++) {
+        for (int i = 0; i < num_of_reductions; i++) {
             f << ";" << reduction_data[i][node];
         }
         f << std::endl;

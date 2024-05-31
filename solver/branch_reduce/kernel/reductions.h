@@ -87,7 +87,7 @@ struct general_reduction
     virtual std::string get_reduction_name() = 0;
     virtual std::string get_model_path() { return ""; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) = 0;
-    virtual inline bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) {}
+    virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) { return false;}
     virtual void restore(branch_and_reduce_algorithm *br_alg) {}
     virtual void apply(branch_and_reduce_algorithm *br_alg) {}
     virtual void reset(branch_and_reduce_algorithm *br_alg, size_t comp_size) {}
@@ -109,7 +109,7 @@ struct general_reduction
     inline bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, bool apply_solution = false);
     inline bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution = false);
     inline bool is_reduced(NodeID v, branch_and_reduce_algorithm *br_alg);
-    inline virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg); 
+    virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg); 
 };
 
 // simple reductions:
@@ -186,7 +186,7 @@ private:
         NodeID deg2_node;
         std::vector<NodeID> neighbors;
     };
-    enum fold_case
+    enum fold2_case
     {
         triangle_mid,
         triangle_min,
@@ -199,7 +199,8 @@ private:
     {
         fold_nodes nodes;
         NodeWeight deg2_weight;
-        fold_case fold_case;
+        fold2_case fold_case;
+        dynamic_graph::neighbor_list neighbor_list;
         std::array<std::vector<NodeID>, 2> node_vecs;
     };
 
@@ -209,7 +210,7 @@ private:
     void fold_v_shape_mid_weight(branch_and_reduce_algorithm *br_alg, const fold_nodes &nodes);
     void fold_v_shape_min_weight(branch_and_reduce_algorithm *br_alg, const fold_nodes &nodes);
 
-    int v_shape_min_count = 0;
+    size_t v_shape_min_count = 0;
 
     std::vector<restore_data> restore_vec;
 };
@@ -678,8 +679,8 @@ using plateu_struction = iterative_struction<extended_struction<false>, reductio
 template <typename key_function = ApproximateIncreaseKey, typename struction_type = extended_struction<false>, reduction_type type = reduction_type ::struction_blow /**/>
 struct blow_up_struction : public general_reduction
 {
-    blow_up_struction(const ReductionConfig &config, size_t n) : general_reduction(n), update_set(n), distribution(0, 1),
-                                                                 generator(config.seed), f(config) {}
+    blow_up_struction(const ReductionConfig &config, size_t n) : general_reduction(n), update_set(n), f(config), generator(config.seed),
+                                                                 distribution(0, 1) {}
     ~blow_up_struction() {}
     virtual blow_up_struction *clone() const final { return new blow_up_struction(*this); }
 

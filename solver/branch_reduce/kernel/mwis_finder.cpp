@@ -42,7 +42,7 @@ void mwis_finder::findAllMWISRec(neighbor_list &nodes, size_t start_idx, NodeWei
 
     const auto &status = br_alg->status;
     auto &node_state = br_alg->zero_vec;
-    auto &order = br_alg->buffers[1];
+    /* auto &order = br_alg->buffers[1]; */
 
     NodeID cur_node;
     while (true) {

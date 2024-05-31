@@ -110,7 +110,7 @@ struct ReductionConfig : public Config {
     bool pick_nodes_by_NodeID;
     bool pick_nodes_by_BFS;
     int num_of_subgraphs = 10;
-    int size_of_subgraph = 1000;
+    NodeID size_of_subgraph = 1000;
     int num_initial_reductions = 3;
     bool generate_training_data = false;
 

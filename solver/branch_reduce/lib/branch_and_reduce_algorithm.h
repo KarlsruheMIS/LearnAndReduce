@@ -317,7 +317,7 @@ public:
 	{
 	    std::cout << "__________________________________" << std::endl;
 	    std::cout << "Dynamic graph:" << std::endl;
-	    for (auto node = 0; node < s.graph.size(); node++)
+	    for (size_t node = 0; node < s.graph.size(); node++)
 	    {
 	        switch (s.node_status[node])
 	        {

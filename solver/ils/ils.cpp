@@ -187,9 +187,9 @@ void ils::perform_ils(graph_access& G, unsigned int iteration_limit, int offset)
         // ASSERT_TRUE(pop.is_mis(config, G, temp));
 
         // Check the difference
-		int solution_weight_after = perm->get_solution_weight();
+		NodeWeight solution_weight_after = perm->get_solution_weight();
         int delta_size = solution_size_before - perm->get_solution_size();
-		int delta_weight = solution_weight_before - solution_weight_after;
+		NodeWeight delta_weight = solution_weight_before - solution_weight_after;
 		int delta_best_size = best_solution_size - perm->get_solution_size();
 
         // New best?

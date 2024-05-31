@@ -40,7 +40,7 @@ void greedy_weighted_vertex::initial_partition(const unsigned int seed, graph_ac
     while (pq->size()) {
         // Pick the node with the smallest weight
         NodeID start_node = pq->maxElement();
-        NodeWeight w = pq->maxValue();
+        /* NodeWeight w = pq->maxValue(); */
         pq->deleteMax();
         // Insert it into the solution
         if (uncovered_edges[start_node] > 0) {

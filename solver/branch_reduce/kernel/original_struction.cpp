@@ -104,6 +104,7 @@ bool original_struction<modified>::reduce(branch_and_reduce_algorithm* br_alg, N
         br_alg->add_next_level_node(u);
     }
     status.reduction_offset += status.weights[n];
+    return true;
 }
 
 template<bool modified>

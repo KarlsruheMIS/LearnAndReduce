@@ -38,7 +38,7 @@
 #include "solution_check.h"
 #include "LRConv.h"
 
-#define generate_training_data;
+#define generate_training_data
 
 bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::string filename, sized_vector<std::string> &reduction_names)
 {
@@ -67,7 +67,7 @@ bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::s
         std::string reduction_filename = filename + reduction_names[i] + ".txt";
         std::ofstream file;
         file.open(reduction_filename);
-        for (int j = 0; j < reduction_data[i].size(); j++)
+        for (size_t j = 0; j < reduction_data[i].size(); j++)
         {
             file << reduction_data[i][j] << std::endl;
         }
@@ -95,7 +95,7 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
     if (count_data_per_graph < 2 || G.number_of_nodes() < 100)
         return false; // specify how much data per graph needed
 
-    for (int i = 0; i < reduction_data.size(); i++)
+    for (size_t i = 0; i < reduction_data.size(); i++)
     {
         if (used_reduction[i])
             std::cout << reduction_names[i] << std::endl;
@@ -108,13 +108,13 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
     std::ofstream file;
     file.open(filename + ".csv");
     file << "source;target;uc;vc;ic;uw;vw;iw;twin;dom" << std::endl;
-    for (int u = 0; u < G.number_of_nodes(); u++)
+    for (NodeID u = 0; u < G.number_of_nodes(); u++)
     {
-        for (int i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
+        for (NodeID i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
         {
             float *ed = edge_attr + (edge_features * i);
             file << u << ";" << G.getEdgeTarget(i);
-            for (int j = 0; j < edge_features; j++)
+            for (NodeID j = 0; j < edge_features; j++)
                 file << ";" << ed[j];
             file << std::endl;
         }
@@ -123,19 +123,19 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
 
     file.open(filename + "_meta.csv");
     file << "id;d;w;nw;l;i;e";
-    for (int i = 0; i < reduction_data.size(); i++)
+    for (NodeID i = 0; i < reduction_data.size(); i++)
         if (used_reduction[i])
             file << ";" << reduction_names[i];
     file << std::endl;
 
-    for (int u = 0; u < G.number_of_nodes(); u++)
+    for (NodeID u = 0; u < G.number_of_nodes(); u++)
     {
         file << u;
         float *nd = node_attr + (u * node_features);
-        for (int i = 0; i < node_features; i++)
+        for (NodeID i = 0; i < node_features; i++)
             file << ";" << nd[i];
         file << ";" << include_data[u] << ";" << exclude_data[u];
-        for (int i = 0; i < reduction_data.size(); i++)
+        for (NodeID i = 0; i < reduction_data.size(); i++)
             if (used_reduction[i])
                 file << ";" << reduction_data[i][u];
         file << std::endl;
@@ -149,8 +149,8 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
 int main(int argn, char **argv)
 {
     struction_log::instance()->restart_total_timer();
-    bool output_convergence = false;
-    bool output_best_solution = true;
+    /* bool output_convergence = false; */
+    /* bool output_best_solution = true; */
     struction_log::instance()->print_title();
     ReductionConfig config;
 
