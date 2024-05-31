@@ -1180,9 +1180,9 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 					  { return deg(lhs) > deg(rhs) || (deg(lhs) == deg(rhs) && status.weights[lhs] > status.weights[rhs]); });
 
 			resize(status.n);
-			for (auto &transformation : status.transformations) {
-				transformation->marker.clear_next();
-			}
+			// for (auto &transformation : status.transformations) {
+			// 	transformation->marker.clear_next();
+			// }
 		}
 
 		if (status.remaining_nodes > SPLIT_CC_LIMIT && branch_reduce_recursive())

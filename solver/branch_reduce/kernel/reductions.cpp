@@ -1934,7 +1934,7 @@ bool clique_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
        size_t max_isolated_idx = 0;
        weighted_node max_isolated{ v, status.weights[v] };
        weighted_node max_non_isolated{ 0, 0 };
-        std::sort(neighbors.begin(), neighbors.end(), [&br_alg](const NodeID lhs, const NodeID rhs) { return br_alg->deg(lhs) < br_alg->deg(rhs); });
+        // std::sort(neighbors.begin(), neighbors.end(), [&br_alg](const NodeID lhs, const NodeID rhs) { return br_alg->deg(lhs) < br_alg->deg(rhs); });
 
        for (auto neighbor : neighbors) {
            size_t count = 0;
