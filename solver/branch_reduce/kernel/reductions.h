@@ -87,7 +87,7 @@ struct general_reduction
     virtual std::string get_reduction_name() = 0;
     virtual std::string get_model_path() { return ""; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) = 0;
-    virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) {}
+    virtual inline bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) {}
     virtual void restore(branch_and_reduce_algorithm *br_alg) {}
     virtual void apply(branch_and_reduce_algorithm *br_alg) {}
     virtual void reset(branch_and_reduce_algorithm *br_alg, size_t comp_size) {}

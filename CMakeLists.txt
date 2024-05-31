@@ -19,7 +19,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # if no build mode is specified build in release mode
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+# if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
@@ -27,6 +28,7 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_definitions(-DNDEBUG)
     add_compile_options(-O3)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fno-omit-frame-pointer -march=native -DNDEBUG -Wall -funroll-loops -fno-stack-limit -fPIC -O3 -g")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -41,8 +43,8 @@ endif()
     set(DCMAKE_CXX_FLAGS -pg)
     set(DCMAKE_EXE_LINKER_FLAGS -pg)
     set(DCMAKE_SHARED_LINKER_FLAGS -pg)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fno-omit-frame-pointer -march=native -DNDEBUG -Wall -funroll-loops -fno-stack-limit -fPIC -O3 -g")
  endif()
-
 
 
 add_definitions(-w)

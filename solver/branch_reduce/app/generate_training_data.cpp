@@ -38,6 +38,8 @@
 #include "solution_check.h"
 #include "LRConv.h"
 
+#define generate_training_data;
+
 bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::string filename, sized_vector<std::string> &reduction_names)
 {
     int count_data_per_graph = 0;
@@ -158,7 +160,7 @@ int main(int argn, char **argv)
     if (ret_code)
         return 0;
 
-    config.generate_training_data = true;
+    // config.generate_training_data = true;
     config.disable_critical_set = true;
     std::string graph_filepath = config.graph_filename;
     config.graph_filename = graph_filepath.substr(graph_filepath.find_last_of('/') + 1);
