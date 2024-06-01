@@ -134,7 +134,7 @@ private:
 	// weight of each vertex i minus the sum of the weights of its neighbors that
 	// are in the independent set
 
-	std::vector<NodeWeight> mu_;
+	std::vector<long int> mu_;
 	
 	// current independent vertex weight
 	
