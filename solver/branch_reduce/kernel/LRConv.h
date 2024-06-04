@@ -28,6 +28,8 @@ public:
 
     void compute_node_attr_dynamic(branch_and_reduce_algorithm *g);
 
+    void compute_node_attr_dynamic_norm(branch_and_reduce_algorithm *g);
+
 private:
     std::unordered_map<std::string, std::vector<float>> params;
 

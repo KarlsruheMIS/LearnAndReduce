@@ -17,6 +17,10 @@
 * this program.  If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
 
+// TODO, Remove this def
+#ifndef gen_training_data
+#define gen_training_data
+#endif
 
 #include "reductions.h"
 #include "branch_and_reduce_algorithm.h"
@@ -86,7 +90,7 @@ inline void general_reduction::get_neighborhood_vector(NodeID v, branch_and_redu
     }
 }
 bool general_reduction::try_neighborhood_reduction(NodeID v, branch_and_reduce_algorithm* br_alg, NodeWeight neighbors_weight) {
-	#ifdef generate_training_data
+	#ifdef gen_training_data
         return false;
     #endif
     auto& status = br_alg->status;
@@ -734,7 +738,7 @@ inline bool single_edge_reduction::reduce_vertex(branch_and_reduce_algorithm* br
          
             // note: weight of v is in partial_neighbor_sum included
             // if N(neighbor) \subset N(v) partial_neighbor_sum = weights[v]
-	        #ifdef generate_training_data
+	        #ifdef gen_training_data
             if (partial_neighbor_sum == weights[v]) break; // should be domination
             #endif
             if (partial_neighbor_sum <= weights[neighbor]) { 
@@ -783,7 +787,7 @@ inline bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algo
     if  (weights[v] < neighbors_weight - weights[max_weight_neighbor]) {
         return false;
     }
-	#ifndef generate_training_data
+	#ifndef gen_training_data
         if (try_neighborhood_reduction(v, br_alg, neighbors_weight)) {
             return oldn != br_alg->status.remaining_nodes;
         }
@@ -794,7 +798,7 @@ inline bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algo
     std::sort(neighbors_vec.begin(), neighbors_vec.end(), [&](NodeID a, NodeID b) { return weights[a] > weights[b]; });
     for (NodeID max_neighbor : neighbors_vec) 
     {
-	    #ifndef generate_training_data
+	    #ifndef gen_training_data
             if (v > max_neighbor) continue;
         #endif
         if (weights[v] < neighbors_weight - weights[max_neighbor]) 
@@ -841,7 +845,7 @@ inline bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm* br_
 	auto& status = br_alg->status;
 	auto& neighbors = br_alg->set_1;
 	size_t oldn = status.remaining_nodes;
-	#ifndef generate_training_data
+	#ifndef gen_training_data
         NodeWeight neighbor_weights = get_neighborhood_weight(v, br_alg);
         if (try_neighborhood_reduction(v, br_alg, neighbor_weights)) {
             return oldn != status.remaining_nodes;
@@ -884,6 +888,7 @@ inline bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm* br_
 }
 bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     if (br_alg->blowing_up) return false;
+    if (br_alg->heuristically_reducing) return false;
     // if (br_alg->config.disable_cut_vertex) return false;
     #ifdef REDUCTION_INFO
         br_alg->reduction_timer.restart();
@@ -935,7 +940,7 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         }
 
         if (!real_cut_v) { //directly solve the component without fold
-	        #ifdef generate_training_data
+	        #ifdef gen_training_data
                 return false;
             #endif
             cut_component.push_back(cut_v);
@@ -1229,7 +1234,7 @@ inline bool cut_vertex_reduction::reduce_vertex(branch_and_reduce_algorithm* br_
         }
 
         if (!real_cut_v) { //directly solve the component without fold
-	        #ifdef generate_training_data
+	        #ifdef gen_training_data
                 return false;
             #endif
             cut_component.push_back(cut_v);
@@ -1505,7 +1510,7 @@ bool component_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 inline bool component_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
     if (br_alg->blowing_up) return false;
     // if (br_alg->config.disable_cut_vertex) return false;
-	#ifdef generate_training_data
+	#ifdef gen_training_data
         return false; // only used for training data (otherwise included in cut_vertex)
     #endif
 	auto& status = br_alg->status;
@@ -1535,7 +1540,7 @@ inline bool component_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
         }
 
         if (!real_cut_v) { //directly solve the component without fold
-	        #ifdef generate_training_data
+	        #ifdef gen_training_data
                 return false;
             #endif
             cut_component.push_back(cut_v);
@@ -1748,10 +1753,10 @@ bool clique_neighborhood_reduction::partition_into_cliques(NodeID v, branch_and_
     target_weight = weights[v];
 
     neighbor_weights = get_neighborhood_weight(v, br_alg);
-	#ifdef generate_training_data
+	#ifdef gen_training_data
 	    if (neighbor_weights <= target_weight)  return false; 
     #endif
-	#ifndef generate_training_data
+	#ifndef gen_training_data
 	    if (neighbor_weights <= target_weight)  return true; 
     #endif
     get_neighborhood_vector(v, br_alg, neighbors_vec);
@@ -3156,7 +3161,8 @@ bool heavy_set3_reduction::check_w_combination(std::vector<NodeWeight>& MWIS_wei
 }
 
 bool generalized_fold_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
-    // if (br_alg->config.disable_generalized_fold) return false;
+    // if (br_alg->config.disable_generalized_fold) return false
+    if (br_alg->heuristically_reducing) return false;;
     #ifdef REDUCTION_INFO
         br_alg->reduction_timer.restart();
     #endif
@@ -3211,7 +3217,7 @@ inline bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorith
     }
 
     if (status.weights[v] >= MWIS_weight) {
-	    #ifdef generate_training_data
+	    #ifdef gen_training_data
 	    #ifdef REDUCTION_INFO 
             reduction_time += br_alg->reduction_timer.elapsed();
             return false; // is heavy vertex reduction
@@ -3442,9 +3448,9 @@ template<typename struction_type, reduction_type type, int vertex_increase>
 bool iterative_struction<struction_type, type, vertex_increase>::reduce(branch_and_reduce_algorithm* br_alg) {
     /* auto &status = br_alg->status; */
     #ifdef REDUCTION_INFO
+        NodeID oldn = br_alg->status.remaining_nodes;
         br_alg->reduction_timer.restart();
     #endif
-    /* NodeID oldn = br_alg->status.remaining_nodes; */
     bool applied = false;
     for_each_changed_vertex(br_alg, [&](NodeID v) {
         if (reduce_vertex(br_alg, v))
@@ -3925,7 +3931,8 @@ bool heuristic_include_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     unsafe_to_reduce.clear();
     if (!config.heuristic_style == ReductionConfig::Heuristic_Style::single) {
         std::sort(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
-            return weights[a] - get_neighborhood_weight(a, br_alg) > weights[b] - get_neighborhood_weight(b, br_alg);
+            // return weights[a] - get_neighborhood_weight(a, br_alg) > weights[b] - get_neighborhood_weight(b, br_alg);
+            return weights[a] > weights[b];
         });
 
         for (NodeID v : marker.current) 
@@ -3991,9 +3998,9 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     br_alg->heuristically_reducing = true;
     if (config.heuristic_style == ReductionConfig::Heuristic_Style::multiple_safe ||
         config.heuristic_style == ReductionConfig::Heuristic_Style::multiple_very_safe) {
-        std::sort(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
-            return weights[a] - get_neighborhood_weight(a, br_alg) < weights[b] - get_neighborhood_weight(b, br_alg);
-        });
+        // std::sort(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
+        //     return weights[a] - get_neighborhood_weight(a, br_alg) < weights[b] - get_neighborhood_weight(b, br_alg);
+        // });
 
         for (NodeID v : marker.current) 
         {
@@ -4026,9 +4033,12 @@ bool heuristic_exclude_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
             }
         }
     } else { // only exclude single vertex with smallest score
-        NodeID v = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
-            return weights[a] - get_neighborhood_weight(a, br_alg) < weights[b] - get_neighborhood_weight(b, br_alg);
-        })[0]; 
+        printf("%d\n", marker.current[0]);
+        NodeID v = marker.current[0];
+        
+        // NodeID v = std::min_element(marker.current.begin(), marker.current.end(), [&](NodeID a, NodeID b) {
+        //     return weights[a] - get_neighborhood_weight(a, br_alg) < weights[b] - get_neighborhood_weight(b, br_alg);
+        // })[0]; 
         assert(!is_reduced(v, br_alg));
         br_alg->set(v, IS_status::excluded);
     }

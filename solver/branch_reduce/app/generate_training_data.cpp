@@ -38,8 +38,6 @@
 #include "solution_check.h"
 #include "LRConv.h"
 
-#define generate_training_data
-
 bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::string filename, sized_vector<std::string> &reduction_names)
 {
     int count_data_per_graph = 0;
@@ -85,7 +83,7 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
     for (size_t i = 0; i < reduction_data.size(); i++)
     {
         // check at least 10% of applications
-        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.10 * reduction_data[i].size())
+        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.1 * reduction_data[i].size())
         {
             continue;
         }
@@ -127,6 +125,7 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
         if (used_reduction[i])
             file << ";" << reduction_names[i];
     file << std::endl;
+    file << std::fixed << std::setprecision(6);
 
     for (NodeID u = 0; u < G.number_of_nodes(); u++)
     {
@@ -160,7 +159,7 @@ int main(int argn, char **argv)
     if (ret_code)
         return 0;
 
-    // config.generate_training_data = true;
+    config.generate_training_data = true;
     config.disable_critical_set = true;
     std::string graph_filepath = config.graph_filename;
     config.graph_filename = graph_filepath.substr(graph_filepath.find_last_of('/') + 1);

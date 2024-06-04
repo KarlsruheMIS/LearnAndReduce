@@ -15,6 +15,11 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
+// TODO, Remove this def
+#ifndef gen_training_data
+#define gen_training_data
+#endif
+
 #include "branch_and_reduce_algorithm.h"
 #include "reductions.h"
 #include "ils/ils.h"

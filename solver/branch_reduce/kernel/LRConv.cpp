@@ -303,13 +303,14 @@ void LRConv::compute_attr(float **node_attr, float **edge_attr, graph_access &g)
 
     for (int u = 0; u < g.number_of_nodes(); u++)
     {
-        int d = g.getNodeDegree(u), Wn = 0, C = 0;
+        int d = g.getNodeDegree(u), Dn = 0, Wn = 0, C = 0;
 
         for (int i = g.get_first_edge(u); i != g.get_first_invalid_edge(u); i++)
         {
             int v = g.getEdgeTarget(i);
             marks[v] = u;
             Wn += g.getNodeWeight(v);
+            Dn += g.getNodeDegree(v);
         }
 
         for (int i = g.get_first_edge(u); i != g.get_first_invalid_edge(u); i++)
@@ -354,10 +355,23 @@ void LRConv::compute_attr(float **node_attr, float **edge_attr, graph_access &g)
         }
 
         float *ua = *node_attr + (u * node_features);
-        ua[0] = (float)d / scale;
-        ua[1] = (float)g.getNodeWeight(u) / scale;
-        ua[2] = (float)Wn / scale;
+        if (d == 0)
+        {
+            ua[0] = 0.0f;
+            ua[1] = 0.0f;
+            ua[2] = 2.0f;
+        }
+        else
+        {
+            ua[0] = (float)d / ((float)Dn / (float)d);
+            ua[1] = (float)g.getNodeWeight(u) / ((float)Wn / (float)d);
+            ua[2] = (float)g.getNodeWeight(u) / (float)Wn;
+        }
         ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
+        // ua[0] = (float)d / scale;
+        // ua[1] = (float)g.getNodeWeight(u) / scale;
+        // ua[2] = (float)Wn / scale;
+        // ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
     }
 }
 
@@ -380,6 +394,32 @@ void LRConv::compute_node_attr_dynamic(branch_and_reduce_algorithm *br_alg)
         ua[0] = (float)d / scale;
         ua[1] = (float)weights[u] / scale;
         ua[2] = (float)Wn / scale;
+        ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
+    }
+}
+
+void LRConv::compute_node_attr_dynamic_norm(branch_and_reduce_algorithm *br_alg)
+{
+    auto &g = br_alg->status.graph;
+    auto &status = br_alg->status.node_status;
+    auto &weights = br_alg->status.weights;
+
+    for (int u = 0; u < g.size(); u++)
+    {
+        if (status[u] != branch_and_reduce_algorithm::IS_status::not_set)
+            continue;
+
+        int d = g[u].size(), Dn = 0, Wn = 0;
+        for (auto v : g[u])
+        {
+            Wn += weights[v];
+            Dn += g[v].size();
+        }
+
+        float *ua = x + (u * node_features);
+        ua[0] = (float)d / ((float)Dn / (float)d);
+        ua[1] = (float)weights[u] / ((float)Wn / (float)d);
+        ua[2] = (float)weights[u] / (float)Wn;
         ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
     }
 }

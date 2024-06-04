@@ -462,9 +462,7 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         }
     }
     if (print_reduction_info->count > 0) {
-        #ifdef REDUCTION_INFO
         config.print_reduction_info = true;
-        #endif
     }
     if (disable_neighborhood->count > 0) {
         config.disable_neighborhood = true;
