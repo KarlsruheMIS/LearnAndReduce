@@ -402,7 +402,7 @@ void branch_and_reduce_algorithm::set(NodeID node, IS_status mis_status, bool pu
 	assert(status.node_status[node] == IS_status::not_set && "Node status set");
 	assert(status.remaining_nodes > 0 && "No nodes remaining to set");
 	status.node_status[node] = mis_status;
-	#ifdef generate_training_data
+	#ifdef gen_training_data
 		if (mis_status == IS_status::included)
 			is_included_vertex[node] = true;
 		else if (mis_status == IS_status::excluded)
