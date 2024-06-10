@@ -44,6 +44,7 @@
 #include "key_functions.h"
 #include "LRConv.h"
 
+class learn_and_reduce_algorithm;
 
 class branch_and_reduce_algorithm {
 public:
@@ -80,7 +81,9 @@ private:
 	friend single_edge_reduction;
 	friend extended_single_edge_reduction;
     friend domination_reduction;
+	friend extended_domination_reduction;	
     friend twin_reduction;
+	friend high_degree_reduction;
     friend generalized_fold_reduction;
     friend cut_vertex_reduction;
     friend component_reduction;
@@ -104,6 +107,7 @@ private:
     friend IncreaseKey;
 
 	friend LRConv;
+    friend learn_and_reduce_algorithm;
 
     struct node_pos {
 		NodeID node;
@@ -114,6 +118,7 @@ private:
 
 	struct graph_status {
 		size_t n = 0;
+		size_t m = 0;
 		size_t remaining_nodes = 0;
 		NodeWeight is_weight = 0;
 		NodeWeight reduction_offset = 0;
@@ -134,7 +139,7 @@ private:
 		graph_status() = default;
 
 		graph_status(graph_access& G) :
-                n(G.number_of_nodes()), remaining_nodes(n), graph(G), weights(n, 0), node_status(n, IS_status::not_set),
+                n(G.number_of_nodes()), m(G.number_of_edges()), remaining_nodes(n), graph(G), weights(n, 0), node_status(n, IS_status::not_set),
                 folded_stack(2*n), branching_stack(n), modified_stack(2*n + 1) {
 			forall_nodes(G, node) {
 				weights[node] = G.getNodeWeight(node);
@@ -354,8 +359,9 @@ public:
 		} endfor
 	}
 
-	template<typename T>
-	void print_subgraph(graph_status& G, T & nodes)
+	// template<typename T>
+	// void print_subgraph(graph_status& G, T & nodes)
+	void print_subgraph(graph_status& G, std::vector<NodeID>& nodes)
 	{
 		std::cout << "__________________________________" << std::endl;
 		std::cout << "Subgraph:" << std::endl;
@@ -369,5 +375,6 @@ public:
 			std::cout << "\n"<< std::endl;
 		}
 	}
+    void print_reduction_progress();
+    void update_best_global_solution();
 };
-
