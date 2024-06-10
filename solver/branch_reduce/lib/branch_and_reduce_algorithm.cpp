@@ -1809,7 +1809,7 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 
 	for (NodeID node = 0; node < status.n; node++)
 	{
-		for (size_t i = 0; i < status.num_reductions; i++)
+		for (size_t i = 0; i < status.transformations.size(); i++) // status.num_reductions
 		{
 			if (std::find(global_transformations.begin(), global_transformations.end(), status.transformations[i]->get_reduction_type()) != global_transformations.end())
 				continue;

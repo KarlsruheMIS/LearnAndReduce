@@ -656,7 +656,12 @@ struct iterative_struction : public general_reduction
     virtual iterative_struction *clone() const final { return new iterative_struction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return type; }
-    virtual std::string get_reduction_name() final { return "struction"; }
+    virtual std::string get_reduction_name() final { 
+        if (type == struction_decrease)
+            return "struction_decrease";
+        else
+            return "struction_plateau";
+        }
     virtual std::string get_model_path() final
     {
         if (type == struction_decrease)

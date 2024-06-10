@@ -3217,15 +3217,12 @@ inline bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorith
     }
 
     if (status.weights[v] >= MWIS_weight) {
-	    #ifdef gen_training_data
-	    #ifdef REDUCTION_INFO 
-            reduction_time += br_alg->reduction_timer.elapsed();
-            return false; // is heavy vertex reduction
-        #endif
-        #endif
         // }
         // same as in generalized_neighborhood_reduction
         br_alg->set(v, IS_status::included);
+	    #ifdef REDUCTION_INFO 
+            reduction_time += br_alg->reduction_timer.elapsed();
+        #endif
         return oldn != status.remaining_nodes;
     }
 
