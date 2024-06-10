@@ -18,7 +18,7 @@ struct ReductionConfig : public Config {
     enum Struction_Type {ORIGINAL, MODIFIED, EXTENDED, EXTENDED_REDUCED, NONE};
     enum Backtrack_Type {IMMEDIATE_TIE_BREAKING, IMMEDIATE_EXCLUDE, END_MIN_KERNEL, NO_BACKTRACK};
     enum Reduction_Style {NORMAL, DENSE, FULL, test1, test2, test3, EARLY_BLOW_UP};
-    enum Heuristic_Style {single, multiple_safe, multiple_very_safe, all, none};
+    enum Heuristic_Style {single, multiple_safe, multiple_very_safe, all, none, hils_intersect};
     enum Key_Type {RANDOM, DEGREE, INCREASE, APPROXIMATE_INCREASE};
 
     // Name of the kernel file.
@@ -42,10 +42,12 @@ struct ReductionConfig : public Config {
     bool disable_critical_set = false;
     bool disable_neighborhood= false;
     bool disable_domination = false;
+    bool disable_extended_domination = false;
     bool disable_decreasing_struction= false;
     bool disable_plateau_struction= false;
     bool disable_path= false;
     bool disable_cut_vertex = false;
+    bool disable_high_degree = false;
     bool disable_funnel = false;
     bool disable_funnel_fold = false;
     bool disable_heavy_vertex = false;
@@ -54,6 +56,7 @@ struct ReductionConfig : public Config {
     bool disable_component = false;
     bool disable_heuristic_include = false;
     bool disable_heuristic_exclude = false;
+    bool use_hils_intersection = false;
     // bound for number of nodes in subgraphs
     NodeID subgraph_node_limit = 10;
     // Write the kernel into a file

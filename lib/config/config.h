@@ -32,6 +32,8 @@ struct Config {
     unsigned int force_cand;
     // Threshold for local search 
     unsigned int local_search_threshold;
+    // Number of swaps in ils pruning 
+    unsigned int max_swaps = 1000;
     // Time limit for the ils 
     /* double ils_time_limit; */
     // Write the log into a file

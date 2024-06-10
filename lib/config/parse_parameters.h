@@ -82,6 +82,7 @@ class ReductionArguments : public BaseArguments {
             initial_filter      = arg_lit0(NULL, "initial_filter", "Use initial filter on vertices to apply reductions on.");
             gnn_filter          = arg_lit0(NULL, "gnn_filter", "Use GNNs for initial filter on vertices to apply reductions on.");
             use_heuristic_reductions  = arg_lit0(NULL, "use_heuristic_reductions", "Enable heuristic reductions.");
+            use_hils_interesection = arg_lit0(NULL, "use_hils_intersection", "Use intersection of HILS solutions.");
 
             // single reduction parameters
             disable_neighborhood        = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -93,6 +94,7 @@ class ReductionArguments : public BaseArguments {
             disable_v_shape_max         = arg_lit0(NULL, "disable_v_shape_max", "Disable v_shape_max reduction.");
             disable_v_shape_mid         = arg_lit0(NULL, "disable_v_shape_mid", "Disable v_shape_mid reduction.");
             disable_domination          = arg_lit0(NULL, "disable_domination", "Disable domination reduction.");
+            disable_extended_domination = arg_lit0(NULL, "disable_extended_domination", "Disable extended domination reduction.");
             disable_basic_se            = arg_lit0(NULL, "disable_basic_se", "Disable basic single edge reduction.");
             disable_extended_se         = arg_lit0(NULL, "disable_extended_se", "Disable extended single edge reduction.");
             disable_clique_neighborhood = arg_lit0(NULL, "disable_clique_neighborhood", "Disable neighborhood clique reduction.");
@@ -108,6 +110,7 @@ class ReductionArguments : public BaseArguments {
             disable_component           = arg_lit0(NULL, "disable_component", "Disable component reduction.");
             disable_funnel              = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
             disable_funnel_fold         = arg_lit0(NULL, "disable_funnel_fold", "Disable funnel fold reduction.");
+            disable_high_degree        = arg_lit0(NULL, "disable_high_degree", "Disable high degree reduction.");
             disable_heuristic_include   = arg_lit0(NULL, "disable_heuristic_include", "Disable heuristic include reduction.");
             disable_heursitic_exclude   = arg_lit0(NULL, "disable_heuristic_exclude", "Disable heuristic exclude reduction.");
             disable_decreasing_struction = arg_lit0(NULL, "disable_decreasing_struction", "Disable decreasing struction.");
@@ -160,6 +163,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_v_shape_max;
         struct arg_lit * disable_v_shape_mid;
         struct arg_lit * disable_domination;
+        struct arg_lit * disable_extended_domination;
         struct arg_lit * disable_basic_se;
         struct arg_lit * disable_extended_se;
         struct arg_lit * disable_clique_neighborhood;
@@ -175,9 +179,11 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_component;
         struct arg_lit * disable_funnel;
         struct arg_lit * disable_funnel_fold;
+        struct arg_lit * disable_high_degree;
         struct arg_lit * disable_decreasing_struction;
         struct arg_lit * disable_plateau_struction;
         struct arg_lit * use_heuristic_reductions;
+        struct arg_lit * use_hils_interesection;
         struct arg_lit * disable_heuristic_include;
         struct arg_lit * disable_heursitic_exclude;
         struct arg_int * subgraph_node_limit;
@@ -282,6 +288,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         initial_filter,
         gnn_filter,
         use_heuristic_reductions,
+        use_hils_interesection,
         kernel_filename,
         reduction_config,
         heuristic_style,
@@ -297,6 +304,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_v_shape_max,
         disable_v_shape_mid,
         disable_domination,
+        disable_extended_domination,
         disable_basic_se,
         disable_extended_se,
         disable_clique_neighborhood,
@@ -312,6 +320,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_component,
         disable_funnel,
         disable_funnel_fold,
+        disable_high_degree,
         disable_decreasing_struction,
         disable_plateau_struction,
         disable_heuristic_include,
@@ -462,9 +471,7 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         }
     }
     if (print_reduction_info->count > 0) {
-        #ifdef REDUCTION_INFO
         config.print_reduction_info = true;
-        #endif
     }
     if (disable_neighborhood->count > 0) {
         config.disable_neighborhood = true;
@@ -492,6 +499,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (disable_domination->count > 0) {
         config.disable_domination = true;
+    }
+    if (disable_extended_domination->count > 0) {
+        config.disable_extended_domination = true;
     }
     if (disable_basic_se->count > 0) {
         config.disable_basic_se = true;
@@ -538,14 +548,20 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     if (disable_funnel->count > 0) {
         config.disable_funnel = true;
     }
+    if (disable_high_degree->count > 0) {
+        config.disable_high_degree = true;
+    }
     if (use_heuristic_reductions->count > 0) {
         config.disable_heuristic_exclude = false;
         config.disable_heuristic_include = false;
         if (config.heuristic_style == ReductionConfig::Heuristic_Style::none)
         {
-            config.heuristic_style      = ReductionConfig::Heuristic_Style::multiple_safe;
-            config.heuristic_style_name = "multiple_safe";
+            config.heuristic_style      = ReductionConfig::Heuristic_Style::single;
+            config.heuristic_style_name = "single";
         }
+    }
+    if (use_hils_interesection->count > 0) {
+        config.use_hils_intersection = true;
     }
     if (disable_heuristic_include->count > 0) {
         config.disable_heuristic_include = true;
