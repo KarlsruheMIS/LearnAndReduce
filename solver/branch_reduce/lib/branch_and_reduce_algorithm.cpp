@@ -260,14 +260,21 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				neighborhood_reduction, fold2_reduction, clique_reduction,
 				domination_reduction, twin_reduction, clique_neighborhood_reduction_fast>(status.n);
 		}
-		else //if (this->config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
+		else if (called_from_fold && this->config.reduction_style == ReductionConfig::Reduction_Style::EARLY_BLOW_UP)
+		{
+			status.transformations = make_reduction_vector<
+				neighborhood_reduction, fold1_reduction, fold2_reduction, clique_reduction,
+				domination_reduction, single_edge_reduction, extended_single_edge_reduction, 
+				twin_reduction, clique_neighborhood_reduction_fast>(status.n);
+		}
+		else // if (this->config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
 		{
 
 			if (called_from_fold)
 			{
 				status.transformations = make_reduction_vector<
 					neighborhood_reduction, fold2_reduction, clique_reduction,
-					domination_reduction, twin_reduction, clique_neighborhood_reduction, critical_set_reduction>(status.n);
+					domination_reduction, twin_reduction, clique_neighborhood_reduction_fast, critical_set_reduction>(status.n);
 			}
 			else
 			{
