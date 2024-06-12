@@ -27,14 +27,14 @@ def parse_data(filename):
         reader = csv.DictReader(f, delimiter=';')
         edge_index = torch.tensor([[int(r['source']), int(r['target'])] for r in reader], dtype=torch.long)
 
-    # with open(filename) as f:
-    #     reader = csv.DictReader(f, delimiter=';')
-    #     edge_attr = torch.tensor([[float(r['uc']), float(r['vc']), float(r['ic']), 
-    #                                float(r['uw']), float(r['vw']), float(r['iw']),
-    #                                float(r['twin']), float(r['dom'])] for r in reader], dtype=torch.float)
+    with open(filename) as f:
+        reader = csv.DictReader(f, delimiter=';')
+        edge_attr = torch.tensor([[float(r['d']), float(r['w']), float(r['dr']), 
+                                   float(r['wr']), float(r['e0']), float(r['e1']),
+                                   float(r['e2']), float(r['e4'])] for r in reader], dtype=torch.float)
 
     if x.size()[0] > 100:
-        dataset.append(Data(x=x, y=y, edge_index=edge_index.t().contiguous())) #, edge_attr=edge_attr
+        dataset.append(Data(x=x, y=y, edge_index=edge_index.t().contiguous(), edge_attr=edge_attr)) #, edge_attr=edge_attr
 
 path = sys.argv[2]
 #path = 'csv/'
@@ -100,10 +100,10 @@ from torch.nn import Linear, Parameter, Sequential, ReLU, Sigmoid
 from torch_geometric.nn import MessagePassing
 
 class LRConv(MessagePassing):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, edge_channels):
         super().__init__(flow='target_to_source', aggr='max')  # "Add" aggregation (Step 5).
         self.seq = Sequential(
-          Linear(in_channels * 2, 16),
+          Linear(in_channels * 2 + edge_channels, 16),
           ReLU(),
           Linear(16, out_channels),
           ReLU()
@@ -115,31 +115,31 @@ class LRConv(MessagePassing):
             if hasattr(layer, 'reset_parameters'):
                 layer.reset_parameters()
 
-    def forward(self, x, edge_index):
-        out = self.propagate(edge_index, x=x)
+    def forward(self, x, edge_index, edge_attr):
+        out = self.propagate(edge_index, x=x, edge_attr=edge_attr)
         #out = torch.cat([out, x], dim=-1)
         #out = out + self.bias
 
         return out
 
-    def message(self, x_i, x_j):
-        return self.seq(torch.cat([x_i, x_j], dim=-1))
+    def message(self, x_i, x_j, edge_attr):
+        return self.seq(torch.cat([x_i, x_j, edge_attr], dim=-1))
 
 from torch_geometric.nn import GCNConv, SAGEConv, GENConv, GINEConv, TransformerConv, PNAConv
 
 class LR_GCN(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = LRConv(4, 16)
-        self.conv2 = LRConv(16, 16)
+        self.conv1 = LRConv(4, 16, 8)
+        self.conv2 = LRConv(16, 16, 8)
         self.lin1 = Linear(16, 16)
         self.a1 = ReLU()
         self.lin2 = Linear(16, 1)
 
     def forward(self, data):
-        x, edge_index = data.x, data.edge_index
-        x = self.conv1(x, edge_index)
-        x = self.conv2(x, edge_index)
+        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
+        x = self.conv1(x, edge_index, edge_attr)
+        x = self.conv2(x, edge_index, edge_attr)
         x = self.lin1(x)
         x = self.a1(x)
         x = self.lin2(x)
