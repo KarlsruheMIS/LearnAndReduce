@@ -20,6 +20,8 @@
 #ifndef _REDUCTIONS_H
 #define _REDUCTIONS_H
 
+#define REDUCTION_INFO
+
 // local includes
 #include "definitions.h"
 #include "fast_set.h"
@@ -759,7 +761,7 @@ struct heuristic_include_reduction : public general_reduction
     virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_include; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual std::string get_reduction_name() final { return "heuristic_include"; }
-    virtual std::string get_model_path() final { return "models/include.gnn"; }
+    virtual std::string get_model_path() final { return "models/reduction.gnn"; } // "models/include.gnn"; }
 
 };
 struct heuristic_exclude_reduction : public general_reduction
@@ -771,7 +773,7 @@ struct heuristic_exclude_reduction : public general_reduction
     virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_exclude; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual std::string get_reduction_name() final { return "heuristic_exclude"; }
-    virtual std::string get_model_path() final { return "models/exclude.gnn"; }
+    virtual std::string get_model_path() final { return "models/reduction.gnn"; } // "models/exclude.gnn"; }
 
 };
 

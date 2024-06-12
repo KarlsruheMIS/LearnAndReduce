@@ -249,7 +249,7 @@ const float *LRConv::predict(branch_and_reduce_algorithm *br_alg)
         y = (float *)aligned_alloc(32, sizeof(float) * allocated);
     }
 
-    compute_node_attr_dynamic(br_alg);
+    compute_node_attr_dynamic_norm(br_alg);
 
     LRConv_message_blas_dyn(x, node_features, y, W[0], B[0], W[1], B[1], g, status);
     LRConv_message_blas_dyn(y, hidden_dim, x, W[2], B[2], W[3], B[3], g, status);
@@ -352,6 +352,63 @@ void LRConv::compute_attr(float **node_attr, float **edge_attr, graph_access &g)
             ea[5] = (float)iw / scale;
             ea[6] = (uc == 0 && vc == 0) ? 1.0f : 0.0f;
             ea[7] = (uc == 0 && vc > 0) ? 1.0f : 0.0f;
+        }
+
+        float *ua = *node_attr + (u * node_features);
+        if (d == 0)
+        {
+            ua[0] = 0.0f;
+            ua[1] = 0.0f;
+            ua[2] = 2.0f;
+        }
+        else
+        {
+            ua[0] = (float)d / ((float)Dn / (float)d);
+            ua[1] = (float)g.getNodeWeight(u) / ((float)Wn / (float)d);
+            ua[2] = (float)g.getNodeWeight(u) / (float)Wn;
+        }
+        ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
+        // ua[0] = (float)d / scale;
+        // ua[1] = (float)g.getNodeWeight(u) / scale;
+        // ua[2] = (float)Wn / scale;
+        // ua[3] = (float)(hash(u + 1) % 1000000) / id_scale;
+    }
+}
+
+void LRConv::compute_attr_norm(float **node_attr, float **edge_attr, graph_access &g)
+{
+    free(*node_attr);
+    *node_attr = (float *)aligned_alloc(32, sizeof(float) * g.number_of_nodes() * node_features);
+    free(*edge_attr);
+    *edge_attr = (float *)aligned_alloc(32, sizeof(float) * g.number_of_edges() * edge_features);
+
+    std::vector<int> marks(g.number_of_nodes(), -1);
+
+    for (int u = 0; u < g.number_of_nodes(); u++)
+    {
+        int d = g.getNodeDegree(u), Dn = 0, Wn = 0, C = 0;
+
+        for (int i = g.get_first_edge(u); i != g.get_first_invalid_edge(u); i++)
+        {
+            int v = g.getEdgeTarget(i);
+            marks[v] = u;
+            Wn += g.getNodeWeight(v);
+            Dn += g.getNodeDegree(v);
+        }
+
+        for (int i = g.get_first_edge(u); i != g.get_first_invalid_edge(u); i++)
+        {
+            int v = g.getEdgeTarget(i);
+
+            float *ea = *edge_attr + (i * edge_features);
+            ea[0] = (float)(g.getNodeDegree(u) > g.getNodeDegree(v));
+            ea[1] = (float)(g.getNodeWeight(u) > g.getNodeWeight(v));
+            ea[2] = (float)g.getNodeDegree(u) / (float)g.getNodeDegree(v);
+            ea[3] = (float)g.getNodeWeight(u) / (float)g.getNodeWeight(v);
+            ea[4] = 1.0f;
+            ea[5] = 1.0f;
+            ea[6] = 1.0f;
+            ea[7] = 1.0f;
         }
 
         float *ua = *node_attr + (u * node_features);

@@ -43,8 +43,8 @@ bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::s
     int count_data_per_graph = 0;
     for (size_t i = 0; i < reduction_data.size(); i++)
     {
-        // check at least 10% of applications
-        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.10 * reduction_data[i].size())
+        // check at least 1% of applications
+        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.010 * reduction_data[i].size())
         {
             continue;
         }
@@ -55,8 +55,8 @@ bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::s
 
     for (size_t i = 0; i < reduction_data.size(); i++)
     {
-        // check at least 10% of applications
-        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.10 * reduction_data[i].size())
+        // check at least 1% of applications
+        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.010 * reduction_data[i].size())
         {
             continue;
         }
@@ -82,15 +82,15 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
     int count_data_per_graph = 0;
     for (size_t i = 0; i < reduction_data.size(); i++)
     {
-        // check at least 10% of applications
-        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.1 * reduction_data[i].size())
+        // check at least 5% of applications
+        if (std::count(reduction_data[i].begin(), reduction_data[i].end(), true) < 0.05 * reduction_data[i].size())
         {
             continue;
         }
         count_data_per_graph++;
         used_reduction[i] = true;
     }
-    if (count_data_per_graph < 2 || G.number_of_nodes() < 100)
+    if (count_data_per_graph == 0 || G.number_of_nodes() < 100)
         return false; // specify how much data per graph needed
 
     for (size_t i = 0; i < reduction_data.size(); i++)
@@ -101,11 +101,23 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
 
     float *node_attr = NULL, *edge_attr = NULL;
     // LRConv::compute_node_attr(&node_attr, G);
-    LRConv::compute_attr(&node_attr, &edge_attr, G);
+    LRConv::compute_attr_norm(&node_attr, &edge_attr, G);
 
     std::ofstream file;
     file.open(filename + ".csv");
-    file << "source;target;uc;vc;ic;uw;vw;iw;twin;dom" << std::endl;
+    // file << "source;target;uc;vc;ic;uw;vw;iw;twin;dom" << std::endl;
+    // for (NodeID u = 0; u < G.number_of_nodes(); u++)
+    // {
+    //     for (NodeID i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
+    //     {
+    //         float *ed = edge_attr + (edge_features * i);
+    //         file << u << ";" << G.getEdgeTarget(i);
+    //         for (NodeID j = 0; j < edge_features; j++)
+    //             file << ";" << ed[j];
+    //         file << std::endl;
+    //     }
+    // }
+    file << "source;target;d;w;dr;wr;e0;e1;e2;e4" << std::endl;
     for (NodeID u = 0; u < G.number_of_nodes(); u++)
     {
         for (NodeID i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
@@ -179,50 +191,10 @@ int main(int argn, char **argv)
 
     if (config.size_of_subgraph > G.number_of_nodes())
     {
+        return 0;
         config.size_of_subgraph = G.number_of_nodes();
         config.num_of_subgraphs = 1;
     }
-
-    // {"fold1", "neighborhood", "fold2", "clique", "funnel", "funnel_fold", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "clique_neighborhood", "decreasing_struction", "heavy_vertex", "generalized_fold", "heavy_set", "heavy_set3", "cut_vertex"};
-    // sized_vector<std::string> reduction_names(25);
-    // if (!config.disable_fold1)
-    //     reduction_names.push_back("fold1");
-    // if (!config.disable_neighborhood)
-    //     reduction_names.push_back("neighborhood");
-    // if (!config.disable_fold2)
-    //     reduction_names.push_back("fold2");
-    // if (!config.disable_clique)
-    //     reduction_names.push_back("clique");
-    // if (!config.disable_funnel)
-    //     reduction_names.push_back("funnel");
-    // if (!config.disable_funnel_fold)
-    //     reduction_names.push_back("funnel_fold");
-    // if (!config.disable_domination)
-    //     reduction_names.push_back("domination");
-    // if (!config.disable_basic_se)
-    //     reduction_names.push_back("single_edge");
-    // if (!config.disable_extended_se)
-    //     reduction_names.push_back("extended_single_edge");
-    // if (!config.disable_twin)
-    //     reduction_names.push_back("twin");
-    // if (!config.disable_clique_neighborhood_fast)
-    //     reduction_names.push_back("clique_nbh_fast");
-    // if (!config.disable_clique_neighborhood)
-    //     reduction_names.push_back("clique_neighborhood");
-    // if (!config.disable_decreasing_struction)
-    //     reduction_names.push_back("decreasing_struction");
-    // if (!config.disable_heavy_vertex)
-    //     reduction_names.push_back("heavy_vertex");
-    // if (!config.disable_generalized_fold)
-    //     reduction_names.push_back("generalized_fold");
-    // if (!config.disable_heavy_set)
-    //     reduction_names.push_back("heavy_set");
-    // if (!config.disable_heavy_set3)
-    //     reduction_names.push_back("heavy_set3");
-    // if (!config.disable_cut_vertex)
-    //     reduction_names.push_back("cut_vertex");
-    // if (!config.disable_cut_vertex)
-    //     reduction_names.push_back("component");
 
     // int num_of_reductions = reduction_names.size();
     std::vector<std::string> transformation_names;
@@ -234,12 +206,24 @@ int main(int argn, char **argv)
     std::vector<bool> include_data(config.size_of_subgraph, false);
     graph_access subgraph;
     config.seed = time(NULL);
+
+    for (auto name : transformation_names)
+        printf("%s\n", name.c_str());
+
+    int tries = 0, max_tries = 1000;
+
     for (int i = 0; i < config.num_of_subgraphs; i++)
     {
         // number of different subgraphs out of one graph
         reducer.get_training_data_for_graph_size(subgraph, config.size_of_subgraph, reduction_data, include_data, exclude_data, i); // size of the subgraph
 
-        write_reduction_data_csv(subgraph, reduction_data, "training_data/csv/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i), transformation_names, exclude_data, include_data);
+        bool found = write_reduction_data_csv(subgraph, reduction_data, "training_data/csv/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i), transformation_names, exclude_data, include_data);
+
+        if (!found && tries < max_tries)
+        {
+            i--;
+            tries++;
+        }
 
         // if (write_reduction_data(reduction_data, "training_data/reduction_data/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i) + "_", reduction_names))
         //     graph_io::writeGraphWeighted(subgraph, "training_data/graph/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i) + ".graph");

@@ -26,6 +26,8 @@ public:
 
     static void compute_attr(float **node_attr, float **edge_attr, graph_access &g);
 
+    static void compute_attr_norm(float **node_attr, float **edge_attr, graph_access &g);
+
     void compute_node_attr_dynamic(branch_and_reduce_algorithm *g);
 
     void compute_node_attr_dynamic_norm(branch_and_reduce_algorithm *g);
