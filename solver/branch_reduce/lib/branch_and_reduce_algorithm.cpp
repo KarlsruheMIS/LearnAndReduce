@@ -36,7 +36,7 @@ constexpr NodeID branch_and_reduce_algorithm::MODIFIED_TOKEN;
 
 branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const ReductionConfig &config, bool called_from_fold)
 	: config(config), global_status(G), set_1(global_status.n), set_2(global_status.n), double_set(global_status.n * 2),
-	  buffers(4, sized_vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0), gnn(called_from_fold ? 0 : G.number_of_nodes())
+	  buffers(4, std::vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0), gnn(called_from_fold ? 0 : G.number_of_nodes())
 {
 	if (config.generate_training_data)
 	{
@@ -422,10 +422,10 @@ void branch_and_reduce_algorithm::fill_global_greedy()
 	}
 }
 
-void branch_and_reduce_algorithm::greedy_initial_is(graph_access &G, sized_vector<NodeID> &tmp_buffer)
+void branch_and_reduce_algorithm::greedy_initial_is(graph_access &G, std::vector<NodeID> &tmp_buffer)
 {
 	auto nodes = tmp_buffer;
-	nodes.set_size(G.number_of_nodes());
+	nodes.resize(G.number_of_nodes());
 
 	for (size_t i = 0; i < nodes.size(); i++)
 	{
@@ -491,7 +491,7 @@ NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound()
 	// Compute node mapping
 	NodeID current_node = 0;
 	auto &node_mapping = buffers[1];
-	node_mapping.set_size(status.n);
+	node_mapping.resize(status.n);
 
 	for (NodeID node : nodes)
 		node_mapping[node] = current_node++;
@@ -502,10 +502,10 @@ NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound()
 	auto &clique_sizes = buffers[4];
 	auto &covered = buffers[5];
 
-	clique.set_size(nodes.size());
-	clique_weight.set_size(nodes.size());
-	clique_sizes.set_size(nodes.size());
-	covered.set_size(nodes.size());
+	clique.resize(nodes.size());
+	clique_weight.resize(nodes.size());
+	clique_sizes.resize(nodes.size());
+	covered.resize(nodes.size());
 
 	std::fill(clique_weight.begin(), clique_weight.end(), 0);
 	std::fill(clique_sizes.begin(), clique_sizes.end(), 0);
@@ -515,7 +515,7 @@ NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound()
 		clique[node_mapping[node]] = node_mapping[node];
 
 	auto &neigh_clique_sizes = buffers[6];
-	neigh_clique_sizes.set_size(nodes.size());
+	neigh_clique_sizes.resize(nodes.size());
 
 	for (NodeID node : nodes)
 	{
@@ -562,7 +562,7 @@ NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound()
 	return upper_bound;
 }
 
-size_t branch_and_reduce_algorithm::run_ils(const ReductionConfig &config, graph_access &G, sized_vector<NodeID> &tmp_buffer, size_t max_swaps)
+size_t branch_and_reduce_algorithm::run_ils(const ReductionConfig &config, graph_access &G, std::vector<NodeID> &tmp_buffer, size_t max_swaps)
 {
 	if (!config.perform_hils)
 	{
@@ -773,10 +773,10 @@ void branch_and_reduce_algorithm::reduce_graph_internal_before_blow_up()
 
 		init_transformation_step(reduction);
 		bool progress = reduction->reduce(this);
-		if (progress && config.print_reduction_info)
-		{
-			print_reduction_progress();
-		}
+		// if (progress && config.print_reduction_info)
+		// {
+		// 	print_reduction_progress();
+		// }
 		active_reduction_index = progress ? 0 : active_reduction_index + 1;
 		if (status.remaining_nodes == 0)
 			break;
@@ -1003,8 +1003,7 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 
 	resize(status.n);
 
-	sized_vector<NodeID> node_order(status.n);
-	node_order.set_size(status.n);
+	std::vector<NodeID> node_order(status.n);
 	std::iota(node_order.begin(), node_order.end(), 0);
 	std::sort(node_order.begin(), node_order.end(), [&](const NodeID lhs, const NodeID rhs)
 			  { return deg(lhs) > deg(rhs) || (deg(lhs) == deg(rhs) && status.weights[lhs] > status.weights[rhs]); });
@@ -1043,7 +1042,7 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 		if (!improvement_possible)
 		{
 			// no improvement_possible --> backtrack
-			if (!status.branching_stack.empty() && status.branching_stack.back().node == branch_node)
+			if (status.branching_stack.size() > 0 && status.branching_stack.back().node == branch_node)
 			{
 				status.branching_stack.pop_back();
 				unset(branch_node);
@@ -1064,7 +1063,7 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 			set(branch_node, IS_status::included, false);
 			status.branching_stack.emplace_back(branch_node, i);
 		}
-		else if (!status.branching_stack.empty() && status.branching_stack.back().node == branch_node)
+		else if (status.branching_stack.size() > 0 && status.branching_stack.back().node == branch_node)
 		{
 			if (status.node_status[branch_node] == IS_status::included)
 			{
@@ -1106,9 +1105,6 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 					  { return deg(lhs) > deg(rhs) || (deg(lhs) == deg(rhs) && status.weights[lhs] > status.weights[rhs]); });
 
 			resize(status.n);
-			// for (auto &transformation : status.transformations) {
-			// 	transformation->marker.clear_next();
-			// }
 		}
 
 		if (status.remaining_nodes > SPLIT_CC_LIMIT && branch_reduce_recursive())
@@ -1206,7 +1202,7 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 
 	graph_extractor extractor;
 
-	buffers.resize(7, sized_vector<NodeID>(global_status.n));
+	buffers.resize(7, std::vector<NodeID>(global_status.n));
 
 	for (size_t i : comp_idx)
 	{
@@ -1315,7 +1311,7 @@ void branch_and_reduce_algorithm::undo_blow_up()
 void branch_and_reduce_algorithm::reverse_branching()
 {
 	// discard topmost branching token
-	if (!status.modified_stack.empty())
+	if (status.modified_stack.size() > 0)
 	{
 		status.modified_stack.pop_back();
 	}
@@ -1324,7 +1320,7 @@ void branch_and_reduce_algorithm::reverse_branching()
 		return;
 	}
 
-	while (!status.modified_stack.empty() && !is_token(status.modified_stack.back()))
+	while (status.modified_stack.size() > 0 && !is_token(status.modified_stack.back()))
 	{
 		NodeID node = status.modified_stack.back();
 		status.modified_stack.pop_back();
@@ -1370,7 +1366,7 @@ void branch_and_reduce_algorithm::restore_best_local_solution()
 
 	status.modified_stack.pop_back();
 
-	while (!status.modified_stack.empty())
+	while (status.modified_stack.size() > 0)
 	{
 		NodeID node = status.modified_stack.back();
 		status.modified_stack.pop_back();
@@ -1406,7 +1402,7 @@ void branch_and_reduce_algorithm::restore_best_global_solution()
 	status = std::move(global_status);
 	status.modified_stack.pop_back();
 
-	while (!status.modified_stack.empty())
+	while (status.modified_stack.size() > 0)
 	{
 		NodeID node = status.modified_stack.back();
 		status.modified_stack.pop_back();
@@ -1512,7 +1508,7 @@ void branch_and_reduce_algorithm::build_induced_neighborhood_subgraph(graph_acce
 	build_induced_subgraph(G, buffers[0], set_1, buffers[1]);
 }
 
-void branch_and_reduce_algorithm::build_induced_subgraph(graph_access &G, const sized_vector<NodeID> &nodes, const fast_set &nodes_set, sized_vector<NodeID> &reverse_mapping)
+void branch_and_reduce_algorithm::build_induced_subgraph(graph_access &G, const std::vector<NodeID> &nodes, const fast_set &nodes_set, std::vector<NodeID> &reverse_mapping)
 {
 	assert(nodes.size() > 1 && "Induced subgraph must have at least two nodes");
 	size_t edge_count = 0;
@@ -1699,7 +1695,7 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access 
 	include_data = br_alg.is_included_vertex;
 }
 
-void branch_and_reduce_algorithm::pick_nodes_by_BFS(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set)
+void branch_and_reduce_algorithm::pick_nodes_by_BFS(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set)
 {
 	nodes_vec.clear();
 	nodes_set.clear();
@@ -1722,7 +1718,7 @@ void branch_and_reduce_algorithm::pick_nodes_by_BFS(NodeID n, sized_vector<NodeI
 		}
 	}
 }
-void branch_and_reduce_algorithm::pick_nodes_by_nodeID(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set)
+void branch_and_reduce_algorithm::pick_nodes_by_nodeID(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set)
 {
 	nodes_vec.clear();
 	nodes_set.clear();
@@ -1752,7 +1748,7 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 			if (node_progress)
 			{
 				reduction_data[i][node] = true;
-				while (!status.modified_stack.empty())
+				while (status.modified_stack.size() > 0)
 				{
 					NodeID restore_node = status.modified_stack.back();
 					status.modified_stack.pop_back();
@@ -1773,7 +1769,7 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 						status.remaining_nodes++;
 					}
 				}
-				assert(status.modified_stack.empty() && "folded stack should be empty");
+				assert(status.modified_stack.size() == 0 && "folded stack should be empty");
 				assert(status.remaining_nodes == status.n && "graph should be restored to original size");
 			}
 		}

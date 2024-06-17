@@ -23,7 +23,7 @@ private:
     };
     std::vector<restore_data> restore_vec;
 
-    bool find_additional_nodes(sized_vector<NodeID> &additional_nodes, neighbor_list &neighbors, sized_vector<NodeID> &layer_prefix_count, size_t max_nodes) const;
+    bool find_additional_nodes(std::vector<NodeID> &additional_nodes, neighbor_list &neighbors, std::vector<NodeID> &layer_prefix_count, size_t max_nodes) const;
 };
 
 #endif //COMPONENTS_ORIGINAL_H

@@ -9,12 +9,15 @@ private:
 
 public:
 
-    sized_vector<NodeID> current;
-    sized_vector<NodeID> next;
+    std::vector<NodeID> current;
+    std::vector<NodeID> next;
     fast_set added_vertices;
 
     vertex_marker() : vertex_marker(10) {}
-	vertex_marker(size_t size) : current(size), next(size), added_vertices(size) {};
+	vertex_marker(size_t size) : added_vertices(size) {
+		current.reserve(size); 
+		next.reserve(size); 
+	}
 
 	void add(NodeID vertex) {
 		if (!added_vertices.get(vertex)) {
@@ -73,23 +76,7 @@ public:
         next.resize(size);
     }
 
-	// after resize old vertices might be left in the marker
-	// void remove_old_vertices() {
-		// remove vertices that are not in the new graph
-		// size_t i = 0;
-		// while (i < next.size()) {
-			// if (next[i] > next.capacity()) {
-			// 	next.remove(i);
- 			// 	// next[i] is now the last element and needs to be checked again
-			// }
-			// else {
-				// i++;
-			// }
-		// }
-		// assert(std::all_of(next.begin(), next.end(), [&](const auto &m) {  return m <= next.capacity(); }) && "Marker contains too large nodes");
-	// }
-
-    sized_vector<NodeID> &current_vec() {
+    std::vector<NodeID> &current_vec() {
 	    return current;
 	}
 };

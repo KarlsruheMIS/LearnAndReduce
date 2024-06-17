@@ -108,11 +108,11 @@ bool original_struction<modified>::reduce(branch_and_reduce_algorithm* br_alg, N
 }
 
 template<bool modified>
-bool original_struction<modified>::find_additional_nodes(sized_vector<NodeID> &additional_nodes, neighbor_list &neighbors,
-                                               sized_vector<NodeID> &layer_prefix_count, size_t max_nodes) const {
+bool original_struction<modified>::find_additional_nodes(std::vector<NodeID> &additional_nodes, neighbor_list &neighbors,
+                                               std::vector<NodeID> &layer_prefix_count, size_t max_nodes) const {
     auto &status = br_alg->status;
     additional_nodes.clear();
-    layer_prefix_count.set_size(neighbors.size() + 1);
+    layer_prefix_count.resize(neighbors.size() + 1);
     layer_prefix_count[0] = 0;
     for (size_t i = 0; i < neighbors.size(); ++i) {
         layer_prefix_count[i + 1] = layer_prefix_count[i];

@@ -30,8 +30,8 @@ private:
     neighbor_list includable_neighbors;
 
     bool findAdditionalNodes(NodeID n, const std::vector<mwis> &independent_sets,
-                             sized_vector<NodeID> &neighbor_ids, sized_vector<NodeID> &layer_prefix_count,
-                             sized_vector<NodeID> &additional_nodes, size_t max_nodes);
+                             std::vector<NodeID> &neighbor_ids, std::vector<NodeID> &layer_prefix_count,
+                             std::vector<NodeID> &additional_nodes, size_t max_nodes);
 };
 
 #endif //COMPONENTS_EXTENDED_H

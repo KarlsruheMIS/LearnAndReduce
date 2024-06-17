@@ -23,7 +23,6 @@
 // local includes
 #include "definitions.h"
 #include "fast_set.h"
-#include "sized_vector.h"
 #include "dynamic_graph.h"
 #include "extended_struction.h"
 #include "original_struction.h"
@@ -103,9 +102,9 @@ struct general_reduction
     inline NodeWeight get_neighborhood_weight(NodeID v, branch_and_reduce_algorithm *br_alg);
     inline NodeID get_max_weight_neighbor(NodeID v, branch_and_reduce_algorithm *br_alg);
     inline void get_neighborhood_set(NodeID v, branch_and_reduce_algorithm *br_alg, fast_set &neighborhood_set);
-    inline void get_neighborhood_vector(NodeID v, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &neighborhood_vec);
+    inline void get_neighborhood_vector(NodeID v, branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &neighborhood_vec);
     inline bool try_neighborhood_reduction(NodeID v, branch_and_reduce_algorithm *br_alg, NodeWeight neighborhood_weight);
-    inline bool solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &nodes_vec, const fast_set &nodes_set, sized_vector<NodeID> &reverse_mapping, bool apply_solution = false);
+    inline bool solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &nodes_vec, const fast_set &nodes_set, std::vector<NodeID> &reverse_mapping, bool apply_solution = false);
     inline bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, bool apply_solution = false);
     inline bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution = false);
     inline bool is_reduced(NodeID v, branch_and_reduce_algorithm *br_alg);
@@ -240,7 +239,7 @@ struct clique_neighborhood_reduction : public general_reduction
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
 
     bool partition_into_cliques(NodeID v, branch_and_reduce_algorithm *br_alg);
-    bool expand_clique(NodeID max_neighbor, sized_vector<NodeID> &neighbors_vec, fast_set &clique_neighbors_set, branch_and_reduce_algorithm *br_alg);
+    bool expand_clique(NodeID max_neighbor, std::vector<NodeID> &neighbors_vec, fast_set &clique_neighbors_set, branch_and_reduce_algorithm *br_alg);
 
     NodeWeight target_weight;
     NodeWeight neighbor_weights;
@@ -305,12 +304,12 @@ private:
     {
         NodeID node;
         NodeID funnel_neighbor;
-        sized_vector<NodeID> remaining_neighbors;
+        std::vector<NodeID> remaining_neighbors;
         std::vector<std::vector<NodeID>> node_vecs;
     };
 
-    bool is_funnel(NodeID v, NodeID &funnel_neighbor, branch_and_reduce_algorithm *br_alg, fast_set &funnel_set, sized_vector<NodeID> &funnel_nodes);
-    bool is_clique(branch_and_reduce_algorithm *br_alg, fast_set &clique_set, sized_vector<NodeID> &clique_nodes);
+    bool is_funnel(NodeID v, NodeID &funnel_neighbor, branch_and_reduce_algorithm *br_alg, fast_set &funnel_set, std::vector<NodeID> &funnel_nodes);
+    bool is_clique(branch_and_reduce_algorithm *br_alg, fast_set &clique_set, std::vector<NodeID> &clique_nodes);
     void fold(const fold_data &data, fast_set &funnel_set, branch_and_reduce_algorithm *br_alg);
 
     std::vector<restore_data> restore_vec;
@@ -339,12 +338,12 @@ private:
     {
         NodeID node;
         NodeID funnel_neighbor;
-        sized_vector<NodeID> remaining_neighbors;
+        std::vector<NodeID> remaining_neighbors;
         std::vector<std::vector<NodeID>> node_vecs;
     };
 
-    bool is_funnel(NodeID v, NodeID &funnel_neighbor, branch_and_reduce_algorithm *br_alg, fast_set &funnel_set, sized_vector<NodeID> &funnel_nodes);
-    bool is_clique(branch_and_reduce_algorithm *br_alg, fast_set &clique_set, sized_vector<NodeID> &clique_nodes);
+    bool is_funnel(NodeID v, NodeID &funnel_neighbor, branch_and_reduce_algorithm *br_alg, fast_set &funnel_set, std::vector<NodeID> &funnel_nodes);
+    bool is_clique(branch_and_reduce_algorithm *br_alg, fast_set &clique_set, std::vector<NodeID> &clique_nodes);
     void fold(const fold_data &data, fast_set &funnel_set, branch_and_reduce_algorithm *br_alg);
 
     std::vector<restore_data> restore_vec;
@@ -374,8 +373,8 @@ struct component_reduction : public general_reduction
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
 
 private:
-    bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent);
-    bool build_small_component(NodeID u, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &component, std::vector<bool> &component_visited);
+    bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, std::vector<NodeID> &smallComponent);
+    bool build_small_component(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &component, std::vector<bool> &component_visited);
     void dfs_fill_visited(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<bool> &component_visited);
 };
 
@@ -392,9 +391,9 @@ struct cut_vertex_reduction : public general_reduction
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
     virtual void apply(branch_and_reduce_algorithm *br_alg) final;
 
-    bool find_cut_vertex(branch_and_reduce_algorithm *br_alg, NodeID &cut_v, sized_vector<NodeID> &cut_component, std::vector<NodeID> &reverse_mapping, fast_set &tested);
-    bool DFS(branch_and_reduce_algorithm *br_alg, NodeID u, int &step, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent);
-    bool get_fold_data(branch_and_reduce_algorithm *br_alg, NodeID cut_v, sized_vector<NodeID> &cut_v_included_i, sized_vector<NodeID> &cut_v_included_e, sized_vector<NodeID> &cut_v_excluded_i, sized_vector<NodeID> &cut_v_excluded_e, NodeWeight &large_cutMWIS_weight, NodeWeight &small_cutMWIS_weight);
+    bool find_cut_vertex(branch_and_reduce_algorithm *br_alg, NodeID &cut_v, std::vector<NodeID> &cut_component, std::vector<NodeID> &reverse_mapping, fast_set &tested);
+    bool DFS(branch_and_reduce_algorithm *br_alg, NodeID u, int &step, NodeID &cut_vertex, std::vector<NodeID> &smallComponent);
+    bool get_fold_data(branch_and_reduce_algorithm *br_alg, NodeID cut_v, std::vector<NodeID> &cut_v_included_i, std::vector<NodeID> &cut_v_included_e, std::vector<NodeID> &cut_v_excluded_i, std::vector<NodeID> &cut_v_excluded_e, NodeWeight &large_cutMWIS_weight, NodeWeight &small_cutMWIS_weight);
 
 private:
     struct fold_data
@@ -403,22 +402,22 @@ private:
         NodeWeight cut_vertex_weight;
         NodeWeight large_cutMWIS_weight;
         NodeWeight small_cutMWIS_weight;
-        sized_vector<NodeID> cut_component;
+        std::vector<NodeID> cut_component;
     };
 
     struct restore_data
     {
         fold_data data;
-        sized_vector<NodeID> case_cut_v_included_nodes_to_include;
-        sized_vector<NodeID> case_cut_v_included_nodes_to_exclude;
-        sized_vector<NodeID> case_cut_v_excluded_nodes_to_include;
-        sized_vector<NodeID> case_cut_v_excluded_nodes_to_exclude;
+        std::vector<NodeID> case_cut_v_included_nodes_to_include;
+        std::vector<NodeID> case_cut_v_included_nodes_to_exclude;
+        std::vector<NodeID> case_cut_v_excluded_nodes_to_include;
+        std::vector<NodeID> case_cut_v_excluded_nodes_to_exclude;
     };
 
-    bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, sized_vector<NodeID> &smallComponent);
-    bool build_small_component(NodeID u, branch_and_reduce_algorithm *br_alg, sized_vector<NodeID> &component, std::vector<bool> &component_visited);
+    bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, std::vector<NodeID> &smallComponent);
+    bool build_small_component(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &component, std::vector<bool> &component_visited);
     void dfs_fill_visited(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<bool> &component_visited);
-    void fold(branch_and_reduce_algorithm *br_alg, fold_data &data, sized_vector<NodeID> &cut_v_included_i, sized_vector<NodeID> &cut_v_included_e, sized_vector<NodeID> &cut_v_excluded_i, sized_vector<NodeID> &cut_v_excluded_e);
+    void fold(branch_and_reduce_algorithm *br_alg, fold_data &data, std::vector<NodeID> &cut_v_included_i, std::vector<NodeID> &cut_v_included_e, std::vector<NodeID> &cut_v_excluded_i, std::vector<NodeID> &cut_v_excluded_e);
 
     std::vector<restore_data> restore_vec;
 };
@@ -556,8 +555,8 @@ private:
         uv
     }; // uo = u fixed as included and v is excluded (start with no increasing to all vertices)
     bool is_heavy_set(NodeID v, fast_set &v_neighbors_set, NodeID u, branch_and_reduce_algorithm *br_alg);
-    void unset_weights(graph_access &graph, sized_vector<NodeID> &nodes, sized_vector<NodeID> &reverse_mapping);
-    void set_weights(graph_access &graph, sized_vector<NodeID> &nodes, sized_vector<NodeID> &reverse_mapping, std::vector<NodeWeight> &weights);
+    void unset_weights(graph_access &graph, std::vector<NodeID> &nodes, std::vector<NodeID> &reverse_mapping);
+    void set_weights(graph_access &graph, std::vector<NodeID> &nodes, std::vector<NodeID> &reverse_mapping, std::vector<NodeWeight> &weights);
 };
 
 struct heavy_set3_reduction : public general_reduction
@@ -589,8 +588,8 @@ private:
     bool check_u_combination(std::vector<NodeWeight> &MWIS_weights);
     bool check_v_combination(std::vector<NodeWeight> &MWIS_weights);
     bool check_w_combination(std::vector<NodeWeight> &MWIS_weights);
-    void unset_weights(graph_access &graph, sized_vector<NodeID> &nodes, sized_vector<NodeID> &reverse_mapping);
-    void set_weights(graph_access &graph, sized_vector<NodeID> &nodes, sized_vector<NodeID> &reverse_mapping, std::vector<NodeWeight> &weights);
+    void unset_weights(graph_access &graph, std::vector<NodeID> &nodes, std::vector<NodeID> &reverse_mapping);
+    void set_weights(graph_access &graph, std::vector<NodeID> &nodes, std::vector<NodeID> &reverse_mapping, std::vector<NodeWeight> &weights);
 };
 
 struct path_reduction : public general_reduction
@@ -613,7 +612,7 @@ private:
     struct restore_data
     {
         std::vector<std::pair<NodeID, NodeWeight>> node_weights;
-        sized_vector<NodeID> path;
+        std::vector<NodeID> path;
         size_t start;
         size_t end;
         size_t offset;
@@ -624,7 +623,7 @@ private:
 
     template <bool add_global = true>
     void enqueue_node(NodeID n);
-    bool dequeue_node(sized_vector<NodeID> &queue, NodeID &n, size_t degree);
+    bool dequeue_node(std::vector<NodeID> &queue, NodeID &n, size_t degree);
     bool reduce_degree_one_node();
     bool reduce_path();
 
@@ -634,18 +633,18 @@ private:
     void add_reduction_offset(size_t reduction_offset, restore_data &data);
     bool are_connected(NodeID v, NodeID w) const;
 
-    void find_max_deg_1_path(NodeID n, sized_vector<NodeID> &path);
-    void find_max_path(NodeID n, sized_vector<NodeID> &path);
+    void find_max_deg_1_path(NodeID n, std::vector<NodeID> &path);
+    void find_max_path(NodeID n, std::vector<NodeID> &path);
     bool next_node_on_path(NodeID current, NodeID last, NodeID first, NodeID &next);
 
-    void find_MIS_on_path(sized_vector<NodeID> &path);
+    void find_MIS_on_path(std::vector<NodeID> &path);
 
     template <bool track_choices = false>
-    void find_MIS_on_path(NodeWeight &w_i, NodeWeight &w_e, sized_vector<NodeID> &path);
+    void find_MIS_on_path(NodeWeight &w_i, NodeWeight &w_e, std::vector<NodeID> &path);
     template <bool track_choices = false>
-    void find_MIS_on_deg_1_path(NodeWeight &w_i, NodeWeight &w_e, sized_vector<NodeID> &path);
+    void find_MIS_on_deg_1_path(NodeWeight &w_i, NodeWeight &w_e, std::vector<NodeID> &path);
 
-    void apply(sized_vector<NodeID> &path);
+    void apply(std::vector<NodeID> &path);
 };
 
 template <typename struction_type, reduction_type type, int vertex_increase>

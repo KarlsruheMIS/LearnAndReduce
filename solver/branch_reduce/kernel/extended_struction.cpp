@@ -196,17 +196,17 @@ void extended_struction<reduced_version>::apply(branch_and_reduce_algorithm* br_
 }
 
 template<bool reduced_version>
-bool extended_struction<reduced_version>::findAdditionalNodes(NodeID n, const std::vector<mwis> &independent_sets, sized_vector<NodeID> &neighbor_ids,
-                                                              sized_vector<NodeID> &layer_prefix_count, sized_vector<NodeID> &additional_nodes, size_t max_nodes) {
+bool extended_struction<reduced_version>::findAdditionalNodes(NodeID n, const std::vector<mwis> &independent_sets, std::vector<NodeID> &neighbor_ids,
+                                                              std::vector<NodeID> &layer_prefix_count, std::vector<NodeID> &additional_nodes, size_t max_nodes) {
     auto &status = br_alg->status;
     auto &marks = br_alg->set_1;
     auto &neighbors = status.graph[n];
 
     additional_nodes.clear();
-    layer_prefix_count.set_size(independent_sets.size() + 1);
+    layer_prefix_count.resize(independent_sets.size() + 1);
     layer_prefix_count[0] = 0;
 
-    neighbor_ids.set_size(status.n);
+    neighbor_ids.resize(status.n);
     for (size_t i = 0; i < neighbors.size(); ++i) {
         neighbor_ids[neighbors[i]] = i;
     }

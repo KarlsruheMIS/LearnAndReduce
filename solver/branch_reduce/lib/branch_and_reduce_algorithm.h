@@ -35,7 +35,7 @@
 #include "cout_handler.h"
 #include "definitions.h"
 #include "data_structure/graph_access.h"
-#include "data_structure/sized_vector.h"
+// #include "data_structure/sized_vector.h"
 #include "dynamic_graph.h"
 #include "mwis_finder.h"
 #include "reductions.h"
@@ -132,15 +132,23 @@ private:
         // int blow_up_index;
 		NodeID heuristically_reduced_n = 0;
 
-		sized_vector<reduction_type> folded_stack;
-		sized_vector<node_pos> branching_stack;
-		sized_vector<NodeID> modified_stack;
+		std::vector<reduction_type> folded_stack;
+		std::vector<node_pos> branching_stack;
+		std::vector<NodeID> modified_stack;
+		// sized_vector<reduction_type> folded_stack;
+		// sized_vector<node_pos> branching_stack;
+		// sized_vector<NodeID> modified_stack;
 
 		graph_status() = default;
 
 		graph_status(graph_access& G) :
-                n(G.number_of_nodes()), m(G.number_of_edges()), remaining_nodes(n), graph(G), weights(n, 0), node_status(n, IS_status::not_set),
-                folded_stack(2*n), branching_stack(n), modified_stack(2*n + 1) {
+                n(G.number_of_nodes()), m(G.number_of_edges()), remaining_nodes(n), graph(G), weights(n, 0), node_status(n, IS_status::not_set)
+				// modified_stack(2*n + 1), branching_stack(n), folded_stack(2*n) {
+		{
+			modified_stack.reserve(2*n + 1);
+			branching_stack.reserve(n);
+			folded_stack.reserve(2*n);
+
 			forall_nodes(G, node) {
 				weights[node] = G.getNodeWeight(node);
 			} endfor
@@ -149,9 +157,12 @@ private:
 		void resize(size_t size) {
 		    weights.resize(size, 0);
 		    node_status.resize(size, IS_status::not_set);
-            modified_stack.resize(2*size + 1);
-            branching_stack.resize(size);
-            folded_stack.resize(2*size);
+            modified_stack.reserve(2*size + 1);
+            branching_stack.reserve(size);
+            folded_stack.reserve(2*size);
+            // modified_stack.reserve(2*size + 1);
+            // branching_stack.reserve(size);
+            // folded_stack.reserve(2*size);
 			if (reduction_node_status.size() > 0 )
 				reduction_node_status.resize(size, std::vector<bool>(num_reductions, true));
             n = size;
@@ -228,7 +239,7 @@ private:
 	fast_set set_1;
 	fast_set set_2;
 	fast_set double_set;
-    std::vector<sized_vector<NodeID>> buffers;
+    std::vector<std::vector<NodeID>> buffers;
     std::vector<bool> bool_buffer;
     std::vector<NodeID> zero_vec;
 
@@ -275,7 +286,7 @@ private:
 
     void build_global_graph_access();
 	void build_induced_neighborhood_subgraph(graph_access& G, NodeID source_node);
-	void build_induced_subgraph(graph_access& G, const sized_vector<NodeID>& nodes, const fast_set& nodes_set, sized_vector<NodeID>& reverse_mapping);
+	void build_induced_subgraph(graph_access& G, const std::vector<NodeID>& nodes, const fast_set& nodes_set, std::vector<NodeID>& reverse_mapping);
 
     void push_nodes(size_t nodes);
     void pop_nodes(size_t nodes);
@@ -290,8 +301,8 @@ public:
     bool run_branch_reduce(NodeWeight weight_bound);
     bool run_branch_reduce();
 
-    static size_t run_ils(const ReductionConfig& config, graph_access& G, sized_vector<NodeID>& tmp_buffer, size_t max_swaps);
-	static void greedy_initial_is(graph_access& G, sized_vector<NodeID>& tmp_buffer);
+    static size_t run_ils(const ReductionConfig& config, graph_access& G, std::vector<NodeID>& tmp_buffer, size_t max_swaps);
+	static void greedy_initial_is(graph_access& G, std::vector<NodeID>& tmp_buffer);
 
 	NodeWeight get_current_is_weight() const;
 	NodeID get_heuristically_reduced_vertices() const;
@@ -308,8 +319,8 @@ public:
     // added for training data
     // void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, size_t i);
     void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, std::vector<bool> &include_data, std::vector<bool> &exclude_data, size_t i);
-    void pick_nodes_by_BFS(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
-    void pick_nodes_by_nodeID(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
+    void pick_nodes_by_BFS(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set);
+    void pick_nodes_by_nodeID(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void generate_initial_reduce_data(std::vector<std::vector<bool>> &reduction_data, size_t i);
 
 

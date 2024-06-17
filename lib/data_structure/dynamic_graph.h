@@ -28,7 +28,6 @@
 #include <algorithm>
 #include "graph_access.h"
 #include "fast_set.h"
-#include "sized_vector.h"
 
 class dynamic_graph {
 public:

@@ -364,7 +364,7 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
 
     // Choose standard configuration
     configuration_reduction cfg;
-    cfg.standard(config);
+    cfg.all_decreasing(config);
     // Parse the arguments
     if (reduction_config->count > 0) {
         if (!strcmp(reduction_config->sval[0], "cyclicFast")) 
