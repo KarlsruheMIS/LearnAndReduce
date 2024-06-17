@@ -21,7 +21,10 @@ def parse_data(filename):
 
     with open(path + '_meta' + ext) as f:
         reader = csv.DictReader(f, delimiter=';')
-        x = torch.tensor([[float(r['d']), float(r['w']), float(r['nw']), float(r['l'])] for r in reader], dtype=torch.float)
+        x = torch.tensor([[float(r['l']), float(r['w']), float(r['d']), float(r['nw']),
+                           float(r['min_w']), float(r['max_w']), float(r['min_d']), float(r['max_d']),
+                           float(r['w_nw']), float(r['w_anw']), float(r['d_nd']), float(r['d_and']),
+                           float(r['w_aw']), float(r['w_mw']), float(r['d_ad']), float(r['d_md'])] for r in reader], dtype=torch.float)
     
     with open(filename) as f:
         reader = csv.DictReader(f, delimiter=';')
@@ -29,9 +32,9 @@ def parse_data(filename):
 
     with open(filename) as f:
         reader = csv.DictReader(f, delimiter=';')
-        edge_attr = torch.tensor([[float(r['d']), float(r['w']), float(r['dr']), 
-                                   float(r['wr']), float(r['e0']), float(r['e1']),
-                                   float(r['e2']), float(r['e4'])] for r in reader], dtype=torch.float)
+        edge_attr = torch.tensor([[float(r['gt_w']), float(r['gt_d']), float(r['lt_w']), 
+                                   float(r['lt_d']), float(r['eq_w']), float(r['eq_d']),
+                                   float(r['wu_wv']), float(r['du_dv'])] for r in reader], dtype=torch.float)
 
     if x.size()[0] > 100:
         dataset.append(Data(x=x, y=y, edge_index=edge_index.t().contiguous(), edge_attr=edge_attr)) #, edge_attr=edge_attr
@@ -88,7 +91,7 @@ def model_fit(model, epoch):
                             fp += 1
                         else:
                             tn += 1
-            print(e, "%.5f" % scheduler.get_last_lr()[0], "%.5f" % (running_loss / N), tp, fp, tn, fn)
+            print(e, "%.5f" % scheduler.get_last_lr()[0], "%.5f" % (running_loss / N), "%.5f" % ((tp + tn) / (tp + fp + tn + fn)), tp, fp, tn, fn)
 
 def store_model(model, path):
     with open(path, "w") as f:
@@ -130,7 +133,7 @@ from torch_geometric.nn import GCNConv, SAGEConv, GENConv, GINEConv, Transformer
 class LR_GCN(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = LRConv(4, 16, 8)
+        self.conv1 = LRConv(16, 16, 8)
         self.conv2 = LRConv(16, 16, 8)
         self.lin1 = Linear(16, 16)
         self.a1 = ReLU()

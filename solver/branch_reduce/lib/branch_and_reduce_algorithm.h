@@ -303,6 +303,7 @@ public:
     // added for training data
     // void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, size_t i);
     void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, std::vector<bool> &include_data, std::vector<bool> &exclude_data, size_t i);
+    void get_exact_training_data_for_graph_size(graph_access &graph, NodeID n);
     void pick_nodes_by_BFS(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
 	void pick_nodes_by_BFS_sample(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void pick_nodes_by_nodeID(NodeID n, sized_vector<NodeID> &nodes_vec, fast_set &nodes_set);

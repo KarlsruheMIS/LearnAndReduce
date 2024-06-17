@@ -38,6 +38,14 @@
 #include "solution_check.h"
 #include "LRConv.h"
 
+const char *edge_feature_names[] = {"gt_w", "gt_d", "lt_w", "lt_d",
+                                    "eq_w", "eq_d", "wu_wv", "du_dv"};
+
+const char *node_feature_names[] = {"l", "w", "d", "nw",
+                                    "min_w", "max_w", "min_d", "max_d",
+                                    "w_nw", "w_anw", "d_nd", "d_and",
+                                    "w_aw", "w_mw", "d_ad", "d_md"};
+
 bool write_reduction_data(std::vector<std::vector<bool>> &reduction_data, std::string filename, sized_vector<std::string> &reduction_names)
 {
     int count_data_per_graph = 0;
@@ -105,26 +113,18 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
 
     std::ofstream file;
     file.open(filename + ".csv");
-    // file << "source;target;uc;vc;ic;uw;vw;iw;twin;dom" << std::endl;
-    // for (NodeID u = 0; u < G.number_of_nodes(); u++)
-    // {
-    //     for (NodeID i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
-    //     {
-    //         float *ed = edge_attr + (edge_features * i);
-    //         file << u << ";" << G.getEdgeTarget(i);
-    //         for (NodeID j = 0; j < edge_features; j++)
-    //             file << ";" << ed[j];
-    //         file << std::endl;
-    //     }
-    // }
-    file << "source;target;d;w;dr;wr;e0;e1;e2;e4" << std::endl;
+    file << "source;target";
+    for (int i = 0; i < total_edge_features; i++)
+        file << ";" << edge_feature_names[i];
+    file << std::endl;
+
     for (NodeID u = 0; u < G.number_of_nodes(); u++)
     {
         for (NodeID i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
         {
-            float *ed = edge_attr + (edge_features * i);
+            float *ed = edge_attr + (total_edge_features * i);
             file << u << ";" << G.getEdgeTarget(i);
-            for (NodeID j = 0; j < edge_features; j++)
+            for (NodeID j = 0; j < total_edge_features; j++)
                 file << ";" << ed[j];
             file << std::endl;
         }
@@ -132,7 +132,11 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
     file.close();
 
     file.open(filename + "_meta.csv");
-    file << "id;d;w;nw;l;i;e";
+    file << "id;i;e";
+    for (int i = 0; i < total_node_features; i++)
+        file << ";" << node_feature_names[i];
+    file << std::endl;
+
     for (NodeID i = 0; i < reduction_data.size(); i++)
         if (used_reduction[i])
             file << ";" << reduction_names[i];
@@ -141,14 +145,63 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
 
     for (NodeID u = 0; u < G.number_of_nodes(); u++)
     {
-        file << u;
-        float *nd = node_attr + (u * node_features);
-        for (NodeID i = 0; i < node_features; i++)
+        file << u << ";" << include_data[u] << ";" << exclude_data[u];
+        float *nd = node_attr + (u * total_node_features);
+        for (NodeID i = 0; i < total_node_features; i++)
             file << ";" << nd[i];
-        file << ";" << include_data[u] << ";" << exclude_data[u];
         for (NodeID i = 0; i < reduction_data.size(); i++)
             if (used_reduction[i])
                 file << ";" << reduction_data[i][u];
+        file << std::endl;
+    }
+    file.close();
+    free(node_attr);
+    free(edge_attr);
+    return true;
+}
+
+bool write_exact_data_csv(graph_access &G, std::string filename)
+{
+    if (G.number_of_nodes() < 100)
+        return false;
+
+    float *node_attr = NULL, *edge_attr = NULL;
+    LRConv::compute_attr_norm(&node_attr, &edge_attr, G);
+
+    std::ofstream file;
+    file.open(filename + ".csv");
+    file << "source;target";
+    for (int i = 0; i < total_edge_features; i++)
+        file << ";" << edge_feature_names[i];
+    file << std::endl;
+
+    for (NodeID u = 0; u < G.number_of_nodes(); u++)
+    {
+        for (NodeID i = G.get_first_edge(u); i != G.get_first_invalid_edge(u); i++)
+        {
+            float *ed = edge_attr + (total_edge_features * i);
+            file << u << ";" << G.getEdgeTarget(i);
+            for (NodeID j = 0; j < total_edge_features; j++)
+                file << ";" << ed[j];
+            file << std::endl;
+        }
+    }
+    file.close();
+
+    file.open(filename + "_meta.csv");
+    file << "id;I";
+    for (int i = 0; i < total_node_features; i++)
+        file << ";" << node_feature_names[i];
+    file << std::endl;
+
+    file << std::fixed << std::setprecision(6);
+    for (NodeID u = 0; u < G.number_of_nodes(); u++)
+    {
+        file << u << ";" << (G.getPartitionIndex(u) == 1 ? 1 : 0);
+
+        float *nd = node_attr + (u * total_node_features);
+        for (NodeID i = 0; i < total_node_features; i++)
+            file << ";" << nd[i];
         file << std::endl;
     }
     file.close();
@@ -188,6 +241,24 @@ int main(int argn, char **argv)
     struction_log::instance()->print_graph();
 
     branch_and_reduce_algorithm reducer(G, config);
+
+    if (config.exact_data)
+    {
+        int tries = 0, max_tries = 1000;
+        graph_access subgraph;
+        for (int i = 0; i < config.num_of_subgraphs; i++)
+        {
+            reducer.get_exact_training_data_for_graph_size(subgraph, config.size_of_subgraph);
+            printf("Got graph with %d vertices\n", subgraph.number_of_nodes());
+            bool found = write_exact_data_csv(subgraph, "training_data/csv/" + name + "_seed" + std::to_string(config.seed) + "_training_data_graph_" + std::to_string(i));
+            if (!found && tries < max_tries)
+            {
+                i--;
+                tries++;
+            }
+        }
+        return 0;
+    }
 
     if (config.size_of_subgraph > G.number_of_nodes())
     {
