@@ -11,6 +11,9 @@ const int hidden_dim = 16;
 const float scale = 100.0f;
 const double id_scale = 1000000.0;
 
+const int total_node_features = 16;
+const int total_edge_features = 8;
+
 class branch_and_reduce_algorithm;
 
 class LRConv
