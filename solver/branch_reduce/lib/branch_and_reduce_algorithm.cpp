@@ -124,6 +124,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
 			if (!config.disable_cut_vertex)
 				global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
+			if (!config.disable_high_degree)
+				global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
 	}
 	else if (config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
 	{
@@ -219,11 +221,13 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		{
 			global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
 		}
-	}
+		if (!config.disable_high_degree)
+			global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
 	if (!config.disable_heuristic_exclude)
 		global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
 	if (!config.disable_heuristic_include)
 		global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
+	}
 
 	global_transformation_map.resize(REDUCTION_NUM);
 	for (size_t i = 0; i < global_status.transformations.size(); i++)
