@@ -1872,7 +1872,7 @@ void branch_and_reduce_algorithm::pick_nodes_by_BFS_sample(NodeID n, sized_vecto
 	nodes_vec.push_back(node);
 	nodes_set.add(node);
 	// start BFS at node
-	for (size_t i = 0; i < n; i++)
+	for (size_t i = 0; i < n && i < nodes_vec.size(); i++)
 	{
 		NodeID node = nodes_vec[i];
 		int d = status.graph[node].size();
