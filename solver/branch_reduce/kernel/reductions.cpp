@@ -3318,7 +3318,9 @@ bool high_degree_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     size_t oldn = status.remaining_nodes;
     NodeWeight no_limit = std::numeric_limits<NodeWeight>::max();
     graph_access globalG;
-    std::vector<NodeID> reverse_mapping(status.remaining_nodes, 0);
+    // std::vector<NodeID> reverse_mapping(status.remaining_nodes, 0);
+    auto& reverse_mapping = br_alg->buffers[1];
+    reverse_mapping.resize(status.remaining_nodes);
 	br_alg->build_graph_access(globalG, reverse_mapping);
 
 	std::vector<int> comp_map(status.remaining_nodes, 0);
@@ -3377,8 +3379,6 @@ bool high_degree_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
                 continue;
             }
         }
-        else
-        {
             // compute local search bound
             fold_nodes MWIS_nodes;
             excluded_nodes.clear();
@@ -3393,7 +3393,11 @@ bool high_degree_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 		    NodeID v = std::max_element(node_order.begin(), node_order.end(), [&](const NodeID lhs, const NodeID rhs)
 			  { return br_alg->deg(lhs) < br_alg->deg(rhs) || ( br_alg->deg(lhs) == br_alg->deg(rhs) && status.weights[lhs] > status.weights[rhs] ); })[0];
             
-            // printf("v %d deg: %d\n", reverse_mapping[br_alg->local_mapping[v]], G.getNodeDegree(v));
+        // store component nodes
+        std::vector<bool> component_nodes(status.n, false);
+        for (NodeID node = 0; node < G.number_of_nodes(); node++)
+            component_nodes[reverse_mapping[br_alg->local_mapping[node]]] = true;
+
             while (G.number_of_nodes() - G.getNodeDegree(v) - excluded_nodes.size() < 2*config.subgraph_node_limit)
             {
 
@@ -3406,6 +3410,7 @@ bool high_degree_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
                     {
                         best_weight_so_far = MWIS_weight;
                         best_is_ils_solution = false;
+                    MWIS_nodes.MWIS.clear();
 
                         // get MWIS nodes
                         MWIS_nodes.main = reverse_mapping[br_alg->local_mapping[v]];
@@ -3430,22 +3435,22 @@ bool high_degree_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
                 node_order.pop_back();
 		        v = std::max_element(node_order.begin(), node_order.end(), [&](const NodeID lhs, const NodeID rhs)
 			        {return br_alg->deg(lhs) < br_alg->deg(rhs) || ( br_alg->deg(lhs) == br_alg->deg(rhs) && status.weights[lhs] > status.weights[rhs] ); })[0];
-                // printf("v %d deg: %d\n", reverse_mapping[br_alg->local_mapping[v]], G.getNodeDegree(v));
 
             }
             if (!best_is_ils_solution)
             {
-                std::vector<NodeID> global_exclude_nodes(excluded_nodes.size());
+            std::vector<NodeID> global_exclude_nodes;
+            global_exclude_nodes.reserve(excluded_nodes.size());
                 for (NodeID node : excluded_nodes)
                 {
                     if (reverse_mapping[br_alg->local_mapping[node]] != MWIS_nodes.main)
                         global_exclude_nodes.push_back(reverse_mapping[br_alg->local_mapping[node]]);
                 }
-                fold(br_alg, MWIS_nodes, MWIS_weight, global_exclude_nodes); 
+            MWIS_nodes.is_component = comp_count > 1;
+            fold(br_alg, MWIS_nodes, best_weight_so_far, global_exclude_nodes, component_nodes); 
             } else {
                 for (auto node : excluded_nodes)
                     br_alg->set(reverse_mapping[br_alg->local_mapping[node]], IS_status::excluded);
-            }
         }
     }
 
@@ -3459,6 +3464,7 @@ bool high_degree_reduction::reduce_in_component(branch_and_reduce_algorithm* br_
 	auto& status = br_alg->status;
     auto& neighbors = br_alg->buffers[0];
 	auto& neighbors_set = br_alg->set_1;
+    auto& reverse_mapping = br_alg->buffers[1];
 	size_t oldn = status.remaining_nodes;
 
     // include vertex v in MWIS by setting all neighbor weights to 0
@@ -3474,18 +3480,19 @@ bool high_degree_reduction::reduce_in_component(branch_and_reduce_algorithm* br_
     //  restore include vertex v in MWIS
     forall_out_edges(G, e, v) {
         NodeID neighbor = G.getEdgeTarget(e);
-        G.setNodeWeight(neighbor, status.weights[neighbor]);
+        G.setNodeWeight(neighbor, status.weights[reverse_mapping[br_alg->local_mapping[neighbor]]]);
     } endfor
 
 	return solved_exact;
 }
-void high_degree_reduction::fold(branch_and_reduce_algorithm* br_alg, fold_nodes& nodes, NodeWeight MWIS_weight, std::vector<NodeID>& excluded_nodes) {
+void high_degree_reduction::fold(branch_and_reduce_algorithm* br_alg, fold_nodes& nodes, NodeWeight MWIS_weight, std::vector<NodeID>& excluded_nodes, std::vector<bool>& component_nodes) {
 	auto& status = br_alg->status;
 
 	restore_vec.emplace_back();
 	restore_data& data = restore_vec.back();
 	data.main_weight = status.weights[nodes.main];
 	data.MWIS_weight = MWIS_weight;
+    data.component_nodes = component_nodes;
     data.nodes = nodes;
 
 	br_alg->set(nodes.main, IS_status::folded, true);
@@ -3503,30 +3510,42 @@ void high_degree_reduction::restore(branch_and_reduce_algorithm* br_alg) {
 	restore_vec.pop_back();
 }
 void high_degree_reduction::apply(branch_and_reduce_algorithm* br_alg) {
-    assert(restore_vec.size() > 0 && "restore vec empty");
 	auto& status = br_alg->status;
-	auto& data = restore_vec.back();
+	auto& global_status = br_alg->global_status;
+	auto data = restore_vec.back();
 	auto MWIS_weight = data.MWIS_weight;
 	restore(br_alg);
 
-	if (MWIS_weight > status.is_weight + status.reduction_offset) {
-		// status.node_status[data.nodes.main] = IS_status::included;
-
+    NodeWeight current_componnent_is_weight = 0;
+    if (!data.nodes.is_component)
+    {
+        current_componnent_is_weight = status.is_weight;
+    }
+    // get component nodes for current solution weight
+    for (NodeID node = 0; node < status.n; node++)
+    {
+        if (data.component_nodes[node])
+        {
+            if (status.node_status[node] == IS_status::included)
+                current_componnent_is_weight += status.weights[node];
+        }
+    }
+    
+    std::cout << "current weight: " << current_componnent_is_weight << " MWIS weight: " << MWIS_weight << std::endl;    
+	if (MWIS_weight > current_componnent_is_weight) {
 		for (auto node : data.nodes.MWIS) {
 			status.node_status[node] = IS_status::included;
-            for (auto neighbor : status.graph[node]) {
-                if (status.node_status[neighbor] == IS_status::included) {
-			        status.node_status[node] = IS_status::excluded;
-                    status.is_weight -= status.weights[neighbor];
-                }
+            for (NodeID neighbor : status.graph[node])
+            {
+                status.node_status[neighbor] = IS_status::excluded;
             }
 		}
 
-		status.is_weight += MWIS_weight;
+		status.is_weight += MWIS_weight - current_componnent_is_weight;
+		global_status.is_weight += MWIS_weight - current_componnent_is_weight;
 	}
     else
 		status.node_status[data.nodes.main] = IS_status::excluded;
-
 }
 bool generalized_fold_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     // if (br_alg->config.disable_generalized_fold) return false;
