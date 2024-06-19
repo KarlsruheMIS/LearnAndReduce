@@ -3,6 +3,7 @@ set(REDUCTION_INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/app 
         ${CMAKE_CURRENT_SOURCE_DIR}/lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/bounds
         ${CMAKE_CURRENT_SOURCE_DIR}/tools
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel
 )
@@ -17,6 +18,7 @@ set(LIB_REDUCTION
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/key_functions.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/LRConv.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/branch_and_reduce_algorithm.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/bounds/partition_cover.cpp
 )
 add_library(lib_reduction OBJECT ${LIB_REDUCTION})
 target_include_directories(lib_reduction PUBLIC ${REDUCTION_INCLUDES})

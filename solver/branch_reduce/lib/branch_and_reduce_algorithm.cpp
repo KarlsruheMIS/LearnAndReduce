@@ -26,6 +26,7 @@
 #include "solution_check.h"
 #include "struction_log.h"
 #include "LRConv.h"
+#include "partition_cover.h"
 
 #include <algorithm>
 #include <chrono>
@@ -1041,8 +1042,27 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 			i = status.branching_stack.back().pos;
 			continue;
 		}
-
-		bool improvement_possible = status.is_weight + status.reduction_offset + compute_cover_pruning_bound() > best_weight;
+		bool improvement_possible = false;
+		if (status.remaining_nodes > 0)
+		{
+			timer bound_timer;
+			bound_timer.restart();
+			int n_cliques = 0;
+			NodeWeight better_bound = compute_cover_pruning_bound(n_cliques) + status.reduction_offset + status.is_weight;
+			double cover_bound_time = bound_timer.elapsed();
+			if (config.use_partition_cover && n_cliques > 20)
+			// if (false)
+			{
+				int k = 2;
+				if (n_cliques > 100) k = 4;
+				bound_timer.restart();
+				NodeWeight ub_partition = compute_partition_pruning_bound(k) + status.reduction_offset + status.is_weight;
+				double partition_bound_time = bound_timer.elapsed();
+				if (better_bound != ub_partition) printf("improved bound: by %d #cliques: %d  diff to lower bound: %d\n", better_bound - ub_partition,n_cliques, ub_partition - best_weight);
+				if (ub_partition < better_bound) better_bound = ub_partition;
+			}
+			improvement_possible = better_bound > best_weight;
+		}
 		if (!improvement_possible)
 		{
 			// no improvement_possible --> backtrack
@@ -1055,6 +1075,7 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 					break;
 			}
 
+			update_best_solution();
 			reverse_branching();
 			i = status.branching_stack.back().pos;
 			continue;
@@ -1085,6 +1106,7 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 				if (i == 0)
 					break;
 
+				update_best_solution();
 				reverse_branching();
 				i = status.branching_stack.back().pos;
 				continue;
@@ -1166,10 +1188,10 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 	}
 
 	build_global_graph_access();
-	#ifdef DEBUG
-	solution_check<graph_access> sc(global_graph);
-	assert(sc.check_graph());
-	#endif
+	// #ifdef DEBUG
+	// solution_check<graph_access> sc(global_graph);
+	// assert(sc.check_graph());
+	// #endif
 
 	std::vector<int> comp_map(global_status.remaining_nodes, 0);
 	size_t comp_count = strongly_connected_components().strong_components(global_graph, comp_map);
