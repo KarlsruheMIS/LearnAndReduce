@@ -253,7 +253,8 @@ private:
 
 	void fill_global_greedy();
 	void compute_ils_pruning_bound();
-	NodeWeight compute_cover_pruning_bound();
+	NodeWeight compute_cover_pruning_bound(int& n_cliques);
+    NodeWeight compute_partition_pruning_bound(int k);
 
 	void init_transformation_step(reduction_ptr &reduction);
 	void init_global_transformation_step(reduction_ptr & reduction);
