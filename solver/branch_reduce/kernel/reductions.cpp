@@ -364,12 +364,12 @@ inline bool fold2_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, 
         this->fold_v_shape_min_weight(br_alg, {v, {bigger, smaller}});
     }
 
-    if (v_shape_min_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
-        assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
-        assert(status.folded_stack.capacity() >= status.folded_stack.size() && "stack size error");
-        status.modified_stack.reserve(status.modified_stack.capacity() + v_shape_min_count);
-        status.folded_stack.reserve(status.folded_stack.capacity() + v_shape_min_count);
-    }
+    // if (v_shape_min_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
+    //     assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
+    //     assert(status.folded_stack.capacity() >= status.folded_stack.size() && "stack size error");
+    //     status.modified_stack.reserve(status.modified_stack.capacity() + v_shape_min_count);
+    //     status.folded_stack.reserve(status.folded_stack.capacity() + v_shape_min_count);
+    // }
 	return oldn != status.remaining_nodes || oldw != status.reduction_offset;
 }
 void fold2_reduction::fold_triangle_mid_weight(branch_and_reduce_algorithm* br_alg, const fold_nodes& nodes) {
@@ -477,17 +477,17 @@ void fold2_reduction::fold_v_shape_max_weight(branch_and_reduce_algorithm* br_al
 void fold2_reduction::fold_v_shape_min_weight(branch_and_reduce_algorithm* br_alg, const fold_nodes& nodes) {
 	auto& status = br_alg->status;
 	auto& neighbors = br_alg->set_1;
-    v_shape_min_count++;
+    // v_shape_min_count++;
 
-    if (v_shape_min_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
-        assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
-        assert(status.folded_stack.capacity() >= status.folded_stack.size() && "stack size error");
-        // std::cout << "resize modified stack " << status.modified_stack.capacity(); 
-        status.modified_stack.reserve(status.modified_stack.capacity() + v_shape_min_count);
-        status.folded_stack.reserve(status.folded_stack.capacity() + v_shape_min_count);
-        // std::cout << " to " << status.modified_stack.capacity();
-        // std::cout << " v_shape_min_count " << v_shape_min_count << std::endl;
-    }
+    // if (v_shape_min_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
+    //     assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
+    //     assert(status.folded_stack.capacity() >= status.folded_stack.size() && "stack size error");
+    //     // std::cout << "resize modified stack " << status.modified_stack.capacity(); 
+    //     status.modified_stack.reserve(status.modified_stack.capacity() + v_shape_min_count);
+    //     status.folded_stack.reserve(status.folded_stack.capacity() + v_shape_min_count);
+    //     // std::cout << " to " << status.modified_stack.capacity();
+    //     // std::cout << " v_shape_min_count " << v_shape_min_count << std::endl;
+    // }
 
     status.modified_stack.push_back(br_alg->MODIFIED_TOKEN);
 
@@ -576,7 +576,7 @@ void fold2_reduction::restore(branch_and_reduce_algorithm* br_alg) {
                 status.graph.add_edge_undirected(data.nodes.neighbors[i], deg2_node);
                 status.weights[data.nodes.neighbors[i]] += data.deg2_weight;
 	        }  
-            v_shape_min_count--;
+            // v_shape_min_count--;
         }
 	restore_vec.pop_back();
 }
@@ -951,12 +951,12 @@ inline bool extended_domination_reduction::reduce_vertex(branch_and_reduce_algor
             assert(neighbors.get(neighbor) == false && "ERROR: neighbor not removed");
         }
     }
-    if (edge_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
-        assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
-        assert(status.folded_stack.capacity() >= status.folded_stack.size() && "stack size error");
-        status.modified_stack.reserve(status.modified_stack.capacity() + edge_count);
-        status.folded_stack.reserve(status.folded_stack.capacity() + edge_count);
-    }
+    // if (edge_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
+    //     assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
+    //     assert(status.folded_stack.capacity() >= status.folded_stack.size() && "stack size error");
+    //     status.modified_stack.reserve(status.modified_stack.capacity() + edge_count);
+    //     status.folded_stack.reserve(status.folded_stack.capacity() + edge_count);
+    // }
     
 	return progress;
 }
@@ -964,13 +964,13 @@ void extended_domination_reduction::fold(branch_and_reduce_algorithm* br_alg, No
 
     auto& status = br_alg->status;
 
-    if (edge_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
-        std::cout << "resize modified stack " << status.modified_stack.size(); 
-        status.modified_stack.reserve(status.modified_stack.capacity() + edge_count);
-        status.folded_stack.reserve(status.folded_stack.capacity() + edge_count);
-        std::cout << " to " << status.modified_stack.capacity();
-        std::cout << " edge_count " << edge_count << std::endl;
-    }
+    // if (edge_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
+    //     std::cout << "resize modified stack " << status.modified_stack.size(); 
+    //     status.modified_stack.reserve(status.modified_stack.capacity() + edge_count);
+    //     status.folded_stack.reserve(status.folded_stack.capacity() + edge_count);
+    //     std::cout << " to " << status.modified_stack.capacity();
+    //     std::cout << " edge_count " << edge_count << std::endl;
+    // }
     status.modified_stack.push_back(br_alg->MODIFIED_TOKEN);
 	restore_vec.push_back({v, neighbor, status.weights[neighbor]});
 
@@ -3841,11 +3841,10 @@ void generalized_fold_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 
 template<typename struction_type, reduction_type type, int vertex_increase>
 bool iterative_struction<struction_type, type, vertex_increase>::reduce(branch_and_reduce_algorithm* br_alg) {
-    /* auto &status = br_alg->status; */
     #ifdef REDUCTION_INFO
         br_alg->reduction_timer.restart();
+        NodeID oldn = br_alg->status.remaining_nodes;
     #endif
-    /* NodeID oldn = br_alg->status.remaining_nodes; */
     bool applied = false;
     for_each_changed_vertex(br_alg, [&](NodeID v) {
         if (reduce_vertex(br_alg, v))

@@ -17,7 +17,6 @@ template<bool reduced>
 bool extended_struction<reduced>::reduce(branch_and_reduce_algorithm* br_alg, NodeID n, size_t max_nodes) {
     this->br_alg = br_alg;
     auto &status = br_alg->status;
-    /* size_t oldn = status.remaining_nodes; */
 
     auto &additional_nodes = br_alg->buffers[1];
     auto &layer_prefix_count = br_alg->buffers[2];
@@ -65,10 +64,7 @@ bool extended_struction<reduced>::reduce(branch_and_reduce_algorithm* br_alg, No
     // Delete v and its neighbors
     br_alg->set(n, IS_status::folded, true);
     for (const auto u : status.graph[n])
-    {
-        if (status.node_status[u] == IS_status::not_set)
             br_alg->set(u, IS_status::folded, false);
-    }
 
 
     // Connect set nodes to original nodes

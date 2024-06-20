@@ -37,8 +37,14 @@ constexpr NodeID branch_and_reduce_algorithm::MODIFIED_TOKEN;
 
 branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const ReductionConfig &config, bool called_from_fold)
 	: config(config), global_status(G), set_1(global_status.n), set_2(global_status.n), double_set(global_status.n * 2),
-	  buffers(4, std::vector<NodeID>(global_status.n)), bool_buffer(global_status.n), zero_vec(global_status.n, 0), gnn(called_from_fold ? 0 : G.number_of_nodes())
+	  buffers(4), zero_vec(global_status.n, 0), gnn(called_from_fold ? 0 : G.number_of_nodes())
 {
+	buffers[0].reserve(global_status.n);
+	buffers[1].reserve(global_status.n);
+	buffers[2].reserve(global_status.n);
+	buffers[3].reserve(global_status.n);
+	bool_buffer.reserve(global_status.n);
+
 	if (config.generate_training_data)
 	{
 		is_included_vertex = std::vector<bool>(global_status.n, false);
@@ -313,14 +319,14 @@ void branch_and_reduce_algorithm::resize(size_t size)
 	set_2.resize(size);
 	// std::cout << "buffers " ;
 	double_set.resize(2 * size);
-	bool_buffer.resize(size + 1);
+	// bool_buffer.reserve(size + 1);
 	zero_vec.resize(size, 0);
-	for (auto &buffer : buffers)
-	{
-		buffer.resize(size);
-	}
+	// for (auto &buffer : buffers)
+	// {
+	// 	buffer.reserve(size);
+	// }
 	for (auto &transformation : status.transformations) {
-		// std::cout << transformation->get_reduction_name() << " " ;
+		// std::cout << transformation->get_reduction_name() << " \n";
 		transformation->marker.resize(size);
 	}
 }
@@ -1228,7 +1234,10 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 
 	graph_extractor extractor;
 
-	buffers.resize(7, std::vector<NodeID>(global_status.n));
+	buffers.resize(7);
+	buffers[4].reserve(global_status.n);
+	buffers[5].reserve(global_status.n);
+	buffers[6].reserve(global_status.n);
 
 	for (size_t i : comp_idx)
 	{

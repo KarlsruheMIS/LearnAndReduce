@@ -157,9 +157,6 @@ private:
 		void resize(size_t size) {
 		    weights.resize(size, 0);
 		    node_status.resize(size, IS_status::not_set);
-            modified_stack.reserve(2*size + 1);
-            branching_stack.reserve(size);
-            folded_stack.reserve(2*size);
             // modified_stack.reserve(2*size + 1);
             // branching_stack.reserve(size);
             // folded_stack.reserve(2*size);
