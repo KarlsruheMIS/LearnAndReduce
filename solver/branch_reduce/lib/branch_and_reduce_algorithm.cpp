@@ -496,7 +496,25 @@ void branch_and_reduce_algorithm::compute_ils_pruning_bound()
 	std::cout <<get_current_is_weight() + best_weight <<", " << best_is_time << std::endl;
 }
 
-NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound()
+NodeWeight branch_and_reduce_algorithm::compute_partition_pruning_bound(int k)
+{
+	graph_access G;
+	std::vector<NodeID> reverse_mapping(status.remaining_nodes,0);
+	build_graph_access(G, reverse_mapping);
+	// assert(G.number_of_nodes() == local_graph->number_of_nodes());
+	// assert(G.getNodeWeight(0) == local_graph->getNodeWeight(0));
+	partition_cover ub_solver(k);
+	ub_solver.create_partition(G, config);
+	// ub_solver.create_partition(G, config);
+	// set original weights to solve
+	forall_nodes(G, node)
+	{
+		G.setNodeWeight(node, status.weights[reverse_mapping[node]]);
+	} endfor
+	NodeWeight upper_bound = ub_solver.solve_partition(G, config);
+	return upper_bound;
+}
+NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound(int& n_cliques)
 {
 	// Gather remaining nodes
 	auto &nodes = buffers[0];
@@ -584,6 +602,7 @@ NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound()
 	for (auto iter = clique.begin(); iter != end_iter; iter++)
 		upper_bound += clique_weight[*iter];
 
+	n_cliques = std::distance(clique.begin(), end_iter);
 	return upper_bound;
 }
 
