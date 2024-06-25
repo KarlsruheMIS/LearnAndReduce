@@ -83,6 +83,8 @@ class ReductionArguments : public BaseArguments {
             gnn_filter          = arg_lit0(NULL, "gnn_filter", "Use GNNs for initial filter on vertices to apply reductions on.");
             use_heuristic_reductions  = arg_lit0(NULL, "use_heuristic_reductions", "Enable heuristic reductions.");
             use_hils_interesection = arg_lit0(NULL, "use_hils_intersection", "Use intersection of HILS solutions.");
+            use_partition_cover = arg_lit0(NULL, "use_partition_cover", "Use partition cover for reductions.");
+            partition_cover_with_edge_weights = arg_lit0(NULL, "partition_cover_with_edge_weights", "Use partition cover with edge weights from lower bound.");
 
             // single reduction parameters
             disable_neighborhood        = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -110,7 +112,8 @@ class ReductionArguments : public BaseArguments {
             disable_component           = arg_lit0(NULL, "disable_component", "Disable component reduction.");
             disable_funnel              = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
             disable_funnel_fold         = arg_lit0(NULL, "disable_funnel_fold", "Disable funnel fold reduction.");
-            disable_high_degree        = arg_lit0(NULL, "disable_high_degree", "Disable high degree reduction.");
+            disable_high_degree         = arg_lit0(NULL, "disable_high_degree", "Disable high degree reduction.");
+            disable_bound               = arg_lit0(NULL, "disable_boundary", "Disable boundary reduction.");
             disable_heuristic_include   = arg_lit0(NULL, "disable_heuristic_include", "Disable heuristic include reduction.");
             disable_heursitic_exclude   = arg_lit0(NULL, "disable_heuristic_exclude", "Disable heuristic exclude reduction.");
             disable_decreasing_struction = arg_lit0(NULL, "disable_decreasing_struction", "Disable decreasing struction.");
@@ -180,10 +183,13 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_funnel;
         struct arg_lit * disable_funnel_fold;
         struct arg_lit * disable_high_degree;
+        struct arg_lit * disable_bound;
         struct arg_lit * disable_decreasing_struction;
         struct arg_lit * disable_plateau_struction;
         struct arg_lit * use_heuristic_reductions;
         struct arg_lit * use_hils_interesection;
+        struct arg_lit * use_partition_cover;
+        struct arg_lit * partition_cover_with_edge_weights;
         struct arg_lit * disable_heuristic_include;
         struct arg_lit * disable_heursitic_exclude;
         struct arg_int * subgraph_node_limit;
@@ -289,6 +295,8 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         gnn_filter,
         use_heuristic_reductions,
         use_hils_interesection,
+        use_partition_cover,
+        partition_cover_with_edge_weights,
         kernel_filename,
         reduction_config,
         heuristic_style,
@@ -321,6 +329,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_funnel,
         disable_funnel_fold,
         disable_high_degree,
+        disable_bound,
         disable_decreasing_struction,
         disable_plateau_struction,
         disable_heuristic_include,
@@ -551,6 +560,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     if (disable_high_degree->count > 0) {
         config.disable_high_degree = true;
     }
+    if (disable_bound->count > 0) {
+        config.disable_bound_reduction = true;
+    }
     if (use_heuristic_reductions->count > 0) {
         config.disable_heuristic_exclude = false;
         config.disable_heuristic_include = false;
@@ -562,6 +574,12 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (use_hils_interesection->count > 0) {
         config.use_hils_intersection = true;
+    }
+    if (use_partition_cover->count > 0) {
+        config.use_partition_cover = true;
+    }
+    if (partition_cover_with_edge_weights->count > 0) {
+        config.partition_cover_with_edge_weights = true;
     }
     if (disable_heuristic_include->count > 0) {
         config.disable_heuristic_include = true;

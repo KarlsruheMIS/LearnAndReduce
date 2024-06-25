@@ -116,6 +116,7 @@ inline void configuration_reduction::disable_new_reductions( ReductionConfig & c
     config.disable_heavy_vertex                   = true;
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
+    config.disable_high_degree                    = true;
 }
 
 inline void configuration_reduction::enable_new_reductions( ReductionConfig & config ) {
@@ -133,14 +134,15 @@ inline void configuration_reduction::enable_new_reductions( ReductionConfig & co
     config.disable_heavy_vertex                   = false;
     config.disable_heavy_set                      = false;
     config.disable_heavy_set3                     = false;
+    config.disable_high_degree                    = false;
 }
 
 inline void configuration_reduction::original_cyclicFast( ReductionConfig & config ) {
     standard(config);
     disable_new_reductions(config);
     config.disable_blow_up                        = false;
-    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
-    config.reduction_style_name                   = "full";
+    config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
+    config.reduction_style_name                   = "normal";
     config.disable_generalized_fold               = true;
     config.disable_clique_neighborhood            = true;
     config.disable_clique_neighborhood_fast       = true;
@@ -154,8 +156,8 @@ inline void configuration_reduction::original_cyclicFast( ReductionConfig & conf
 inline void configuration_reduction::original_cyclicStrong( ReductionConfig & config ) {
     standard(config);
     disable_new_reductions(config);
-    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
-    config.reduction_style_name                   = "full";
+    config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
+    config.reduction_style_name                   = "normal";
     config.disable_blow_up                        = false;
     config.disable_generalized_fold               = true;
     config.disable_clique_neighborhood            = true;
@@ -233,6 +235,7 @@ inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfi
 
 inline void configuration_reduction::all_decreasing( ReductionConfig & config ) {
     standard(config);
+    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
     config.disable_blow_up                        = true;
 }
 

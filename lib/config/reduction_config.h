@@ -53,6 +53,7 @@ struct ReductionConfig : public Config {
     bool disable_heavy_vertex = false;
     bool disable_heavy_set = false;
     bool disable_heavy_set3 = false;
+    bool disable_bound_reduction = false;
     bool disable_component = false;
     bool disable_heuristic_include = false;
     bool disable_heuristic_exclude = false;
@@ -82,10 +83,15 @@ struct ReductionConfig : public Config {
     // early terminate solving subgraphs is best weight found is already to large for reduction to be applied
     bool disable_early_termination;
 
+    // use hils solution to set edge weights in partition cover for upper bound
+    bool partition_cover_with_edge_weights = false;
+
     // filter reductions before adding to marker
     bool initial_filter;
     bool gnn_filter;
 
+    // use partition cover for upper bound
+    bool use_partition_cover = false;
     // Lower bound for the change rate between best individuals
     double best_limit;
     // Number of candidates for forced insertion.
