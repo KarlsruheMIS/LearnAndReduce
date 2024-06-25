@@ -10,6 +10,7 @@
 #include "../app/balance_configuration.h"
 #include "../app/configuration.h"
 #include "solution_check.h"
+#include "hils.h"
 
 partition_cover::partition_cover(PartitionID number_of_blocks) : k(number_of_blocks)
 {
@@ -32,19 +33,33 @@ void partition_cover::create_partition(graph_access &G, ReductionConfig &config)
  
         srand(partition_config.seed);
         random_functions::setSeed(partition_config.seed);
+
+        if (config.partition_cover_with_edge_weights)
+        {
+		    hils local_search(config);
+		    local_search.perform_ils(G, config.max_swaps/10);
+        }
        
         // if(vwgt != NULL) {
                 forall_nodes(G, node) {
-                        // G.setNodeWeight(node, 1);
-                        G.setNodeWeight(node, G.getNodeDegree(node)+1);
+                        G.setNodeWeight(node, 1);
+                        // G.setNodeWeight(node, G.getNodeDegree(node)+1);
                 } endfor
         // }
 
-        // if(adjcwgt != NULL) {
-        //         forall_edges(G, e) {
-        //                 G.setEdgeWeight(e, adjcwgt[e]);
-        //         } endfor 
-        // }
+        if (config.partition_cover_with_edge_weights) {
+                forall_edges(G, e) {
+                        G.setEdgeWeight(e, 1);
+                } endfor        
+                forall_nodes(G, v) {
+                        if (G.getPartitionIndex(v) == 1)
+                        {
+                                forall_out_edges(G, e, v) {
+                                        G.setEdgeWeight(e, 10);
+                                } endfor 
+                        }
+                } endfor 
+        }
 
         balance_configuration bc;
         bc.configurate_balance( partition_config, G);
@@ -72,10 +87,6 @@ NodeWeight partition_cover::solve_partition(graph_access &G, ReductionConfig &co
         {
                 component_mapping.clear();
                 extractor.extract_block(G, component_graph, i, component_mapping);
-                // #ifdef DEBUG
-                // solution_check<graph_access> sc(component_graph);
-                // assert(sc.check_graph());
-                // #endif
 
                 branch_and_reduce_algorithm solver(component_graph, component_config, true);
                 solver.ch.disable_cout();

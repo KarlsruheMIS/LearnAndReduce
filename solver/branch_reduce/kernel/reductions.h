@@ -66,6 +66,7 @@ enum reduction_type
     component,
     funnel,
     funnel_fold,
+    bound,
     path,
     struction_decrease,
     struction_plateau,
@@ -73,7 +74,7 @@ enum reduction_type
     heuristic_include,
     heuristic_exclude
 };
-constexpr size_t REDUCTION_NUM = 26;
+constexpr size_t REDUCTION_NUM = 28;
 
 struct general_reduction
 {

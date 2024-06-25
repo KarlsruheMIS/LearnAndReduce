@@ -39,6 +39,7 @@
 #include "dynamic_graph.h"
 #include "mwis_finder.h"
 #include "reductions.h"
+#include "bound_reduction.h"
 #include "extended_struction.h"
 #include "original_struction.h"
 #include "key_functions.h"
@@ -84,6 +85,7 @@ private:
 	friend extended_domination_reduction;	
     friend twin_reduction;
 	friend high_degree_reduction;
+	friend bound_reduction;
     friend generalized_fold_reduction;
     friend cut_vertex_reduction;
     friend component_reduction;

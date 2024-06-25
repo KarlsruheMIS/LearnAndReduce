@@ -13,10 +13,12 @@ public:
     partition_cover(PartitionID number_of_blocks);
     ~partition_cover();
 
-    void create_partition(graph_access &G, ReductionConfig &config);
+    void create_partition(graph_access &G, ReductionConfig &confign);
 
 
-    NodeWeight solve_partition(graph_access &G, ReductionConfig &config);
+    void build_component_graphs(graph_access & G, ReductionConfig & config);
+
+NodeWeight solve_partition(graph_access &G, ReductionConfig &config);
 
 private:
     // Graph data structures used for the KaHIP-library calls.

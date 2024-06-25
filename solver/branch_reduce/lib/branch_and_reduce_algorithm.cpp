@@ -131,6 +131,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
 			if (!config.disable_heavy_set3)
 				global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
+			if (!config.disable_bound_reduction)
+				global_status.transformations.emplace_back(new bound_reduction(global_status.n));
 			if (!config.disable_high_degree)
 				global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
 			if (!config.disable_cut_vertex)
@@ -223,6 +225,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
 			if (!config.disable_heavy_set3)
 				global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
+			if (!config.disable_bound_reduction)
+				global_status.transformations.emplace_back(new bound_reduction(global_status.n));
 			if (!config.disable_high_degree)
 				global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
 			if (!config.disable_cut_vertex)
