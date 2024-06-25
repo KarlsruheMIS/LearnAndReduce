@@ -54,7 +54,7 @@ int write_weights_and_reductions_to_csv(graph_access & G, const std::string & re
     // if reduction file with filename exists, add the content, otherwise all 0
     //reduction names:
      // {"fold1", "neighborhood", "fold2", "clique", "funnel", "funnel_fold", "single_edge", "extended_single_edge", "twin", "clique_nbh_fast", "clique_neighborhood", "decreasing_struction", "heavy_vertex", "generalized_fold", "heavy_set", "heavy_set3", "cut_vertex"};
-    sized_vector<std::string> reduction_names(25);
+    std::vector<std::string> reduction_names;
     if (!config.disable_fold1) reduction_names.push_back("fold1");
     if (!config.disable_neighborhood) reduction_names.push_back("neighborhood");
     if (!config.disable_fold2) reduction_names.push_back("fold2");

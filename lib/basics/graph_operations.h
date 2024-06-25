@@ -2,7 +2,6 @@
 
 #include "graph_access.h"
 #include "fast_set.h"
-#include "sized_vector.h"
 #include "config.h"
 #include <random>
 

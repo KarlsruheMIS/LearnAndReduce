@@ -7,7 +7,6 @@
 
 
 #include <vector>
-#include <data_structure/sized_vector.h>
 #include "definitions.h"
 #include "dynamic_graph.h"
 

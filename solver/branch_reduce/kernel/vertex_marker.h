@@ -1,7 +1,6 @@
 #pragma once
 
 #include <definitions.h>
-#include <data_structure/sized_vector.h>
 #include "fast_set.h"
 
 class vertex_marker {
@@ -72,8 +71,6 @@ public:
 
     void resize(size_t size) {
         added_vertices.resize(size);
-        current.resize(size);
-        next.resize(size);
     }
 
     std::vector<NodeID> &current_vec() {
