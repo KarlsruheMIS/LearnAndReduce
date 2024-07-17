@@ -274,6 +274,7 @@ private:
 
 
     void update_best_solution();
+    void update_best_global_solution();
     void undo_blow_up();
     void reverse_branching();
 	void restore_best_local_solution();

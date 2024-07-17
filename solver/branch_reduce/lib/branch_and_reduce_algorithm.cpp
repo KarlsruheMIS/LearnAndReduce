@@ -116,6 +116,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
 			if (!config.disable_decreasing_struction)
 				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
+			if (!config.disable_plateau_struction)
+				global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
 			if (!config.disable_extended_domination)
 				global_status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
 			if (!config.disable_critical_set)
@@ -137,6 +139,10 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
 			if (!config.disable_cut_vertex)
 				global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
+			if (!config.disable_heuristic_exclude)
+				global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
+			if (!config.disable_heuristic_include)
+				global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
 	}
 	else if (config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
 	{
@@ -152,8 +158,6 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new domination_reduction(global_status.n));
 			if (!config.disable_twin)
 				global_status.transformations.emplace_back(new twin_reduction(global_status.n));
-			if (!config.disable_extended_domination)
-				global_status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
 			if (!config.disable_clique_neighborhood)
 				global_status.transformations.emplace_back(new clique_neighborhood_reduction(global_status.n));
 			if (!config.disable_generalized_fold)
@@ -505,11 +509,8 @@ NodeWeight branch_and_reduce_algorithm::compute_partition_pruning_bound(int k)
 	graph_access G;
 	std::vector<NodeID> reverse_mapping(status.remaining_nodes,0);
 	build_graph_access(G, reverse_mapping);
-	// assert(G.number_of_nodes() == local_graph->number_of_nodes());
-	// assert(G.getNodeWeight(0) == local_graph->getNodeWeight(0));
 	partition_cover ub_solver(k);
 	ub_solver.create_partition(G, config);
-	// ub_solver.create_partition(G, config);
 	// set original weights to solve
 	forall_nodes(G, node)
 	{
@@ -1093,8 +1094,8 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 			int n_cliques = 0;
 			NodeWeight better_bound = compute_cover_pruning_bound(n_cliques) + status.reduction_offset + status.is_weight;
 			double cover_bound_time = bound_timer.elapsed();
-			if (config.use_partition_cover && n_cliques > 20)
 			// if (false)
+			if (config.use_partition_cover && n_cliques > 20)
 			{
 				int k = 2;
 				if (n_cliques > 100) k = 4;
@@ -1207,6 +1208,14 @@ bool branch_and_reduce_algorithm::run_branch_reduce(NodeWeight bound)
 bool branch_and_reduce_algorithm::run_branch_reduce()
 {
 	t.restart();
+	if (!config.disable_bound_reduction)
+	{
+		buffers.resize(8);
+		buffers[4].reserve(global_status.n);
+		buffers[5].reserve(global_status.n);
+		buffers[6].reserve(global_status.n);
+		buffers[7].reserve(global_status.n);
+	}
 	initial_reduce();
 	min_kernel = status.remaining_nodes;
 	kernelization_time = t.elapsed();
@@ -1227,6 +1236,9 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 		max_min_kernel_comp = 0;
 
 		restore_best_global_solution();
+		if (config.console_log)
+			std::cout << "solution weight and time: " << get_current_is_weight() << "," << t.elapsed() << std::endl;
+		update_best_global_solution();
 		return true;
 	}
 
@@ -1310,6 +1322,7 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 		}
 
 		global_status.is_weight += best_weight;
+		// best_weight = global_status.is_weight;
 		assert(status.n <= global_status.remaining_nodes && "Graph size and remaining nodes mismatch");
 		global_status.remaining_nodes -= status.n;
 		local_graph = nullptr;
@@ -1319,7 +1332,6 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 	{
 		fill_global_greedy();
 	}
-
 	update_best_global_solution();
 	restore_best_global_solution();
 	return !timeout;
