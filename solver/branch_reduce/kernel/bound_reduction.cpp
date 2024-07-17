@@ -75,15 +75,15 @@ NodeWeight bound_reduction::get_lower_bound(branch_and_reduce_algorithm* br_alg,
 {
     auto& lb_solution_set = br_alg->set_1;
     auto& config = br_alg->config;
-        // compute global lower bound
-        NodeWeight lb = br_alg->run_ils(config, G, br_alg->buffers[1], config.max_swaps);
-        lb_solution_set.clear();
-        forall_nodes(G, node)
-        {
-            if (G.getPartitionIndex(node) == 1) {
-                lb_solution_set.add(node);
-            }
-        } endfor
+    // compute global lower bound
+    NodeWeight lb = br_alg->run_ils(config, G, br_alg->buffers[1], config.max_swaps);
+    lb_solution_set.clear();
+    forall_nodes(G, node)
+    {
+        if (G.getPartitionIndex(node) == 1) {
+            lb_solution_set.add(node);
+        }
+    } endfor
     return lb;
 }
 
@@ -116,16 +116,16 @@ void bound_reduction::reduce_component(branch_and_reduce_algorithm* br_alg, grap
         else ub = partition_ub;
     }
 
-        printf("lb: %lu, ub: %lu\n", lb, ub);
+    printf("lb: %lu, ub: %lu\n", lb, ub);
     assert(lb <= ub);
-        if (ub == lb) 
-        {
-            // apply lb solution
-	        forall_nodes(G, node) {
-	        	if (lb_solution_set.get(node))
+    if (ub == lb) 
+    {
+        // apply lb solution
+	    forall_nodes(G, node) {
+	    	if (lb_solution_set.get(node))
             {
                 assert(status.node_status[reverse_mapping[br_alg->local_mapping[node]]] == IS_status::not_set);
-            		br_alg->set(reverse_mapping[br_alg->local_mapping[node]], IS_status::included);
+        		br_alg->set(reverse_mapping[br_alg->local_mapping[node]], IS_status::included);
             }
 	    } endfor
         if (use_partition) clear_partition_graphs();
@@ -143,27 +143,27 @@ void bound_reduction::reduce_by_partition_bound(branch_and_reduce_algorithm* br_
     auto& ub_solution_set = br_alg->double_set;
     auto& neighbors_set = br_alg->set_2;
 
-        for (size_t i = 0; i < k; i++)
+    for (size_t i = 0; i < k; i++)
+    {
+        auto& graph = partition_graphs[i];
+        std::vector<NodeID> vertices_included;
+        std::vector<NodeID> vertices_excluded;
+        for (NodeID node = 0; node < graph->number_of_nodes(); node++)
         {
-            auto& graph = partition_graphs[i];
-            std::vector<NodeID> vertices_included;
-            std::vector<NodeID> vertices_excluded;
-            for (NodeID node = 0; node < graph->number_of_nodes(); node++)
-            {
-                if (ub_solution_set.get(partition_mappings[i][node]))
-                    vertices_included.push_back(node);
-                else
-                    vertices_excluded.push_back(node);
-            }
+            if (ub_solution_set.get(partition_mappings[i][node]))
+                vertices_included.push_back(node);
+            else
+                vertices_excluded.push_back(node);
+        }
         std::vector<NodeWeight> potential_decrease(graph->number_of_nodes(), 0);
-            for (NodeID node : vertices_excluded)
+        for (NodeID node : vertices_excluded)
+        {
+            for (EdgeID e = graph->get_first_edge(node); e < graph->get_first_invalid_edge(node); e++)
             {
-                for (EdgeID e = graph->get_first_edge(node); e < graph->get_first_invalid_edge(node); e++)
-                {
-                    NodeID neighbor = graph->getEdgeTarget(e);
-                    if (ub_solution_set.get(partition_mappings[i][neighbor]))
+                NodeID neighbor = graph->getEdgeTarget(e);
+                if (ub_solution_set.get(partition_mappings[i][neighbor]))
                     potential_decrease[node] += graph->getNodeWeight(neighbor);
-                }
+            }
             assert(potential_decrease[node] >= graph->getNodeWeight(node));
             potential_decrease[node] -= graph->getNodeWeight(node);
         }
@@ -178,15 +178,15 @@ void bound_reduction::reduce_by_partition_bound(branch_and_reduce_algorithm* br_
             NodeID global_node = reverse_mapping[br_alg->local_mapping[partition_mappings[i][node]]];
             if (br_alg->status.node_status[global_node] != IS_status::not_set) continue;
             if (ub - 0.5*potential_decrease[node] > lb) break;
-                
-                NodeWeight new_part_ub = recompute_partition_weight_including_node(i, node, config); 
+            
+            NodeWeight new_part_ub = recompute_partition_weight_including_node(i, node, config); 
 
-                if (new_part_ub == std::numeric_limits<NodeWeight>::max()) continue;
-                NodeWeight new_ub = ub - partition_solution_weights[i] + new_part_ub;
-                if (new_ub < lb || (new_ub == lb && !lb_solution_set.get(partition_mappings[i][node])))
-                {
+            if (new_part_ub == std::numeric_limits<NodeWeight>::max()) continue;
+            NodeWeight new_ub = ub - partition_solution_weights[i] + new_part_ub;
+            if (new_ub < lb || (new_ub == lb && !lb_solution_set.get(partition_mappings[i][node])))
+            {
                 printf("excluding lb: %lu, old ub: %d, new_ub: %lu\n", lb, ub, new_ub);
-                    br_alg->set(global_node, IS_status::excluded);
+                br_alg->set(global_node, IS_status::excluded);
             }
         }
 
