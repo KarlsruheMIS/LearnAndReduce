@@ -14,9 +14,16 @@ struct bound_reduction : public general_reduction
     virtual reduction_type get_reduction_type() const final { return reduction_type::bound; }
     virtual std::string get_reduction_name() final { return "bound"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
+    NodeWeight get_lower_bound(branch_and_reduce_algorithm *br_alg, graph_access &G, fast_set &lb_solution_set);
+    NodeWeight get_partition_bound(branch_and_reduce_algorithm* br_alg, graph_access& G, fast_set& ub_solution_set);
+    NodeWeight get_clique_cover_bound(branch_and_reduce_algorithm *br_alg, int &n_cliques, fast_set &solution, std::vector<NodeID> &vertices_to_include, std::vector<NodeID> &reverse_mapping);
+    NodeWeight compute_cover_pruning_bound(branch_and_reduce_algorithm *br_alg, int &n_cliques, std::vector<NodeID> &reverse_mapping);
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
 
     private:
+    void reduce_component(branch_and_reduce_algorithm *br_alg, graph_access &G);
+    void reduce_by_partition_bound(branch_and_reduce_algorithm *br_alg, graph_access &G, NodeWeight lb, NodeWeight ub);
+    void reduce_by_clique_cover_bound(branch_and_reduce_algorithm *br_alg, graph_access &G, NodeWeight lb, NodeWeight ub, std::vector<NodeID> &vertices_to_include, std::vector<NodeID> &reverse_mapping, int n_cliques);
     void build_component_graphs(graph_access &G, ReductionConfig &config);
     NodeWeight solve_partition(size_t i, ReductionConfig &config, bool apply_solution = false);
 

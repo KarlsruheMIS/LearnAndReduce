@@ -134,6 +134,7 @@ bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, R
     auto c = config;
     c.disable_heuristic_exclude = true;
     c.disable_heuristic_include = true;
+    c.use_partition_cover = false;
     // c.time_limit = graph.number_of_nodes() / 10.0;
     c.time_limit = config.reduction_time_limit*0.1;
 
