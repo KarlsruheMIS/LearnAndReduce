@@ -70,21 +70,22 @@ class ReductionArguments : public BaseArguments {
         ReductionArguments(int argc, char **argv) : BaseArguments(argc, argv) {
 
             // Unique parameters
-            reduction_style     = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: full, normal, dense, test1, test2.");
-            heuristic_style     = arg_str0(NULL, "heuristic_style", NULL, "Configuration to use in the heuristic reductions. ([single, multiple_very_safe, multiple_safe, all (if no gnn_filter this is the same as multiple_safe)]). Default: multiple_safe.");
-            reduction_time_limit= arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
-            reduction_config    = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, extended_cyclicFast, all_decreasing, fast, very_fast]). Default: decreasing (not using increasing reductions).");
-            kernel_filename     = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
-	        disable_reduction   = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
-	        print_reduction_info= arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
-	        reduce_by_vertex    = arg_lit0(NULL, "reduce_by_vertex", "Reduce by vertex instead of by edge.");
+            reduction_style             = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: full, normal, dense, test1, test2.");
+            heuristic_style             = arg_str0(NULL, "heuristic_style", NULL, "Configuration to use in the heuristic reductions. ([single, multiple_very_safe, multiple_safe, all (if no gnn_filter this is the same as multiple_safe)]). Default: multiple_safe.");
+            reduction_time_limit        = arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
+            reduction_config            = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, extended_cyclicFast, all_decreasing, fast, very_fast]). Default: decreasing (not using increasing reductions).");
+            kernel_filename             = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
+	        disable_reduction           = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
+	        print_reduction_info        = arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
+	        reduce_by_vertex            = arg_lit0(NULL, "reduce_by_vertex", "Reduce by vertex instead of by edge.");
             disable_early_termination   = arg_lit0(NULL, "disable_early_termination", "Disable early termination of solving subgraphs in reductions.");
-            initial_filter      = arg_lit0(NULL, "initial_filter", "Use initial filter on vertices to apply reductions on.");
-            gnn_filter          = arg_lit0(NULL, "gnn_filter", "Use GNNs for initial filter on vertices to apply reductions on.");
-            use_heuristic_reductions  = arg_lit0(NULL, "use_heuristic_reductions", "Enable heuristic reductions.");
-            use_hils_interesection = arg_lit0(NULL, "use_hils_intersection", "Use intersection of HILS solutions.");
-            use_partition_cover = arg_lit0(NULL, "use_partition_cover", "Use partition cover for reductions.");
+            initial_filter              = arg_lit0(NULL, "initial_filter", "Use initial filter on vertices to apply reductions on.");
+            gnn_filter                  = arg_lit0(NULL, "gnn_filter", "Use GNNs for initial filter on vertices to apply reductions on.");
+            use_heuristic_reductions    = arg_lit0(NULL, "use_heuristic_reductions", "Enable heuristic reductions.");
+            use_hils_interesection      = arg_lit0(NULL, "use_hils_intersection", "Use intersection of HILS solutions.");
+            use_partition_cover         = arg_lit0(NULL, "use_partition_cover", "Use partition cover for reductions.");
             partition_cover_with_edge_weights = arg_lit0(NULL, "partition_cover_with_edge_weights", "Use partition cover with edge weights from lower bound.");
+            partition_cover_imbalance   = arg_int0(NULL, "partition_cover_imbalance", NULL, "Choose imbalance for partition cover. Default 4.");
 
             // single reduction parameters
             disable_neighborhood        = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -190,6 +191,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * use_hils_interesection;
         struct arg_lit * use_partition_cover;
         struct arg_lit * partition_cover_with_edge_weights;
+        struct arg_int * partition_cover_imbalance;
         struct arg_lit * disable_heuristic_include;
         struct arg_lit * disable_heursitic_exclude;
         struct arg_int * subgraph_node_limit;
@@ -297,6 +299,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         use_hils_interesection,
         use_partition_cover,
         partition_cover_with_edge_weights,
+        partition_cover_imbalance,
         kernel_filename,
         reduction_config,
         heuristic_style,
@@ -580,6 +583,9 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (partition_cover_with_edge_weights->count > 0) {
         config.partition_cover_with_edge_weights = true;
+    }
+    if (partition_cover_imbalance->count > 0) {
+        config.partition_cover_imbalance = partition_cover_imbalance->ival[0];
     }
     if (disable_heuristic_include->count > 0) {
         config.disable_heuristic_include = true;

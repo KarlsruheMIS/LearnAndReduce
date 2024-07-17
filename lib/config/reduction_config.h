@@ -85,6 +85,7 @@ struct ReductionConfig : public Config {
 
     // use hils solution to set edge weights in partition cover for upper bound
     bool partition_cover_with_edge_weights = false;
+    int partition_cover_imbalance = 4;
 
     // filter reductions before adding to marker
     bool initial_filter;
