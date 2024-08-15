@@ -135,8 +135,13 @@ bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, R
     c.disable_heuristic_exclude = true;
     c.disable_heuristic_include = true;
     c.use_partition_cover = false;
+    c.disable_critical_set = true;
+    c.disable_heavy_set = true;
+    c.disable_blow_up = true;
+    c.disable_generalized_fold = true;
     // c.time_limit = graph.number_of_nodes() / 10.0;
-    c.time_limit = config.reduction_time_limit*0.1;
+    c.time_limit = config.reduction_time_limit*0.01;
+    c.max_swaps = 1000;
 
     branch_and_reduce_algorithm solver(graph, c, true);
 	solver.ch.disable_cout();
@@ -151,7 +156,7 @@ bool general_reduction::solve_graph(NodeWeight& solution, graph_access& graph, R
         solver.apply_branch_reduce_solution(graph);
     }
 	solver.ch.enable_cout();
-    solution = solver.get_current_is_weight();
+    solution = solver.get_is_weight();
     return true;
 }
 bool general_reduction::is_reduced(NodeID v, branch_and_reduce_algorithm* br_alg) {
@@ -173,9 +178,7 @@ bool neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
                return;
            }
         }
-        // if (status.weights[v] >= neighbor_weights) {
-            br_alg->set(v, IS_status::included);
-        // }
+        br_alg->set(v, IS_status::included);
     });
 
     #ifdef REDUCTION_INFO
@@ -280,14 +283,11 @@ void fold1_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 		status.node_status[nodes.fold_node] = IS_status::included;
 		status.node_status[nodes.deg1_node] = IS_status::excluded;
 
-		status.is_weight += status.weights[nodes.fold_node];
-
 	} else if (main_status == IS_status::excluded) {
 		status.node_status[nodes.fold_node] = IS_status::excluded;
 		status.node_status[nodes.deg1_node] = IS_status::included;
-
-		status.is_weight += status.weights[nodes.deg1_node];
 	}
+	status.is_weight += status.weights[nodes.deg1_node];
 }
 bool fold1_reduction::is_suited(NodeID v, branch_and_reduce_algorithm* br_alg) {
     return br_alg->deg(v) <= 1;
@@ -365,12 +365,6 @@ inline bool fold2_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, 
         this->fold_v_shape_min_weight(br_alg, {v, {bigger, smaller}});
     }
 
-    // if (v_shape_min_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
-    //     assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
-    //     assert(status.folded_stack.capacity() >= status.folded_stack.size() && "stack size error");
-    //     status.modified_stack.reserve(status.modified_stack.capacity() + v_shape_min_count);
-    //     status.folded_stack.reserve(status.folded_stack.capacity() + v_shape_min_count);
-    // }
 	return oldn != status.remaining_nodes || oldw != status.reduction_offset;
 }
 void fold2_reduction::fold_triangle_mid_weight(branch_and_reduce_algorithm* br_alg, const fold_nodes& nodes) {
@@ -448,7 +442,6 @@ void fold2_reduction::fold_v_shape_max_weight(branch_and_reduce_algorithm* br_al
 	br_alg->set(nodes.neighbors[1], IS_status::folded, false);
 	br_alg->set(nodes.neighbors[0], IS_status::folded, true);
 
-/* 	restore_vec.push_back({ nodes, status.weights[nodes.deg2_node], fold2_reduction::fold_case::v_shape_max, {} }); */
 	restore_vec.push_back({ nodes, status.weights[nodes.deg2_node], fold2_reduction::fold2_case::v_shape_max, status.graph[nodes.deg2_node], {} });
 
 	status.reduction_offset += status.weights[nodes.deg2_node];
@@ -462,7 +455,6 @@ void fold2_reduction::fold_v_shape_max_weight(branch_and_reduce_algorithm* br_al
 		for (auto neighbor : status.graph[nodes.neighbors[i]]) {
 			if (neighbors.add(neighbor)) {
                 new_neighbors.push_back(neighbor);
-                /* status.graph.add_edge_undirected(neighbor, nodes.deg2_node); */
                 status.graph.add_edge_directed(neighbor, nodes.deg2_node);
 			    restore_vec.back().node_vecs[i].push_back(neighbor);
 			}
@@ -478,17 +470,6 @@ void fold2_reduction::fold_v_shape_max_weight(branch_and_reduce_algorithm* br_al
 void fold2_reduction::fold_v_shape_min_weight(branch_and_reduce_algorithm* br_alg, const fold_nodes& nodes) {
 	auto& status = br_alg->status;
 	auto& neighbors = br_alg->set_1;
-    // v_shape_min_count++;
-
-    // if (v_shape_min_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
-    //     assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
-    //     assert(status.folded_stack.capacity() >= status.folded_stack.size() && "stack size error");
-    //     // std::cout << "resize modified stack " << status.modified_stack.capacity(); 
-    //     status.modified_stack.reserve(status.modified_stack.capacity() + v_shape_min_count);
-    //     status.folded_stack.reserve(status.folded_stack.capacity() + v_shape_min_count);
-    //     // std::cout << " to " << status.modified_stack.capacity();
-    //     // std::cout << " v_shape_min_count " << v_shape_min_count << std::endl;
-    // }
 
     status.modified_stack.push_back(br_alg->MODIFIED_TOKEN);
 
@@ -556,19 +537,21 @@ void fold2_reduction::restore(branch_and_reduce_algorithm* br_alg) {
             break;
         case fold2_reduction::fold2_case::v_shape_mid:
             br_alg->unset(deg2_node);
-            if (status.node_status[nb0] != IS_status::not_set) br_alg->unset(nb0, false);
-            if (status.node_status[nb1] != IS_status::not_set) br_alg->unset(nb1, false);
+            br_alg->unset(nb0, false);
+            br_alg->unset(nb1, false);
 
             // restore neighbors of smaller node
             for (auto neighbor : data.node_vecs[1]) {
                 status.graph.hide_edge_undirected(neighbor, nb1);
             }
+
             status.weights[nb0] += data.deg2_weight;
             break;
+
         case fold2_reduction::fold2_case::v_shape_min:
-            if (status.node_status[deg2_node] != IS_status::not_set) br_alg->unset(deg2_node, false);
-            if (status.node_status[nb0] != IS_status::not_set) br_alg->unset(nb0, false);
-            if (status.node_status[nb1] != IS_status::not_set) br_alg->unset(nb1, false);
+            br_alg->unset(deg2_node, false);
+            br_alg->unset(nb0, false);
+            br_alg->unset(nb1, false);
 
 	        for (size_t i = 0; i < 2; i++) {
                 for (auto second_neighbor : data.node_vecs[i]) {
@@ -577,7 +560,6 @@ void fold2_reduction::restore(branch_and_reduce_algorithm* br_alg) {
                 status.graph.add_edge_undirected(data.nodes.neighbors[i], deg2_node);
                 status.weights[data.nodes.neighbors[i]] += data.deg2_weight;
 	        }  
-            // v_shape_min_count--;
         }
 	restore_vec.pop_back();
 }
@@ -589,33 +571,27 @@ void fold2_reduction::apply(branch_and_reduce_algorithm* br_alg) {
 	auto deg_2_status = status.node_status[nodes.deg2_node];
     auto bigger_status = status.node_status[nodes.neighbors[0]];
     auto smaller_status = status.node_status[nodes.neighbors[1]];
+
 	restore(br_alg);
+
+    status.node_status[nodes.deg2_node]    = IS_status::excluded;
+    status.node_status[nodes.neighbors[0]] = IS_status::excluded;
+    status.node_status[nodes.neighbors[1]] = IS_status::excluded;
 
     switch (fold_case)
     {
         case fold2_reduction::fold2_case::v_shape_max:
             if (deg_2_status == IS_status::included) {
-                status.node_status[nodes.deg2_node]    = IS_status::excluded;
                 status.node_status[nodes.neighbors[0]] = IS_status::included;
                 status.node_status[nodes.neighbors[1]] = IS_status::included;
-
-                status.is_weight += status.weights[nodes.neighbors[0]]; 
-                status.is_weight += status.weights[nodes.neighbors[1]];
-
-            } else { // (deg_2_status == IS_status::excluded)
+            } else {
                 status.node_status[nodes.deg2_node]    = IS_status::included;
-                status.node_status[nodes.neighbors[0]] = IS_status::excluded;
-                status.node_status[nodes.neighbors[1]] = IS_status::excluded;
-
-                status.is_weight += status.weights[nodes.deg2_node];
             }
+            status.is_weight += status.weights[nodes.deg2_node];
             break;
         case fold2_reduction::fold2_case::v_shape_mid:
-            status.node_status[nodes.deg2_node]    = IS_status::excluded;
-            status.node_status[nodes.neighbors[0]] = IS_status::excluded;
-            status.node_status[nodes.neighbors[1]] = IS_status::excluded;
 
-            if (smaller_status == IS_status::included) { // smaller included
+            if (smaller_status == IS_status::included) { 
                 status.node_status[nodes.neighbors[0]] = IS_status::included;
                 status.node_status[nodes.neighbors[1]] = IS_status::included;
                 status.is_weight += status.weights[nodes.neighbors[0]];
@@ -623,60 +599,37 @@ void fold2_reduction::apply(branch_and_reduce_algorithm* br_alg) {
             } else if (bigger_status == IS_status::included) {
                 status.node_status[nodes.neighbors[0]] = IS_status::included;
                 status.is_weight += status.weights[nodes.neighbors[0]];
-            } else if (bigger_status == IS_status::excluded && smaller_status == IS_status::excluded) {
+            } else {
                 status.node_status[nodes.deg2_node] = IS_status::included;
                 status.is_weight += status.weights[nodes.deg2_node];
-            } else if (bigger_status == IS_status::not_set || smaller_status == IS_status::not_set) {
-                std::cerr << "ERROR restore mid nodes not set" << std::endl;
             }
             break;
         case fold2_reduction::fold2_case::v_shape_min:
-	        if (deg_2_status == IS_status::included) {
-               status.node_status[nodes.deg2_node]    = IS_status::excluded;
-               status.node_status[nodes.neighbors[0]] = IS_status::included;
-               status.node_status[nodes.neighbors[1]] = IS_status::included;
-               status.is_weight += status.weights[nodes.neighbors[0]];
-               status.is_weight += status.weights[nodes.neighbors[1]];
-	        } else if (smaller_status == IS_status::included) {
-                status.node_status[nodes.deg2_node]    = IS_status::excluded;
+
+            if (smaller_status == IS_status::included) {
            	    status.node_status[nodes.neighbors[1]] = IS_status::included;
           		status.is_weight += status.weights[nodes.neighbors[1]];
-                if (bigger_status == IS_status::included) {
-           	        status.node_status[nodes.neighbors[0]] = IS_status::included;
-               	    status.is_weight += status.weights[nodes.neighbors[0]];
-           	    } else if (bigger_status == IS_status::excluded){
-           	        status.node_status[nodes.neighbors[0]] = IS_status::excluded;
-           	    }
-            } else if (smaller_status == IS_status::excluded) {
-               status.node_status[nodes.neighbors[1]] = IS_status::excluded;
-               if (bigger_status == IS_status::included) {
-                  	status.node_status[nodes.deg2_node]    = IS_status::excluded;
-           	        status.node_status[nodes.neighbors[0]] = IS_status::included;
-                    status.is_weight += status.weights[nodes.neighbors[0]];
-                } else if (bigger_status == IS_status::excluded){
-               	    status.node_status[nodes.neighbors[0]] = IS_status::excluded;
-	                status.node_status[nodes.deg2_node]    = IS_status::included;
-	                status.is_weight += status.weights[nodes.deg2_node];
-                }
-            } else { std::cerr << "Error included v_shape_min_reduction::apply" <<  std::endl; }
+            }
+            if (bigger_status == IS_status::included) {
+           	    status.node_status[nodes.neighbors[0]] = IS_status::included;
+          		status.is_weight += status.weights[nodes.neighbors[0]];
+            }
+            if (smaller_status == IS_status::excluded && bigger_status == IS_status::excluded) {
+	            status.node_status[nodes.deg2_node]    = IS_status::included;
+	            status.is_weight += status.weights[nodes.deg2_node];
+            }
             break;
 
         default: // triangle_mid and triangle_min
             if (bigger_status == IS_status::included) {
             	status.node_status[nodes.neighbors[0]] = IS_status::included;
-            	status.node_status[nodes.neighbors[1]] = IS_status::excluded;
-            	status.node_status[nodes.deg2_node] = IS_status::excluded;
-            	status.is_weight += status.weights[nodes.neighbors[0]];
+            	status.is_weight += status.weights[nodes.deg2_node];
 
             } else if (smaller_status == IS_status::included){
-            	status.node_status[nodes.neighbors[0]] = IS_status::excluded;
             	status.node_status[nodes.neighbors[1]] = IS_status::included;
-            	status.node_status[nodes.deg2_node] = IS_status::excluded;
-            	status.is_weight += status.weights[nodes.neighbors[1]];
+            	status.is_weight += status.weights[nodes.deg2_node];
 
             } else {
-            	status.node_status[nodes.neighbors[0]] = IS_status::excluded;
-            	status.node_status[nodes.neighbors[1]] = IS_status::excluded;
             	status.node_status[nodes.deg2_node] = IS_status::included;
             	status.is_weight += status.weights[nodes.deg2_node];
             }
@@ -767,7 +720,6 @@ inline bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algo
     // if (br_alg->config.disable_extended_se) return false;
     if (br_alg->deg(v) == 0 ) return false;
 
-    /* auto& config = br_alg->config; */
 	auto& status = br_alg->status;
     auto& weights = status.weights;
 	size_t oldn = status.remaining_nodes;
@@ -832,6 +784,7 @@ bool domination_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduced_nodes += (oldn - status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
     #endif
+	// if (oldn != br_alg->status.remaining_nodes) std::cout << "domination redu -> " << (oldn - br_alg->status.remaining_nodes) << std::endl;
 	return oldn != status.remaining_nodes;
 }
 inline bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
@@ -908,7 +861,7 @@ inline bool extended_domination_reduction::reduce_vertex(branch_and_reduce_algor
 	#ifndef generate_training_data
         NodeWeight neighbor_weights = get_neighborhood_weight(v, br_alg);
         if (try_neighborhood_reduction(v, br_alg, neighbor_weights)) {
-	return oldn != status.remaining_nodes;
+            return oldn != status.remaining_nodes;
         }
     #endif
 
@@ -952,12 +905,6 @@ inline bool extended_domination_reduction::reduce_vertex(branch_and_reduce_algor
             assert(neighbors.get(neighbor) == false && "ERROR: neighbor not removed");
         }
     }
-    // if (edge_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
-    //     assert(status.modified_stack.capacity() >= status.modified_stack.size() && "stack size error");
-    //     assert(status.folded_stack.capacity() >= status.folded_stack.size() && "stack size error");
-    //     status.modified_stack.reserve(status.modified_stack.capacity() + edge_count);
-    //     status.folded_stack.reserve(status.folded_stack.capacity() + edge_count);
-    // }
     
 	return progress;
 }
@@ -965,24 +912,13 @@ void extended_domination_reduction::fold(branch_and_reduce_algorithm* br_alg, No
 
     auto& status = br_alg->status;
 
-    // if (edge_count >= status.modified_stack.capacity() - status.n) { // initial cpapcity is 2n (one n for v_shape min)
-    //     std::cout << "resize modified stack " << status.modified_stack.size(); 
-    //     status.modified_stack.reserve(status.modified_stack.capacity() + edge_count);
-    //     status.folded_stack.reserve(status.folded_stack.capacity() + edge_count);
-    //     std::cout << " to " << status.modified_stack.capacity();
-    //     std::cout << " edge_count " << edge_count << std::endl;
-    // }
     status.modified_stack.push_back(br_alg->MODIFIED_TOKEN);
 	restore_vec.push_back({v, neighbor, status.weights[neighbor]});
-
-    // std::cout << "\r hide edge " << v << " " << neighbor  << " " << edge_count <<  " "  << status.modified_stack.size() << " " << status.modified_stack.capacity() << " " << status.modified_stack.size() - edge_count <<  "\n" << std::flush;
 
     status.weights[v] -= status.weights[neighbor];
     status.graph.hide_edge_undirected(v, neighbor);
 
     status.folded_stack.push_back(get_reduction_type());
-    edge_count++;
-
 
     br_alg->add_next_level_node(v);
     br_alg->add_next_level_node(neighbor);
@@ -991,10 +927,8 @@ void extended_domination_reduction::fold(branch_and_reduce_algorithm* br_alg, No
 void extended_domination_reduction::restore(branch_and_reduce_algorithm* br_alg) {
     auto& status = br_alg->status;
     auto& data = restore_vec.back();
-    edge_count--;
 
     status.weights[data.v] += data.neighborWeight;
-    // std::cout << "restore edge " << data.v << " " << data.neighbor << std::endl;
     status.graph.add_edge_undirected(data.v, data.neighbor);
     restore_vec.pop_back();
 }
@@ -1017,8 +951,6 @@ void extended_domination_reduction::apply(branch_and_reduce_algorithm* br_alg) {
             status.is_weight -= status.weights[neighbor];
 		    status.node_status[neighbor] = IS_status::excluded;
         }
-	// } else if (neighbor_status == IS_status::included) {
-    //     status.is_weight += status.weights[neighbor];
     }
 }
 bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
@@ -1115,7 +1047,6 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 	return oldn != status.remaining_nodes;
 }
 bool cut_vertex_reduction::find_cut_vertex(branch_and_reduce_algorithm* br_alg, NodeID& cut_v, std::vector<NodeID>& cut_component, std::vector<NodeID>& reverse_mapping, fast_set& tested) {
-    /* auto& status = br_alg->status; */
     auto& visited = br_alg->bool_buffer;
 
     int step = 0;
@@ -1409,7 +1340,6 @@ bool cut_vertex_reduction::get_fold_data(branch_and_reduce_algorithm* br_alg, No
     auto& config = br_alg->config;
     auto& cut_v_neighbor_set = br_alg->double_set; // since set_2 used in later iterative function call
     auto& cut_component_set = br_alg->set_1;
-    /* auto& visited = br_alg->bool_buffer; */
     auto& reverse_mapping = br_alg->buffers[1];
     auto& cut_component = br_alg->buffers[0];
     graph_access cut_graph;
@@ -1940,7 +1870,6 @@ bool clique_neighborhood_reduction::expand_clique(NodeID max_neighbor, std::vect
 			}
 		}
 		if (intersection_empty)	break;
-        // if (local_max == status.n) break;
 
 		// add local_max to current clique
 		neighbor_weights -= local_max_weight;
@@ -2305,10 +2234,8 @@ inline bool funnel_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg,
     // if (br_alg->config.disable_funnel) return false;
     if (br_alg->deg(v) <= 2) return false; // fold1 or 2
 	auto& weights = br_alg->status.weights;
-/* 	auto& graph = br_alg->status.graph; */
 	auto& remaining_n = br_alg->status.remaining_nodes;
 	auto& funnel_set = br_alg->set_1;
-    /* auto& f_neighbors = br_alg->set_2;  */
 	auto& neighbors = br_alg->buffers[0];
 	size_t oldn = remaining_n;
     NodeID funnel_neighbor = br_alg->status.n;
@@ -2495,13 +2422,11 @@ void funnel_reduction::apply(branch_and_reduce_algorithm* br_alg) {
     if (include_node) {
         node_status[data.node] = IS_status::included;
         node_status[data.funnel_neighbor] = IS_status::excluded;
-        is_weight += weights[data.node];
     } else {
         node_status[data.node] = IS_status::excluded;
         node_status[data.funnel_neighbor] = IS_status::included;
-        is_weight += weights[data.node];
     }
-    // std::cout << "node: " << data.node << " (" << node_status[data.node] << ") funnel_neighbor: " << data.funnel_neighbor << " (" << node_status[data.funnel_neighbor] << ")\n";
+    is_weight += weights[data.node];
 }
 
 bool funnel_fold_reduction::reduce(branch_and_reduce_algorithm* br_alg)
@@ -2543,7 +2468,6 @@ inline bool funnel_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br
         get_neighborhood_set(v, br_alg, funnel_set);
         funnel_set.add(v);
 
-
         if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, neighbors)) {
             fold({v, funnel_neighbor}, funnel_set, br_alg);
         }
@@ -2554,8 +2478,6 @@ inline bool funnel_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br
 bool funnel_fold_reduction::is_funnel(NodeID v, NodeID& funnel_neighbor, branch_and_reduce_algorithm* br_alg, fast_set& funnel_set, std::vector<NodeID>& funnel_nodes) {
     auto& status = br_alg->status;
     auto& weights = status.weights;
-    /* auto& graph = status.graph; */
-    /* auto& neighbors = br_alg->buffers[1]; // neighbors of v (set before) */
     funnel_neighbor = status.n;
     if (is_clique(br_alg, funnel_set, funnel_nodes)) 
         return false;
@@ -2563,7 +2485,6 @@ bool funnel_fold_reduction::is_funnel(NodeID v, NodeID& funnel_neighbor, branch_
     for (NodeID u : funnel_nodes) {
         assert(u != v && "ERROR: funnel_reduction::is_funnel: node must not be in funnel_nodes");
         assert(!is_reduced(u, br_alg) && "ERROR: funnel_reduction::is_funnel: node must be unset");
-        /* bool skip = false; */
         assert(std::find(funnel_nodes.begin(), funnel_nodes.end(), u)!=funnel_nodes.end() && "ERROR: funnel_reduction::is_funnel: node must be in funnel_nodes");
         auto iter = std::find(funnel_nodes.begin(), funnel_nodes.end(), u);
         std::swap(*iter, funnel_nodes.back());
@@ -2572,11 +2493,6 @@ bool funnel_fold_reduction::is_funnel(NodeID v, NodeID& funnel_neighbor, branch_
             funnel_nodes.push_back(u);
             continue;
         }
-        #ifdef DEBUG
-        /* for (auto neighbor : funnel_nodes) { */
-        /*     assert(weights[neighbor] + weights[u] >= weights[v] && "ERROR: funnel_reduction::fold: weight must be larger than node weight"); */
-        /* } */
-        #endif
 
         funnel_set.remove(u);
         if (is_clique(br_alg, funnel_set, funnel_nodes)) {
@@ -2717,11 +2633,13 @@ void funnel_fold_reduction::apply(branch_and_reduce_algorithm* br_alg) {
         node_status[data.funnel_neighbor] = IS_status::included;
         for (auto neighbor : remaining) {
             if (node_status[neighbor] == IS_status::included)
-                is_weight += weights[neighbor];
+            { // add original weight for neighbors to IS
+                is_weight += weights[data.node];
+                is_weight -= weights[data.funnel_neighbor];
+            }
         }
         is_weight += weights[data.funnel_neighbor];
     }
-    // std::cout << "node: " << data.node << " (" << node_status[data.node] << ") funnel_neighbor: " << data.funnel_neighbor << " (" << node_status[data.funnel_neighbor] << ")\n";
 }
 
 
@@ -2901,6 +2819,7 @@ bool heavy_set_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     size_t oldn = status.remaining_nodes;
 
     for_each_changed_vertex(br_alg, [&](NodeID v) {
+        if (br_alg->t.elapsed() > br_alg->config.time_limit) return;
         reduce_vertex(br_alg, v);
     });
 
@@ -2917,7 +2836,6 @@ inline bool heavy_set_reduction::reduce_vertex(branch_and_reduce_algorithm* br_a
     if (br_alg->deg(common_neighbor) < 3) return false; // use other reduction
 
 	auto& status = br_alg->status;
-    /* auto& weights = status.weights; */
     assert(status.node_status[common_neighbor] == IS_status::not_set && "ERROR: heavy_set_reduction::reduce_vertex: node must be unset");
     // check if common neighbor is suitable
     if (std::all_of(status.graph[common_neighbor].begin(), status.graph[common_neighbor].end(), [&](NodeID neighbor) { return br_alg->deg(neighbor) > config.subgraph_node_limit; })) return false;
@@ -3061,6 +2979,7 @@ void heavy_set_reduction::set_weights(graph_access& graph, std::vector<NodeID>& 
 bool heavy_set3_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     // if (br_alg->config.disable_heavy_set) return false;
     if (br_alg->heuristically_reducing) return false;
+    if (br_alg->t.elapsed() > br_alg->config.time_limit) return false;
 
 	auto& status = br_alg->status;
     size_t oldn = status.remaining_nodes;
@@ -3069,6 +2988,7 @@ bool heavy_set3_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     #endif
 
     for_each_changed_vertex(br_alg, [&](NodeID v) {
+        if (br_alg->t.elapsed() > br_alg->config.time_limit) return;
         reduce_vertex(br_alg, v);
     });
 
@@ -3326,6 +3246,8 @@ bool generalized_fold_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduced_nodes += (oldn - status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
     #endif
+    // has_run = false; // check marker with gnn in next round again
+    // has_filtered_marker = true;
 	return oldn != status.remaining_nodes;
 }
 inline bool generalized_fold_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {

@@ -1149,10 +1149,6 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 	}
 
 	build_global_graph_access();
-	// #ifdef DEBUG
-	// solution_check<graph_access> sc(global_graph);
-	// assert(sc.check_graph());
-	// #endif
 
 	std::vector<int> comp_map(global_status.remaining_nodes, 0);
 	size_t comp_count = strongly_connected_components().strong_components(global_graph, comp_map);
@@ -1216,12 +1212,8 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 		branch_reduce_single_component();
 
 		if (best_weight > weight_bound)
-		{
-			// std::cout << "pruning for solving subgraphs in reducion" << std::endl;
-			// struction_log::instance()->set_best(get_current_is_weight(), t.elapsed());
-			// restore_best_global_solution();
 			return false;
-		}
+
 		for (size_t node = 0; node < local_mapping.size(); node++)
 		{
 			global_status.node_status[global_mapping[local_mapping[node]]] = status.node_status[node];
@@ -1420,6 +1412,11 @@ NodeWeight branch_and_reduce_algorithm::get_current_is_weight() const
 	return global_status.is_weight + global_status.reduction_offset;
 }
 
+NodeWeight branch_and_reduce_algorithm::get_is_weight() const
+{
+	return status.is_weight + status.reduction_offset;
+}
+
 NodeID branch_and_reduce_algorithm::get_heuristically_reduced_vertices() const
 {
 	return global_status.heuristically_reduced_n;
@@ -1551,7 +1548,7 @@ void branch_and_reduce_algorithm::reverse_reduction(graph_access &G, graph_acces
 	}
 	endfor
 
-		global_status = std::move(status);
+	global_status = std::move(status);
 	restore_best_global_solution();
 	apply_branch_reduce_solution(G);
 }

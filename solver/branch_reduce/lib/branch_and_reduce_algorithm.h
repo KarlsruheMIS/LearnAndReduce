@@ -137,15 +137,11 @@ private:
 		std::vector<reduction_type> folded_stack;
 		std::vector<node_pos> branching_stack;
 		std::vector<NodeID> modified_stack;
-		// sized_vector<reduction_type> folded_stack;
-		// sized_vector<node_pos> branching_stack;
-		// sized_vector<NodeID> modified_stack;
 
 		graph_status() = default;
 
 		graph_status(graph_access& G) :
                 n(G.number_of_nodes()), m(G.number_of_edges()), remaining_nodes(n), graph(G), weights(n, 0), node_status(n, IS_status::not_set)
-				// modified_stack(2*n + 1), branching_stack(n), folded_stack(2*n) {
 		{
 			modified_stack.reserve(2*n + 1);
 			branching_stack.reserve(n);
@@ -159,9 +155,6 @@ private:
 		void resize(size_t size) {
 		    weights.resize(size, 0);
 		    node_status.resize(size, IS_status::not_set);
-            // modified_stack.reserve(2*size + 1);
-            // branching_stack.reserve(size);
-            // folded_stack.reserve(2*size);
 			if (reduction_node_status.size() > 0 )
 				reduction_node_status.resize(size, std::vector<bool>(num_reductions, true));
             n = size;
@@ -306,8 +299,9 @@ public:
 	static void greedy_initial_is(graph_access& G, std::vector<NodeID>& tmp_buffer);
 
 	NodeWeight get_current_is_weight() const;
-	NodeID get_heuristically_reduced_vertices() const;
-	void reverse_reduction(graph_access & G, graph_access & reduced_G, std::vector<NodeID> & reverse_mapping);
+	NodeWeight get_is_weight() const;
+    NodeID get_heuristically_reduced_vertices() const;
+    void reverse_reduction(graph_access & G, graph_access & reduced_G, std::vector<NodeID> & reverse_mapping);
 	void apply_branch_reduce_solution(graph_access & G);
 
 	void build_graph_access(graph_access & G, std::vector<NodeID>& reverse_mapping) const;
@@ -388,5 +382,4 @@ public:
 		}
 	}
     void print_reduction_progress();
-    void update_best_global_solution();
 };
