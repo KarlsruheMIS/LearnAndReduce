@@ -88,9 +88,11 @@ int main(int argn, char **argv) {
             }
         } endfor
     }
+    std::cout << "IS weight: " << is_weight << std::endl; 
 
     struction_log::instance()->print_reduction(config, reducer.kernelization_time, reducer.kernelization_offset, reducer.min_kernel, reducer.max_min_kernel_comp);
     struction_log::instance()->print_results(!reducer.timeout && reducer.get_heuristically_reduced_vertices() == 0);
+    sc.check_overall_solution(is_weight);
 
 #ifndef OUTPUT_WEIGHT_CONVERGENCE
     std::cout << name << "," << G.number_of_nodes() << "," << G.number_of_edges() << ","

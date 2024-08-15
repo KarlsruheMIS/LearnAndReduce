@@ -29,7 +29,6 @@
 
 #include <utility>
 
-// #define REDUCTION_INFO
 
 typedef branch_and_reduce_algorithm::IS_status IS_status;
 
@@ -185,6 +184,7 @@ bool neighborhood_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduced_nodes += (oldn - br_alg->status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
     #endif
+	// if (oldn != status.remaining_nodes) std::cout << "neighbor redu -> " << (oldn - status.remaining_nodes) << std::endl;
 	return oldn != br_alg->status.remaining_nodes;
 }
 
@@ -311,6 +311,7 @@ bool fold2_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduced_nodes += (oldn - status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
     #endif
+	// if (oldn != status.remaining_nodes) std::cout << "fold2 redu -> " << (oldn - status.remaining_nodes) << std::endl;
 	return oldn != status.remaining_nodes || oldw != status.reduction_offset;
 }
 inline bool fold2_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
@@ -1726,6 +1727,7 @@ bool clique_neighborhood_reduction_fast::reduce(branch_and_reduce_algorithm* br_
         reduce_vertex(br_alg, v);
 	});
 
+	// if (oldn != status.remaining_nodes) std::cout << "clique_neighborhood fast redu -> " << (oldn - status.remaining_nodes) << std::endl;
 	return oldn != status.remaining_nodes;
 }
 inline bool clique_neighborhood_reduction_fast::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
@@ -1980,6 +1982,7 @@ bool critical_set_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduced_nodes += (oldn - status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
     #endif
+	// if (oldn != status.remaining_nodes) std::cout << "critical redu -> " << (oldn - status.remaining_nodes) << std::endl;
     return oldn != status.remaining_nodes;
 }
 
@@ -2077,6 +2080,7 @@ bool clique_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduced_nodes += (oldn - status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
     #endif
+	// if (oldn != status.remaining_nodes) std::cout << "clique redu -> " << (oldn - status.remaining_nodes) << std::endl;
 	return oldn != status.remaining_nodes;
 }
 
@@ -2658,6 +2662,7 @@ bool twin_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduced_nodes += (oldn - br_alg->status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
     #endif
+	// if (oldn != br_alg->status.remaining_nodes) std::cout << "twin redu -> " << (oldn - br_alg->status.remaining_nodes) << std::endl;
 	return oldn != br_alg->status.remaining_nodes;
 }
 inline bool twin_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {

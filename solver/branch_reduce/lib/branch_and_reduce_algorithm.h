@@ -39,6 +39,7 @@
 #include "dynamic_graph.h"
 #include "mwis_finder.h"
 #include "reductions.h"
+#include "high_degree_reduction.h"
 #include "bound_reduction.h"
 #include "extended_struction.h"
 #include "original_struction.h"
