@@ -15,6 +15,7 @@ set(LIB_REDUCTION
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/mwis_finder.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/original_struction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/extended_struction.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/high_degree_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/bound_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/key_functions.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/LRConv.cpp
