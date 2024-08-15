@@ -2,22 +2,6 @@
  * configuration.h
  * Purpose: Contains preset configurations for the reduction algorithms.
  *
- ******************************************************************************
- * Copyright (C) 2015-2017 Sebastian Lamm <lamm@ira.uka.de>
- *
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * H
- * this program.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
 #pragma once
@@ -50,6 +34,7 @@ class configuration_reduction {
         void original_kamis( ReductionConfig & config );
         void mmwis( ReductionConfig & config );
         void all_reductions_cyclicFast( ReductionConfig & config );
+        void fast_reductions_cyclicFast( ReductionConfig & config );
         void all_reductions_cyclicStrong( ReductionConfig & config );
         void all_decreasing( ReductionConfig & config );
 
@@ -76,7 +61,7 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
 	config.sort_freenodes                         = true;
     // Reductions
 	config.perform_reductions                     = true;
-    config.reduction_style                        = ReductionConfig::Reduction_Style::NORMAL;
+    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
     // Weights
     config.weight_source                          = ReductionConfig::Weight_Source::FILE;
 
@@ -188,20 +173,6 @@ inline void configuration_reduction::mmwis( ReductionConfig & config ) {
 
 inline void configuration_reduction::fast( ReductionConfig & config ) {
     all_reductions_cyclicFast(config);
-    config.disable_heavy_set                      = true;
-    config.disable_heavy_set3                     = true;
-    config.disable_heavy_vertex                   = true;
-    config.disable_cut_vertex                     = true;
-    config.disable_clique_neighborhood            = true;
-    config.disable_generalized_fold               = true;
-    config.disable_heuristic_exclude              = true;
-    config.disable_heuristic_include              = true;
-    config.subgraph_node_limit                    = 20;
-    config.reduction_style                        = ReductionConfig::Reduction_Style::test2;
-    config.reduction_style_name                   = "test2";
-}
-inline void configuration_reduction::very_fast( ReductionConfig & config ) {
-    all_reductions_cyclicFast(config);
     config.disable_generalized_fold               = true;
     config.disable_cut_vertex                     = true;
     config.disable_heavy_set                      = true;
@@ -214,16 +185,43 @@ inline void configuration_reduction::very_fast( ReductionConfig & config ) {
     config.disable_heuristic_exclude              = true;
     config.disable_heuristic_include              = true;
     config.subgraph_node_limit                    = 20;
-    config.reduction_style                        = ReductionConfig::Reduction_Style::test2;
-    config.reduction_style_name                   = "test2";
+}
+inline void configuration_reduction::very_fast( ReductionConfig & config ) {
+    all_reductions_cyclicFast(config);
+    config.disable_funnel                         = true;
+    config.disable_funnel_fold                    = true;
+    config.disable_generalized_fold               = true;
+    config.disable_cut_vertex                     = true;
+    config.disable_heavy_set                      = true;
+    config.disable_heavy_set3                     = true;
+    config.disable_heavy_vertex                   = true;
+    config.disable_critical_set                   = true;
+    config.disable_clique_neighborhood            = true;
+    config.disable_generalized_fold               = true;
+    config.disable_clique_neighborhood_fast       = true;
+    config.disable_heuristic_exclude              = true;
+    config.disable_heuristic_include              = true;
+    config.subgraph_node_limit                    = 20;
 }
 
 inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig & config ) {
     original_cyclicFast(config);
-    config.reduction_style                        = ReductionConfig::Reduction_Style::EARLY_BLOW_UP;
-    config.reduction_style_name                   = "early_blow_up";
+    config.reduction_style                        = ReductionConfig::Reduction_Style::EARLY_STRUCTION;
+    config.reduction_style_name                   = "early_struction";
     config.disable_generalized_fold               = false;
     enable_new_reductions(config);
+}
+
+inline void configuration_reduction::fast_reductions_cyclicFast( ReductionConfig & config ) {
+    all_reductions_cyclicFast(config);
+    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
+    config.reduction_style_name                   = "full";
+    enable_new_reductions(config);
+    config.disable_cut_vertex                     = true;
+    config.disable_heavy_set                      = true;
+    config.disable_heavy_set3                     = true;
+    config.disable_heavy_vertex                   = true;
+    config.disable_generalized_fold               = true;
 }
 
 inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfig & config ) {

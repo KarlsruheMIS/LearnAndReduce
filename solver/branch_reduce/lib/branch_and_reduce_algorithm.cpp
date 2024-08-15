@@ -53,75 +53,68 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {critical_set, struction_plateau, struction_blow};
 
-	if (called_from_fold)
-	{
-		if (config.reduction_style == ReductionConfig::Reduction_Style::test1 || config.reduction_style == ReductionConfig::Reduction_Style::test2 || config.reduction_style == ReductionConfig::Reduction_Style::test3)
+	if (!config.disable_neighborhood)
+		global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
+	if (!config.disable_fold1)
+		global_status.transformations.emplace_back(new fold1_reduction(global_status.n));
+	if (!config.disable_fold2)
+		global_status.transformations.emplace_back(new fold2_reduction(global_status.n));
+	if (!config.disable_clique)
+		global_status.transformations.emplace_back(new clique_reduction(global_status.n));
+	if (!config.disable_domination)
+		global_status.transformations.emplace_back(new domination_reduction(global_status.n));
+	if (!config.disable_basic_se)
+		global_status.transformations.emplace_back(new single_edge_reduction(global_status.n));
+	if (!config.disable_extended_se)
+		global_status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
+	if (!config.disable_twin)
+		global_status.transformations.emplace_back(new twin_reduction(global_status.n));
+
+	if (!called_from_fold) {
+		if (!config.disable_funnel)
+			global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
+		if (!config.disable_funnel_fold)
+			global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
+		if (!config.disable_clique_neighborhood_fast)
+			global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
+
+		if (config.reduction_style == ReductionConfig::Reduction_Style::EARLY_STRUCTION)
 		{
-			global_status.transformations = make_reduction_vector<
-				neighborhood_reduction,
-				fold1_reduction,
-				fold2_reduction,
-				clique_reduction,
-				domination_reduction,
-				single_edge_reduction,
-				extended_single_edge_reduction,
-				twin_reduction>(global_status.n);
-			global_status.num_reductions = global_status.transformations.size();
-		}
-		else //if (config.reduction_style != ReductionConfig::Reduction_Style::FULL)
-		{
-			global_status.transformations = make_reduction_vector<
-				neighborhood_reduction,
-				fold2_reduction,
-				clique_reduction,
-				domination_reduction,
-				twin_reduction>(global_status.n);
-			global_status.num_reductions = global_status.transformations.size();
-		}
-	}
-	else if (config.reduction_style == ReductionConfig::Reduction_Style::DENSE)
-	{
-		global_status.transformations = make_reduction_vector<
-			neighborhood_reduction,
-			fold2_reduction,
-			clique_reduction,
-			domination_reduction,
-			twin_reduction,
-			generalized_fold_reduction>(global_status.n);
-		global_status.num_reductions = global_status.transformations.size();
-	}
-	else if (config.reduction_style == ReductionConfig::Reduction_Style::EARLY_BLOW_UP)
-	{
-			if (!config.disable_neighborhood)
-				global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
-			if (!config.disable_fold1)
-				global_status.transformations.emplace_back(new fold1_reduction(global_status.n));
-			if (!config.disable_fold2)
-				global_status.transformations.emplace_back(new fold2_reduction(global_status.n));
-			if (!config.disable_clique)
-				global_status.transformations.emplace_back(new clique_reduction(global_status.n));
-			if (!config.disable_domination)
-				global_status.transformations.emplace_back(new domination_reduction(global_status.n));
-			if (!config.disable_basic_se)
-				global_status.transformations.emplace_back(new single_edge_reduction(global_status.n));
-			if (!config.disable_extended_se)
-				global_status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
-			if (!config.disable_twin)
-				global_status.transformations.emplace_back(new twin_reduction(global_status.n));
-			if (!config.disable_funnel)
-				global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
-			if (!config.disable_funnel_fold)
-				global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
-			if (!config.disable_clique_neighborhood_fast)
-				global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
+			if (!config.disable_extended_domination)
+				global_status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
 			if (!config.disable_decreasing_struction)
 				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 			if (!config.disable_plateau_struction)
 				global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
+
+			global_status.num_reductions = global_status.transformations.size();
+			if (!config.disable_blow_up)
+				global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
+
+			if (!config.disable_critical_set)
+				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
+			if (!config.disable_generalized_fold)
+				global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
+			if (!config.disable_heavy_set)
+				global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
+			if (!config.disable_heavy_set3)
+				global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
+			// if (!config.disable_bound_reduction)
+			// 	global_status.transformations.emplace_back(new bound_reduction(global_status.n));
+			// if (!config.disable_high_degree)
+			// 	global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
+			if (!config.disable_cut_vertex)
+				global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
+		} else if (config.reduction_style == ReductionConfig::Reduction_Style::EARLY_CS)
+		{
 			if (!config.disable_extended_domination)
 				global_status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
 			if (!config.disable_critical_set)
 				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
+			if (!config.disable_decreasing_struction)
+				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
+			if (!config.disable_plateau_struction)
+				global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
 
 			global_status.num_reductions = global_status.transformations.size();
 			if (!config.disable_blow_up)
@@ -133,77 +126,15 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
 			if (!config.disable_heavy_set3)
 				global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
-			if (!config.disable_bound_reduction)
-				global_status.transformations.emplace_back(new bound_reduction(global_status.n));
-			if (!config.disable_high_degree)
-				global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
+			// if (!config.disable_bound_reduction)
+			// 	global_status.transformations.emplace_back(new bound_reduction(global_status.n));
+			// if (!config.disable_high_degree)
+			// 	global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
 			if (!config.disable_cut_vertex)
 				global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
-			if (!config.disable_heuristic_exclude)
-				global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
-			if (!config.disable_heuristic_include)
-				global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
-	}
-	else if (config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
-	{
-		if (!config.plain_struction)
-		{
-			if (!config.disable_neighborhood)
-				global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
-			if (!config.disable_fold2)
-				global_status.transformations.emplace_back(new fold2_reduction(global_status.n));
-			if (!config.disable_clique)
-				global_status.transformations.emplace_back(new clique_reduction(global_status.n));
-			if (!config.disable_domination)
-				global_status.transformations.emplace_back(new domination_reduction(global_status.n));
-			if (!config.disable_twin)
-				global_status.transformations.emplace_back(new twin_reduction(global_status.n));
-			if (!config.disable_clique_neighborhood)
-				global_status.transformations.emplace_back(new clique_neighborhood_reduction(global_status.n));
-			if (!config.disable_generalized_fold)
-				global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
-		}
-		if (config.struction_type != ReductionConfig::Struction_Type::NONE)
-		{
-			if (!config.disable_decreasing_struction)
-				global_status.transformations.push_back(make_decreasing_struction(config, global_status.n));
-			if (!config.disable_plateau_struction)
-				global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
-		}
-		if (!config.plain_struction)
-		{
-			if (!config.disable_critical_set)
-				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
-		}
 
-		global_status.num_reductions = global_status.transformations.size();
-		if (!config.disable_blow_up)
-			global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
-	}
-	else
-	{ // FULL and tests
-		if (!config.plain_struction)
-		{
-			if (!config.disable_neighborhood)
-				global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
-			if (!config.disable_fold1)
-				global_status.transformations.emplace_back(new fold1_reduction(global_status.n));
-			if (!config.disable_fold2)
-				global_status.transformations.emplace_back(new fold2_reduction(global_status.n));
-			if (!config.disable_clique)
-				global_status.transformations.emplace_back(new clique_reduction(global_status.n));
-			if (!config.disable_domination)
-				global_status.transformations.emplace_back(new domination_reduction(global_status.n));
-			if (!config.disable_basic_se)
-				global_status.transformations.emplace_back(new single_edge_reduction(global_status.n));
-			if (!config.disable_extended_se)
-				global_status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
-			if (!config.disable_twin)
-				global_status.transformations.emplace_back(new twin_reduction(global_status.n));
-			if (!config.disable_funnel)
-				global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
-			if (!config.disable_funnel_fold)
-				global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
+
+		} else { // FULL and tests
 			if (!config.disable_extended_domination)
 				global_status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
 			if (!config.disable_clique_neighborhood_fast)
@@ -214,13 +145,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new heavy_vertex_reduction(global_status.n));
 			if (!config.disable_decreasing_struction)
 				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
-		}
-		if (config.struction_type != ReductionConfig::Struction_Type::NONE && !config.disable_plateau_struction)
-		{
-			global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
-		}
-		if (!config.plain_struction)
-		{
+			if (!config.disable_plateau_struction)
+				global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
 			if (!config.disable_critical_set)
 				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
 			if (!config.disable_generalized_fold)
@@ -229,25 +155,22 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new heavy_set_reduction(global_status.n));
 			if (!config.disable_heavy_set3)
 				global_status.transformations.emplace_back(new heavy_set3_reduction(global_status.n));
-			if (!config.disable_bound_reduction)
-				global_status.transformations.emplace_back(new bound_reduction(global_status.n));
-			if (!config.disable_high_degree)
-				global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
+			// if (!config.disable_bound_reduction)
+			// 	global_status.transformations.emplace_back(new bound_reduction(global_status.n));
+			// if (!config.disable_high_degree)
+			// 	global_status.transformations.emplace_back(new high_degree_reduction(global_status.n));
 			if (!config.disable_cut_vertex)
 				global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
-			if (config.generate_training_data && !config.disable_component)
-				global_status.transformations.emplace_back(new component_reduction(global_status.n));
+
+			global_status.num_reductions = global_status.transformations.size();
+			if (!config.disable_blow_up)
+				global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
 		}
 
-		global_status.num_reductions = global_status.transformations.size();
-		if (!config.disable_blow_up)
-		{
-			global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
-		}
-	if (!config.disable_heuristic_exclude)
-		global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
-	if (!config.disable_heuristic_include)
-		global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
+		if (!config.disable_heuristic_exclude)
+			global_status.transformations.emplace_back(new heuristic_exclude_reduction(global_status.n));
+		if (!config.disable_heuristic_include)
+			global_status.transformations.emplace_back(new heuristic_include_reduction(global_status.n));
 	}
 
 	global_transformation_map.resize(REDUCTION_NUM);
@@ -268,41 +191,29 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				neighborhood_reduction, fold2_reduction, clique_reduction,
 				domination_reduction, twin_reduction,  clique_neighborhood_reduction_fast>(status.n);
 		}
-		else //if (this->config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
+		else 
 		{
-
-			if (called_from_fold && this->config.reduction_style == ReductionConfig::Reduction_Style::NORMAL)
-			{
-				status.transformations = make_reduction_vector<
-					neighborhood_reduction, fold2_reduction, clique_reduction,
-					domination_reduction, twin_reduction,  clique_neighborhood_reduction, critical_set_reduction>(status.n);
-			}
-			else if (called_from_fold && this->config.reduction_style == ReductionConfig::Reduction_Style::FULL)
-			{
-				status.transformations = make_reduction_vector<
-					neighborhood_reduction, fold1_reduction, fold2_reduction, clique_reduction,
-					domination_reduction, single_edge_reduction, extended_single_edge_reduction, 
-					twin_reduction, clique_neighborhood_reduction_fast, critical_set_reduction>(status.n);
-			} else
-			{
-				status.transformations.clear();
-				if (!config.disable_neighborhood)
-					status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
-				if (!config.disable_fold2)
-					status.transformations.emplace_back(new fold2_reduction(global_status.n));
-				if (!config.disable_clique)
-					status.transformations.emplace_back(new clique_reduction(global_status.n));
-				if (!config.disable_domination)
-					status.transformations.emplace_back(new domination_reduction(global_status.n));
-				if (!config.disable_twin)
-					status.transformations.emplace_back(new twin_reduction(global_status.n));
-				if (!config.disable_extended_domination)
-					status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
-				if (!config.disable_decreasing_struction)
-					status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
-				if (!config.disable_critical_set)
-					status.transformations.emplace_back(new critical_set_reduction(global_status.n));
-			}
+			status.transformations.clear();
+			if (!config.disable_neighborhood)
+				status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
+			if (!config.disable_fold1)
+				status.transformations.emplace_back(new fold1_reduction(global_status.n));
+			if (!config.disable_fold2)
+				status.transformations.emplace_back(new fold2_reduction(global_status.n));
+			if (!config.disable_clique)
+				status.transformations.emplace_back(new clique_reduction(global_status.n));
+			if (!config.disable_domination)
+				status.transformations.emplace_back(new domination_reduction(global_status.n));
+			if (!config.disable_basic_se)
+				status.transformations.emplace_back(new single_edge_reduction(global_status.n));
+			if (!config.disable_extended_se)
+				status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
+			if (!config.disable_twin)
+				status.transformations.emplace_back(new twin_reduction(global_status.n));
+			if (!config.disable_extended_domination)
+				status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
+			if (!config.disable_decreasing_struction)
+				status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 		}
 		status.num_reductions = status.transformations.size();
 
@@ -339,16 +250,9 @@ void branch_and_reduce_algorithm::resize(size_t size)
 {
 	set_1.resize(size);
 	set_2.resize(size);
-	// std::cout << "buffers " ;
 	double_set.resize(2 * size);
-	// bool_buffer.reserve(size + 1);
 	zero_vec.resize(size, 0);
-	// for (auto &buffer : buffers)
-	// {
-	// 	buffer.reserve(size);
-	// }
 	for (auto &transformation : status.transformations) {
-		// std::cout << transformation->get_reduction_name() << " \n";
 		transformation->marker.resize(size);
 	}
 }
@@ -383,6 +287,7 @@ void branch_and_reduce_algorithm::set(NodeID node, IS_status mis_status, bool pu
 
 		for (auto neighbor : status.graph[node])
 		{
+			assert(status.node_status[neighbor] == IS_status::not_set && "neighbor already set");
 			status.node_status[neighbor] = IS_status::excluded;
 			status.remaining_nodes--;
 			status.graph.hide_node(neighbor);
@@ -402,6 +307,7 @@ template void branch_and_reduce_algorithm::set<false>(NodeID node, IS_status mis
 
 void branch_and_reduce_algorithm::unset(NodeID node, bool restore)
 {
+	if (status.node_status[node] == IS_status::not_set) return;
 	if (status.node_status[node] == IS_status::included)
 	{
 		status.is_weight -= status.weights[node];
@@ -492,14 +398,14 @@ void branch_and_reduce_algorithm::compute_ils_pruning_bound()
 {
 	is_ils_best_solution = true;
 	best_solution_status = status;
+
 	ch.disable_cout();
 	auto config_cpy = config;
 	config_cpy.time_limit = config_cpy.time_limit * status.n / total_ils_node_count / 100;
-
 	best_weight = status.reduction_offset + status.is_weight + run_ils(config_cpy, *local_graph, buffers[0], config.max_swaps);
 	best_is_time = t.elapsed();
 	ch.enable_cout();
-	// update_best_solution();
+
 	struction_log::instance()->set_best(get_current_is_weight() + best_weight, best_is_time);
 	std::cout <<get_current_is_weight() + best_weight <<", " << best_is_time << std::endl;
 }

@@ -17,7 +17,8 @@ struct ReductionConfig : public Config {
     // enum Reduction_Style {initial, time_ordering, weight_ordering, time_and_weight_ordering};
     enum Struction_Type {ORIGINAL, MODIFIED, EXTENDED, EXTENDED_REDUCED, NONE};
     enum Backtrack_Type {IMMEDIATE_TIE_BREAKING, IMMEDIATE_EXCLUDE, END_MIN_KERNEL, NO_BACKTRACK};
-    enum Reduction_Style {NORMAL, DENSE, FULL, test1, test2, test3, EARLY_BLOW_UP};
+    // enum Reduction_Style {NORMAL, DENSE, FULL, test1, test2, test3, EARLY_BLOW_UP};
+    enum Reduction_Style {NORMAL, DENSE, FULL, EARLY_STRUCTION, EARLY_CS};
     enum Heuristic_Style {single, multiple_safe, multiple_very_safe, all, none, hils_intersect};
     enum Key_Type {RANDOM, DEGREE, INCREASE, APPROXIMATE_INCREASE};
 
@@ -128,21 +129,15 @@ struct ReductionConfig : public Config {
         if (strCompare(style, "dense")) {
             reduction_style = Reduction_Style::DENSE;
             reduction_style_name = "dense";
-        } else if (strCompare(style, "full")) {
-            reduction_style_name = "full";
-            reduction_style = Reduction_Style::FULL;
-        } else if (strCompare(style, "early_blow_up")) {
-            reduction_style_name = "early_blow_up";
-            reduction_style = Reduction_Style::EARLY_BLOW_UP;
-        } else  if (strCompare(style, "test1")) {
-            reduction_style = Reduction_Style::test1;
-            reduction_style_name = "test1";
-        } else  if (strCompare(style, "test2")) {
-            reduction_style = Reduction_Style::test2;
-            reduction_style_name = "test2";
+        } else if (strCompare(style, "early_struction")) {
+            reduction_style_name = "early_struction";
+            reduction_style = Reduction_Style::EARLY_STRUCTION;
+        } else if (strCompare(style, "early_CS")) {
+            reduction_style_name = "early_CS";
+            reduction_style = Reduction_Style::EARLY_CS;
         } else {
-            reduction_style = Reduction_Style::NORMAL;
-            reduction_style_name = "normal";
+            reduction_style = Reduction_Style::FULL;
+            reduction_style_name = "full";
         }
     }
     
