@@ -35,7 +35,6 @@
 #include "cout_handler.h"
 #include "definitions.h"
 #include "data_structure/graph_access.h"
-// #include "data_structure/sized_vector.h"
 #include "dynamic_graph.h"
 #include "mwis_finder.h"
 #include "reductions.h"
@@ -233,6 +232,7 @@ private:
 	fast_set set_2;
 	fast_set double_set;
     std::vector<std::vector<NodeID>> buffers;
+    std::vector<NodeWeight> weight_buffer;
     std::vector<bool> bool_buffer;
     std::vector<NodeID> zero_vec;
 
@@ -247,7 +247,7 @@ private:
 	void fill_global_greedy();
 	void compute_ils_pruning_bound();
 	NodeWeight compute_cover_pruning_bound(int& n_cliques);
-    NodeWeight compute_partition_pruning_bound(int k);
+    // NodeWeight compute_partition_pruning_bound(int k);
 
 	void init_transformation_step(reduction_ptr &reduction);
 	void init_global_transformation_step(reduction_ptr & reduction);
@@ -315,7 +315,9 @@ public:
     // added for training data
     // void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, size_t i);
     void get_training_data_for_graph_size(graph_access &graph, NodeID n, std::vector<std::vector<bool>> &reduction_data, std::vector<bool> &include_data, std::vector<bool> &exclude_data, size_t i);
+    void get_exact_training_data_for_graph_size(graph_access &graph, NodeID n);
     void pick_nodes_by_BFS(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set);
+	void pick_nodes_by_BFS_sample(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void pick_nodes_by_nodeID(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void generate_initial_reduce_data(std::vector<std::vector<bool>> &reduction_data, size_t i);
 

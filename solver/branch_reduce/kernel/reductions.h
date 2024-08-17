@@ -686,7 +686,12 @@ struct iterative_struction : public general_reduction
     virtual iterative_struction *clone() const final { return new iterative_struction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return type; }
-    virtual std::string get_reduction_name() final { return "struction"; }
+    virtual std::string get_reduction_name() final { 
+        if (type == struction_decrease)
+            return "struction_decrease";
+        else
+            return "struction_plateau";
+        }
     virtual std::string get_model_path() final
     {
         if (type == struction_decrease)
@@ -784,7 +789,7 @@ struct heuristic_include_reduction : public general_reduction
     virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_include; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual std::string get_reduction_name() final { return "heuristic_include"; }
-    virtual std::string get_model_path() final { return "models/include.gnn"; }
+    virtual std::string get_model_path() final { return "models/include.gnn"; } // "models/include.gnn"; }
 
 };
 struct heuristic_exclude_reduction : public general_reduction
@@ -796,7 +801,7 @@ struct heuristic_exclude_reduction : public general_reduction
     virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_exclude; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual std::string get_reduction_name() final { return "heuristic_exclude"; }
-    virtual std::string get_model_path() final { return "models/exclude.gnn"; }
+    virtual std::string get_model_path() final { return "models/reduction.gnn"; } // "models/exclude.gnn"; }
 
 };
 

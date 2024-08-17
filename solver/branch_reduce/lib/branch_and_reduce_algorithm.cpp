@@ -15,6 +15,11 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
+// TODO, Remove this def
+// #ifndef gen_training_data
+// #define gen_training_data
+// #endif
+
 #include "branch_and_reduce_algorithm.h"
 #include "reductions.h"
 #include "ils/ils.h"
@@ -26,7 +31,7 @@
 #include "solution_check.h"
 #include "struction_log.h"
 #include "LRConv.h"
-#include "partition_cover.h"
+// #include "partition_cover.h"
 
 #include <algorithm>
 #include <chrono>
@@ -44,6 +49,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	buffers[2].reserve(global_status.n);
 	buffers[3].reserve(global_status.n);
 	bool_buffer.reserve(global_status.n);
+	weight_buffer.reserve(global_status.n);
 
 	if (config.generate_training_data)
 	{
@@ -268,7 +274,7 @@ void branch_and_reduce_algorithm::set(NodeID node, IS_status mis_status, bool pu
 	assert(status.node_status[node] == IS_status::not_set && "Node status set");
 	assert(status.remaining_nodes > 0 && "No nodes remaining to set");
 	status.node_status[node] = mis_status;
-	#ifdef generate_training_data
+	#ifdef gen_training_data
 		if (mis_status == IS_status::included)
 			is_included_vertex[node] = true;
 		else if (mis_status == IS_status::excluded)
@@ -410,21 +416,22 @@ void branch_and_reduce_algorithm::compute_ils_pruning_bound()
 	std::cout <<get_current_is_weight() + best_weight <<", " << best_is_time << std::endl;
 }
 
-NodeWeight branch_and_reduce_algorithm::compute_partition_pruning_bound(int k)
-{
-	graph_access G;
-	std::vector<NodeID> reverse_mapping(status.remaining_nodes,0);
-	build_graph_access(G, reverse_mapping);
-	partition_cover ub_solver(k);
-	ub_solver.create_partition(G, config);
-	// set original weights to solve
-	forall_nodes(G, node)
-	{
-		G.setNodeWeight(node, status.weights[reverse_mapping[node]]);
-	} endfor
-	NodeWeight upper_bound = ub_solver.solve_partition(G, config);
-	return upper_bound;
-}
+// NodeWeight branch_and_reduce_algorithm::compute_partition_pruning_bound(int k)
+// {
+// 	graph_access G;
+// 	std::vector<NodeID> reverse_mapping(status.remaining_nodes,0);
+// 	build_graph_access(G, reverse_mapping);
+// 	partition_cover ub_solver(k);
+// 	ub_solver.create_partition(G, config);
+// 	// set original weights to solve
+// 	forall_nodes(G, node)
+// 	{
+// 		G.setNodeWeight(node, status.weights[reverse_mapping[node]]);
+// 	} endfor
+// 	NodeWeight upper_bound = ub_solver.solve_partition(G, config);
+// 	return upper_bound;
+// }
+
 NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound(int& n_cliques)
 {
 	// Gather remaining nodes
@@ -452,9 +459,9 @@ NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound(int& n_cliqu
 
 	// Init cliques
 	auto &clique = buffers[2];
-	auto &clique_weight = buffers[3];
-	auto &clique_sizes = buffers[4];
-	auto &covered = buffers[5];
+	auto &clique_sizes = buffers[3];
+	auto &covered = buffers[4];
+	auto &clique_weight = weight_buffer;
 
 	clique.resize(nodes.size());
 	clique_weight.resize(nodes.size());
@@ -468,7 +475,7 @@ NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound(int& n_cliqu
 	for (NodeID node : nodes)
 		clique[node_mapping[node]] = node_mapping[node];
 
-	auto &neigh_clique_sizes = buffers[6];
+	auto &neigh_clique_sizes = buffers[5];
 	neigh_clique_sizes.resize(nodes.size());
 
 	for (NodeID node : nodes)
@@ -728,10 +735,10 @@ void branch_and_reduce_algorithm::reduce_graph_internal_before_blow_up()
 
 		init_transformation_step(reduction);
 		bool progress = reduction->reduce(this);
-		// if (progress && config.print_reduction_info)
-		// {
-		// 	print_reduction_progress();
-		// }
+		if (progress && config.print_reduction_info)
+		{
+			print_reduction_progress();
+		}
 		active_reduction_index = progress ? 0 : active_reduction_index + 1;
 		if (status.remaining_nodes == 0)
 			break;
@@ -999,18 +1006,17 @@ void branch_and_reduce_algorithm::branch_reduce_single_component()
 			bound_timer.restart();
 			int n_cliques = 0;
 			NodeWeight better_bound = compute_cover_pruning_bound(n_cliques) + status.reduction_offset + status.is_weight;
-			double cover_bound_time = bound_timer.elapsed();
-			// if (false)
-			if (config.use_partition_cover && n_cliques > 20)
-			{
-				int k = 2;
-				if (n_cliques > 100) k = 4;
-				bound_timer.restart();
-				NodeWeight ub_partition = compute_partition_pruning_bound(k) + status.reduction_offset + status.is_weight;
-				double partition_bound_time = bound_timer.elapsed();
-				if (better_bound != ub_partition) printf("improved bound: by %d #cliques: %d  diff to lower bound: %d\n", better_bound - ub_partition,n_cliques, ub_partition - best_weight);
-				if (ub_partition < better_bound) better_bound = ub_partition;
-			}
+			// double cover_bound_time = bound_timer.elapsed();
+			// if (config.use_partition_cover && n_cliques > 20)
+			// {
+			// 	int k = 2;
+			// 	if (n_cliques > 100) k = 4;
+			// 	bound_timer.restart();
+			// 	NodeWeight ub_partition = compute_partition_pruning_bound(k) + status.reduction_offset + status.is_weight;
+			// 	double partition_bound_time = bound_timer.elapsed();
+			// 	if (better_bound != ub_partition) printf("improved bound: by %d #cliques: %d  diff to lower bound: %d\n", better_bound - ub_partition,n_cliques, ub_partition - best_weight);
+			// 	if (ub_partition < better_bound) better_bound = ub_partition;
+			// }
 			improvement_possible = better_bound > best_weight;
 		}
 		if (!improvement_possible)
@@ -1116,11 +1122,10 @@ bool branch_and_reduce_algorithm::run_branch_reduce()
 	t.restart();
 	if (!config.disable_bound_reduction)
 	{
-		buffers.resize(8);
+		buffers.resize(7);
 		buffers[4].reserve(global_status.n);
 		buffers[5].reserve(global_status.n);
 		buffers[6].reserve(global_status.n);
-		buffers[7].reserve(global_status.n);
 	}
 	initial_reduce();
 	min_kernel = status.remaining_nodes;
@@ -1667,7 +1672,7 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access 
 	}
 	else
 	{ // if (config.pick_nodes_by_BFS)
-		pick_nodes_by_BFS(n, nodes_vec, nodes_set);
+		pick_nodes_by_BFS_sample(n, nodes_vec, nodes_set);
 	}
 	std::sort(nodes_vec.begin(), nodes_vec.end());
 	build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
@@ -1680,6 +1685,72 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access 
 	br_alg.generate_initial_reduce_data(reduction_data, i);
 	exclude_data = br_alg.is_excluded_vertex;
 	include_data = br_alg.is_included_vertex;
+}
+
+void branch_and_reduce_algorithm::get_exact_training_data_for_graph_size(graph_access &graph, NodeID n)
+{
+	status = std::move(global_status);
+	auto &reverse_mapping = buffers[0];
+	auto &nodes_vec = buffers[1];
+	auto &nodes_set = set_1;
+	reverse_mapping.clear();
+	nodes_vec.clear();
+	nodes_set.clear();
+	if (config.pick_nodes_by_NodeID)
+	{
+		pick_nodes_by_nodeID(n, nodes_vec, nodes_set);
+	}
+	else
+	{ // if (config.pick_nodes_by_BFS)
+		pick_nodes_by_BFS_sample(n, nodes_vec, nodes_set);
+	}
+
+	std::sort(nodes_vec.begin(), nodes_vec.end());
+	build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
+
+	printf("Found graph with %d nodes\n", graph.number_of_nodes());
+
+	global_status = std::move(status);
+
+	branch_and_reduce_algorithm br_alg(graph, config, false);
+
+	const int min_D = 3, max_D = 20;
+
+	for (NodeID u = 0; u < br_alg.global_status.n; u++)
+	{
+		if (br_alg.global_status.graph[u].size() < min_D)
+		{
+			// Add random edge
+			do
+			{
+				NodeID v = random_functions::nextInt(0, br_alg.global_status.n - 1);
+				if (!br_alg.global_status.graph.adjacent(u, v))
+					br_alg.global_status.graph.add_edge_undirected(u, v);
+			} while (br_alg.global_status.graph[u].size() < min_D);
+		}
+		else if (br_alg.global_status.graph[u].size() > max_D)
+		{
+			// Remove random edge
+			do
+			{
+				NodeID v = random_functions::nextInt(0, br_alg.global_status.n - 1);
+				if (br_alg.global_status.graph.adjacent(u, v))
+					br_alg.global_status.graph.hide_edge_undirected(u, v);
+			} while (br_alg.global_status.graph[u].size() > max_D);
+		}
+	}
+
+	// br_alg.status.graph.add_edge_undirected
+	// br_alg.status.graph.hide_edge_undirected
+	// std::vector<NodeID> rm(graph.number_of_nodes());
+	br_alg.build_global_graph_access();
+	printf("Made graph access %d nodes\n", br_alg.global_graph.number_of_nodes());
+	br_alg.global_graph.copy(graph);
+	printf("After copy %d nodes\n", graph.number_of_nodes());
+	// br_alg.build_graph_access(graph, rm);
+
+	br_alg.run_branch_reduce();
+	br_alg.apply_branch_reduce_solution(graph);
 }
 
 void branch_and_reduce_algorithm::pick_nodes_by_BFS(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set)
@@ -1705,6 +1776,34 @@ void branch_and_reduce_algorithm::pick_nodes_by_BFS(NodeID n, std::vector<NodeID
 		}
 	}
 }
+
+void branch_and_reduce_algorithm::pick_nodes_by_BFS_sample(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set)
+{
+	nodes_vec.clear();
+	nodes_set.clear();
+	// start with random node in graph
+	size_t node = random_functions::nextInt(0, status.n - 1);
+	nodes_vec.push_back(node);
+	nodes_set.add(node);
+	// start BFS at node
+	for (size_t i = 0; i < n && i < nodes_vec.size(); i++)
+	{
+		NodeID node = nodes_vec[i];
+		int d = status.graph[node].size();
+		for (auto neighbor : status.graph[node])
+		{
+			if (random_functions::nextDouble(0.0, 1.0) > (10.0 / (double)d))
+				continue;
+			if (nodes_set.add(neighbor))
+			{
+				nodes_vec.push_back(neighbor);
+			}
+			if (nodes_vec.size() == n)
+				return;
+		}
+	}
+}
+
 void branch_and_reduce_algorithm::pick_nodes_by_nodeID(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set)
 {
 	nodes_vec.clear();
@@ -1725,15 +1824,21 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 
 	for (NodeID node = 0; node < status.n; node++)
 	{
-		for (size_t i = 0; i < status.num_reductions; i++)
+		// printf("\r%d/%d\t\t", node, status.n);
+		// fflush(stdout);
+		for (size_t i = 0; i < status.transformations.size(); i++) // status.num_reductions
 		{
+			// printf("%s\n", status.transformations[i]->get_reduction_name().c_str());
 			if (std::find(global_transformations.begin(), global_transformations.end(), status.transformations[i]->get_reduction_type()) != global_transformations.end())
 				continue;
 			status.is_weight = 0;
-			auto reduction = status.transformations[i];
+			auto &&reduction = status.transformations[i];
+			reduction_timer.restart();
 			bool node_progress = reduction->reduce_vertex(this, node);
+			reduction->reduction_time += reduction_timer.elapsed();
 			if (node_progress)
 			{
+				reduction->reduced_nodes += 1;
 				reduction_data[i][node] = true;
 				while (status.modified_stack.size() > 0)
 				{
@@ -1761,6 +1866,10 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 			}
 		}
 	}
+	// printf("\n");
+
+	if (config.print_reduction_info)
+		print_reduction_info();
 
 	global_status = std::move(status);
 	std::swap(global_transformation_map, local_transformation_map);
@@ -1777,7 +1886,6 @@ void branch_and_reduce_algorithm::get_transformation_names(std::vector<std::stri
 
 void branch_and_reduce_algorithm::print_reduction_progress()
 {
-
 	// print progress bar for remaining nodes in graph
 	size_t i = 0;
 	double factor = 1.0/status.n;
@@ -1789,6 +1897,7 @@ void branch_and_reduce_algorithm::print_reduction_progress()
 	std::cout << "] " << (status.n-status.remaining_nodes)*factor*100 << "% \n";
 	std::cout << "\033[A" << std::flush;
 }
+
 void branch_and_reduce_algorithm::print_reduction_info()
 {
 	std::cout << "\n\n\t\t Reduction Info" << std::endl;

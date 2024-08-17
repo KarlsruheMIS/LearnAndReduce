@@ -139,6 +139,7 @@ class ReductionArguments : public BaseArguments {
             ils                     = arg_lit0(NULL, "ils", "Use ils as local search");
 	        pick_nodes_by_NodeID    = arg_lit0(NULL, "pick_nodes_by_NodeID", "Pick nodes by NodeID.");
 	        pick_nodes_by_BFS       = arg_lit0(NULL, "pick_nodes_by_BFS", "Pick nodes by BFS.");
+            exact_data              = arg_lit0(NULL, "exact_data", "Generate exact training data.");
             num_of_subgraphs        = arg_int0(NULL, "num_of_subgraphs", NULL, "Choose number of subgraphs to generate.");
             size_of_subgraph        = arg_int0(NULL, "size_of_subgraph", NULL, "Choose size of subgraphs to generate.");
         }
@@ -212,6 +213,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_blow_up;
         struct arg_lit * pick_nodes_by_NodeID;
         struct arg_lit * pick_nodes_by_BFS;
+        struct arg_lit * exact_data;
         struct arg_int * num_of_subgraphs;
         struct arg_int * size_of_subgraph;
     };
@@ -355,6 +357,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_blow_up,
         pick_nodes_by_NodeID,
         pick_nodes_by_BFS,
+        exact_data,
         num_of_subgraphs,
         size_of_subgraph,
         end
@@ -667,6 +670,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
 		config.pick_nodes_by_NodeID = true;
 	} else {
         config.pick_nodes_by_NodeID = false;
+    }
+    if (exact_data->count > 0) {
+		config.exact_data = true;
+	} else {
+        config.exact_data = false;
     }
     if (num_of_subgraphs->count > 0) {
         config.num_of_subgraphs = num_of_subgraphs->ival[0];
