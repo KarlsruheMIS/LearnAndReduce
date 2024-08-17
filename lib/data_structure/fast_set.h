@@ -6,6 +6,7 @@
 #ifndef FAST_SET_H
 #define FAST_SET_H
 
+#include <cassert>
 #include <vector>
 #include "definitions.h"
 
@@ -54,12 +55,6 @@ class fast_set {
 		assert(i < used.size() && "fast_set::get: index out of bounds");
 		return (used[i] == uid);
 	}
-
-    void print() {
-        std::cout << "Fast set: ";
-        for (NodeID n = 0; n< used.size(); n++) std::cout << used[n] << " ";
-        std::cout << std::endl;
-    }
 
 };
 

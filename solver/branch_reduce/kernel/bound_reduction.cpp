@@ -105,16 +105,16 @@ void bound_reduction::reduce_component(branch_and_reduce_algorithm* br_alg, grap
     // NodeWeight ub =  get_partition_bound(br_alg, G, ub_solution_set);
 
     assert(lb <= ub);
-    bool use_partition = true;
+    // bool use_partition = true;
     // bool use_partition = false;
     // bool use_partition = n_cliques > 20;
-    if (use_partition)
-    {
-        NodeWeight partition_ub = get_partition_bound(br_alg, G, ub_solution_set);
-        assert(lb <= partition_ub);
-        if (partition_ub >= ub) use_partition = false;
-        else ub = partition_ub;
-    }
+    // if (use_partition)
+    // {
+    //     NodeWeight partition_ub = get_partition_bound(br_alg, G, ub_solution_set);
+    //     assert(lb <= partition_ub);
+    //     if (partition_ub >= ub) use_partition = false;
+    //     else ub = partition_ub;
+    // }
 
     printf("lb: %lu, ub: %lu\n", lb, ub);
     assert(lb <= ub);
@@ -267,41 +267,41 @@ void bound_reduction::reduce_by_clique_cover_bound(branch_and_reduce_algorithm* 
     }
 }
 
-NodeWeight bound_reduction::get_partition_bound(branch_and_reduce_algorithm* br_alg, graph_access& G, fast_set& ub_solution_set)
-{
-    auto& config = br_alg->config;
-    auto& status = br_alg->status;
-    auto& lb_solution_set = br_alg->set_1;
-    partition_solution_weights.resize(k);
-    partition_mappings.resize(k);
-    // compute partition for upper bound
-	partition_cover ub_solver(k);
-	ub_solver.create_partition(G, config);
+// NodeWeight bound_reduction::get_partition_bound(branch_and_reduce_algorithm* br_alg, graph_access& G, fast_set& ub_solution_set)
+// {
+//     auto& config = br_alg->config;
+//     auto& status = br_alg->status;
+//     auto& lb_solution_set = br_alg->set_1;
+//     partition_solution_weights.resize(k);
+//     partition_mappings.resize(k);
+//     // compute partition for upper bound
+// 	partition_cover ub_solver(k);
+// 	ub_solver.create_partition(G, config);
 
-    build_component_graphs(G, config);
+//     build_component_graphs(G, config);
 
-    NodeWeight ub = 0;
-    ub_solution_set.clear();
-    // solve partitions for upper bound
-    for (size_t i = 0; i < k; i++)
-    {
-	    partition_solution_weights[i] = solve_partition(i, config, true);
-        for (NodeID node = 0; node < partition_graphs[i]->number_of_nodes(); node++) 
-        {
-            if (partition_graphs[i]->getPartitionIndex(node) == 1) {
-                NodeID component_node = partition_mappings[i][node];
-                ub_solution_set.add(component_node);
-            }
-        }
-        if (partition_solution_weights[i] == std::numeric_limits<NodeWeight>::max())
-        {
-            clear_partition_graphs();
-            return std::numeric_limits<NodeWeight>::max();
-        }
-        ub += partition_solution_weights[i];
-    }
-    return ub;
-}
+//     NodeWeight ub = 0;
+//     ub_solution_set.clear();
+//     // solve partitions for upper bound
+//     for (size_t i = 0; i < k; i++)
+//     {
+// 	    partition_solution_weights[i] = solve_partition(i, config, true);
+//         for (NodeID node = 0; node < partition_graphs[i]->number_of_nodes(); node++) 
+//         {
+//             if (partition_graphs[i]->getPartitionIndex(node) == 1) {
+//                 NodeID component_node = partition_mappings[i][node];
+//                 ub_solution_set.add(component_node);
+//             }
+//         }
+//         if (partition_solution_weights[i] == std::numeric_limits<NodeWeight>::max())
+//         {
+//             clear_partition_graphs();
+//             return std::numeric_limits<NodeWeight>::max();
+//         }
+//         ub += partition_solution_weights[i];
+//     }
+//     return ub;
+// }
 
 NodeWeight bound_reduction::get_clique_cover_bound(branch_and_reduce_algorithm* br_alg, int& n_cliques, fast_set& solution, std::vector<NodeID>& vertices_to_include, std::vector<NodeID>& reverse_mapping)
 {

@@ -25,7 +25,6 @@ void greedy_vertex::initial_partition(const unsigned int seed, graph_access & G)
 
     bucket_array *buckets = new bucket_array(G.number_of_nodes());
     int *uncovered_edges = new int[G.number_of_nodes()];
-    G.set_partition_count(2);
 
     // Initialize the priority queue
     forall_nodes (G, n) {

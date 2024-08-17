@@ -28,7 +28,6 @@ void greedy_mis::initial_partition(const unsigned int seed, graph_access & G) {
     generate_permutation(G, permutation);
 
     bucket_array *buckets = new bucket_array(G.number_of_nodes());
-    G.set_partition_count(2);
 
     // Initialize the priority queue
     forall_nodes (G, n) {

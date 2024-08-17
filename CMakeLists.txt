@@ -91,10 +91,15 @@ else()
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/misc)
 endif()
 
-# 64 Bit option
+# 64 Bit options
 option(64BITMODE "64 bit mode" OFF)
 if(64BITMODE)
   add_definitions("-DMODE64BITEDGES")
+  add_definitions("-DPOINTER64=1")
+endif()
+option(64BITMODENODEWEIGHTS "64 bit mode (node weights)" ON)
+if(64BITMODENODEWEIGHTS)
+  add_definitions("-DMODE64BITNODEWEIGHTS")
   add_definitions("-DPOINTER64=1")
 endif()
 
@@ -103,7 +108,10 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/app
     ${CMAKE_CURRENT_SOURCE_DIR}/lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/io
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/config
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/tools
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/algorithms
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/data_structure
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/data_structure/priority_queues
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/basics 
@@ -111,26 +119,23 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/solver/initial
     ${CMAKE_CURRENT_SOURCE_DIR}/solver/ils
     ${CMAKE_CURRENT_SOURCE_DIR}/solver/hils
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/KaHIP/lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/KaHIP/lib/io
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/KaHIP/lib/tools
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/KaHIP/lib/partition
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/KaHIP/lib/algorithms
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/KaHIP/lib/data_structure
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/KaHIP/extern/argtable3-3.2.2
+    ${CMAKE_CURRENT_SOURCE_DIR}/extern/argtable3-3.2.2
 )
 
-add_subdirectory(extern/KaHIP EXCLUDE_FROM_ALL)
-
-
 set(GENERAL
+    lib/io/graph_io.cpp
+    lib/algorithms/push_relabel.cpp
+    lib/algorithms/strongly_connected_components.cpp
     lib/data_structure/operation_log.cpp
     lib/data_structure/priority_queues/bucket_array.cpp
     lib/data_structure/mis_permutation.cpp
     lib/data_structure/candidate_list.cpp
+    lib/tools/random_functions.cpp
+    lib/tools/graph_extractor.cpp
     lib/config/mis_log.cpp
     lib/config/reduction_log.cpp
     lib/basics/cout_handler.cpp
+    extern/argtable3-3.2.2/argtable3.c
     )
 add_library(lib_general OBJECT ${GENERAL})
 
@@ -159,10 +164,7 @@ add_library(lib_local_search OBJECT ${LOCAL_SEARCH})
 target_include_directories(lib_local_search PUBLIC ${REDUCTION_INCLUDES})
 target_link_libraries(lib_local_search PUBLIC lib_reduction)
 
-add_library(lib STATIC $<TARGET_OBJECTS:libkaffpa>
-                       $<TARGET_OBJECTS:libmapping>
-                       $<TARGET_OBJECTS:libnodeordering>
-                       $<TARGET_OBJECTS:lib_general>
+add_library(lib STATIC $<TARGET_OBJECTS:lib_general>
                        $<TARGET_OBJECTS:lib_initial_solver>
                        $<TARGET_OBJECTS:lib_local_search>
                         )

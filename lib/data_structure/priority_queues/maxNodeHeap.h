@@ -14,6 +14,7 @@
 #include <execinfo.h>
 
 #include "data_structure/priority_queues/priority_queue_interface.h"
+#include "macros_assertions.h"
              
 typedef int Key;
 

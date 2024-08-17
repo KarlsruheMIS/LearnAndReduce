@@ -21,7 +21,6 @@ void random_mis::initial_partition(const unsigned int seed, graph_access & G) {
     random_functions::setSeed(seed);
     NodePermutationMap permutation;
     generate_permutation(G, permutation);
-    G.set_partition_count(2);
 
     // Initialize the partition index
     forall_nodes (G, n) {

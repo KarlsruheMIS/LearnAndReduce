@@ -7,7 +7,7 @@
 
 #include "definitions.h"
 #include "graph_access.h"
-#include "graph_io.h"
+#include "io/graph_io.h"
 #include "config.h"
 #include "random_functions.h"
 #include "timer.h"

@@ -5,7 +5,7 @@
 
 #include "definitions.h"
 #include "reduction_config.h"
-#include "partition_config.h"
+// #include "partition_config.h"
 #include "graph_access.h"
 
 class partition_cover {

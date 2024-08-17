@@ -5,8 +5,8 @@
  * Christian Schulz <christian.schulz.phone@gmail.com>
  *****************************************************************************/
 
-#ifndef GRAPH_ACCESS_EFRXO4X2
-#define GRAPH_ACCESS_EFRXO4X2
+#ifndef GRAPH_ACCESS_MWIS
+#define GRAPH_ACCESS_MWIS
 
 #include <bitset>
 #include <cassert>
@@ -20,20 +20,13 @@
 struct Node {
     EdgeID firstEdge;
     NodeWeight weight;
+    bool inMWIS;
+    PartitionID partitionID;
 };
 
 struct Edge {
     NodeID target;
     EdgeWeight weight;
-};
-
-struct refinementNode {
-    PartitionID partitionIndex; 
-    //Count queueIndex;
-};
-
-struct coarseningEdge {
-    EdgeRatingType rating;
 };
 
 class graph_access;
@@ -73,11 +66,7 @@ private:
 
         //resizes property arrays
         m_nodes.resize(n+1);
-        m_refinement_node_props.resize(n+1);
         m_edges.resize(m);
-        m_coarsening_edge_props.resize(m);
-
-        m_contraction_offset.resize(n+1, 0);
 
         m_nodes[node].firstEdge = e;
     }
@@ -86,14 +75,14 @@ private:
     // If an edge with source = n has been added, adding
     // edges with source < n will lead to a broken graph.
     EdgeID new_edge(NodeID source, NodeID target) {
-        ASSERT_TRUE(m_building_graph);
-        ASSERT_TRUE(e < m_edges.size());
+        assert(m_building_graph);
+        assert(e < m_edges.size());
        
         m_edges[e].target = target;
         EdgeID e_bar = e;
         ++e;
 
-        ASSERT_TRUE(source+1 < m_nodes.size());
+        assert(source+1 < m_nodes.size());
         m_nodes[source+1].firstEdge = e;
 
         //fill isolated sources at the end
@@ -107,19 +96,14 @@ private:
     }
 
     NodeID new_node() {
-        ASSERT_TRUE(m_building_graph);
+        assert(m_building_graph);
         return node++;
     }
 
     void finish_construction() {
-        // inert dummy node
+        // insert dummy node
         m_nodes.resize(node+1);
-        m_refinement_node_props.resize(node+1);
-
-        m_contraction_offset.resize(node+1);
-
         m_edges.resize(e);
-        m_coarsening_edge_props.resize(e);
 
         m_building_graph = false;
 
@@ -133,14 +117,9 @@ private:
     }
 
     // %%%%%%%%%%%%%%%%%%% DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    // split properties for coarsening and uncoarsening
     std::vector<Node> m_nodes;
     std::vector<Edge> m_edges;
     
-    std::vector<refinementNode> m_refinement_node_props;
-    std::vector<coarseningEdge> m_coarsening_edge_props;
-    // Offsets for computing sizes of reachable sets for contracted nodes
-    std::vector<NodeWeight> m_contraction_offset;
     // construction properties
     bool m_building_graph;
     int m_last_source;
@@ -157,13 +136,11 @@ private:
 #define endfor }}
 
 
-class complete_boundary;
 
 class graph_access {
-        friend class complete_boundary;
         public:
                 graph_access() { 
-                    m_max_degree_computed = false; m_max_degree = 0; m_max_weight_computed = false; m_max_weight = 0; graphref = new basicGraph(); m_separator_block_ID = 2;}
+                    m_max_degree_computed = false; m_max_degree = 0; m_max_weight_computed = false; m_max_weight = 0; graphref = new basicGraph(); }
                 virtual ~graph_access(){ delete graphref; };
 
                 graph_access(const graph_access&) = delete;
@@ -185,20 +162,11 @@ class graph_access {
                 EdgeID get_first_edge(NodeID node);
                 EdgeID get_first_invalid_edge(NodeID node);
 
-                PartitionID get_partition_count(); 
-                void set_partition_count(PartitionID count); 
-
-                PartitionID getSeparatorBlock();
-                void setSeparatorBlock(PartitionID id);
-
                 PartitionID getPartitionIndex(NodeID node);
-                void setPartitionIndex(NodeID node, PartitionID id);
+                void setPartitionIndex(NodeID node, PartitionID partition);
 
-                PartitionID getSecondPartitionIndex(NodeID node);
-                void setSecondPartitionIndex(NodeID node, PartitionID id);
-
-                //to be called if combine in meta heuristic is used
-                void resizeSecondPartitionIndex(unsigned no_nodes);
+                bool getMWISState(NodeID node);
+                void setMWISState(NodeID node, bool MWISState);
 
                 NodeWeight getNodeWeight(NodeID node);
                 void setNodeWeight(NodeID node, NodeWeight weight);
@@ -214,13 +182,6 @@ class graph_access {
                 NodeID getEdgeTarget(EdgeID edge);
                 void setEdgeTarget(EdgeID edge, NodeID target);
 
-                EdgeRatingType getEdgeRating(EdgeID edge);
-                void setEdgeRating(EdgeID edge, EdgeRatingType rating);
-
-                // access the contraction offset of a node
-                NodeWeight get_contraction_offset(NodeID node) const;
-                void set_contraction_offset(NodeID node, NodeWeight offset);
-
                 int* UNSAFE_metis_style_xadj_array();
                 int* UNSAFE_metis_style_adjncy_array();
 
@@ -230,30 +191,14 @@ class graph_access {
                 int build_from_metis(int n, int* xadj, int* adjncy);
                 int build_from_metis_weighted(int n, int* xadj, int* adjncy, int * vwgt, int* adjwgt);
 
-                //void set_node_queue_index(NodeID node, Count queue_index); 
-                //Count get_node_queue_index(NodeID node);
-
                 void copy(graph_access & Gcopy);
         protected:
                 basicGraph* graphref;     
                 bool         m_max_degree_computed;
                 bool         m_max_weight_computed;
-                unsigned int m_partition_count;
                 EdgeWeight   m_max_degree;
                 EdgeWeight   m_max_weight;
-                PartitionID  m_separator_block_ID;
-                std::vector<PartitionID> m_second_partition_index;
 };
-
-
-inline NodeWeight graph_access::get_contraction_offset(NodeID node) const {
-        return graphref->m_contraction_offset[node];
-}
-
-inline void graph_access::set_contraction_offset(NodeID node, NodeWeight offset) {
-        graphref->m_contraction_offset[node] = offset;
-}
-
 
 
 /* graph build methods */
@@ -282,10 +227,6 @@ inline EdgeID graph_access::number_of_edges() {
         return graphref->number_of_edges();
 }
 
-inline void graph_access::resizeSecondPartitionIndex(unsigned no_nodes) {
-        m_second_partition_index.resize(no_nodes);
-}
-
 inline EdgeID graph_access::get_first_edge(NodeID node) {
 #ifdef NDEBUG
         return graphref->m_nodes[node].firstEdge;
@@ -298,48 +239,35 @@ inline EdgeID graph_access::get_first_invalid_edge(NodeID node) {
         return graphref->m_nodes[node+1].firstEdge;
 }
 
-inline PartitionID graph_access::get_partition_count() {
-        return m_partition_count;
-}
-
-inline PartitionID graph_access::getSecondPartitionIndex(NodeID node) {
+inline void graph_access::setPartitionIndex(NodeID node, PartitionID partitionID) {
 #ifdef NDEBUG
-        return m_second_partition_index[node];
+        return graphref->m_nodes[node].partitionID = partitionID;
 #else
-        return m_second_partition_index.at(node);
+        return graphref->m_nodes.at(node).partitionID = partitionID;
 #endif
-}
-
-inline void graph_access::setSecondPartitionIndex(NodeID node, PartitionID id) {
-#ifdef NDEBUG
-        m_second_partition_index[node] = id;
-#else
-        m_second_partition_index.at(node) = id;
-#endif
-}
-
-
-inline PartitionID graph_access::getSeparatorBlock() {
-        return m_separator_block_ID;
-}
-
-inline void graph_access::setSeparatorBlock(PartitionID id) {
-        m_separator_block_ID = id;
 }
 
 inline PartitionID graph_access::getPartitionIndex(NodeID node) {
 #ifdef NDEBUG
-        return graphref->m_refinement_node_props[node].partitionIndex;
+        return graphref->m_nodes[node].partitionID;
 #else
-        return graphref->m_refinement_node_props.at(node).partitionIndex;
+        return graphref->m_nodes.at(node).partitionID;
 #endif
 }
 
-inline void graph_access::setPartitionIndex(NodeID node, PartitionID id) {
+inline bool graph_access::getMWISState(NodeID node) {
 #ifdef NDEBUG
-        graphref->m_refinement_node_props[node].partitionIndex = id;
+        return graphref->m_nodes[node].inMWIS;
 #else
-        graphref->m_refinement_node_props.at(node).partitionIndex = id;
+        return graphref->m_nodes.at(node).inMWIS;
+#endif
+}
+
+inline void graph_access::setMWISState(NodeID node, bool MWISState) {
+#ifdef NDEBUG
+        graphref->m_nodes[node].inMWIS = MWISState;
+#else
+        graphref->m_nodes.at(node).inMWIS = MWISState;
 #endif
 }
 
@@ -388,22 +316,6 @@ inline void graph_access::setEdgeTarget(EdgeID edge, NodeID target) {
     graphref->m_edges[edge].target = target;
 #else
     graphref->m_edges.at(edge).target = target;
-#endif
-}
-
-inline EdgeRatingType graph_access::getEdgeRating(EdgeID edge) {
-#ifdef NDEBUG
-        return graphref->m_coarsening_edge_props[edge].rating;        
-#else
-        return graphref->m_coarsening_edge_props.at(edge).rating;        
-#endif
-}
-
-inline void graph_access::setEdgeRating(EdgeID edge, EdgeRatingType rating){
-#ifdef NDEBUG
-        graphref->m_coarsening_edge_props[edge].rating = rating;
-#else
-        graphref->m_coarsening_edge_props.at(edge).rating = rating;
 #endif
 }
 
@@ -497,10 +409,6 @@ inline int* graph_access::UNSAFE_metis_style_adjwgt_array() {
         return adjwgt;
 }
 
-inline void graph_access::set_partition_count(PartitionID count) {
-        m_partition_count = count;
-}
-
 inline int graph_access::build_from_metis(int n, int* xadj, int* adjncy) {
         if (graphref != nullptr) {
             delete graphref;
@@ -511,7 +419,7 @@ inline int graph_access::build_from_metis(int n, int* xadj, int* adjncy) {
         for( unsigned i = 0; i < (unsigned)n; i++) {
                 NodeID node = new_node();
                 setNodeWeight(node, 1);
-                setPartitionIndex(node, 0);
+                setMWISState(node, 0);
 
                 for( unsigned e = xadj[i]; e < (unsigned)xadj[i+1]; e++) {
                         EdgeID e_bar = new_edge(node, adjncy[e]);
@@ -529,13 +437,12 @@ inline int graph_access::build_from_metis_weighted(int n, int* xadj, int* adjncy
             delete graphref;
         }
         graphref = new basicGraph();
-        /* graphref = std::make_shared<basicGraph>(basicGraph()); */
         start_construction(n, xadj[n]);
 
         for( unsigned i = 0; i < (unsigned)n; i++) {
                 NodeID node = new_node();
                 setNodeWeight(node, vwgt[i]);
-                setPartitionIndex(node, 0);
+                setMWISState(node, 0);
 
                 for( unsigned e = xadj[i]; e < (unsigned)xadj[i+1]; e++) {
                         EdgeID e_bar = new_edge(node, adjncy[e]);
@@ -554,6 +461,7 @@ inline void graph_access::copy(graph_access & G_bar) {
         forall_nodes(ref, node) {
                 NodeID shadow_node = G_bar.new_node();
                 G_bar.setNodeWeight(shadow_node, getNodeWeight(node));
+                G_bar.setMWISState(shadow_node, getMWISState(node));
                 forall_out_edges(ref, e, node) {
                         NodeID target                   = getEdgeTarget(e);
                         EdgeID shadow_edge              = G_bar.new_edge(shadow_node, target);

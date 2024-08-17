@@ -25,7 +25,6 @@ void greedy_weighted_vertex::initial_partition(const unsigned int seed, graph_ac
 
     MaxHeap<NodeWeight> *pq = new MaxHeap<NodeWeight>;
     int *uncovered_edges = new int[G.number_of_nodes()];
-    G.set_partition_count(2);
 
     // Initialize the priority queue
     NodeWeight max_weight = G.getMaxWeight();

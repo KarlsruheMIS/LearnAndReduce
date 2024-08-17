@@ -30,7 +30,6 @@ void greedy_mwis::initial_partition(const unsigned int seed, graph_access & G) {
     generate_permutation(G, permutation);
 
     MaxHeap<NodeWeight> *pq = new MaxHeap<NodeWeight>;
-    G.set_partition_count(2);
 
     // Initialize the priority queue
     forall_nodes (G, n) {

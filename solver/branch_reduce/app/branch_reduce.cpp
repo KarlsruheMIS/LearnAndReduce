@@ -29,7 +29,7 @@
 #include "cout_handler.h"
 #include "struction_log.h"
 #include "graph_access.h"
-#include "graph_io.h"
+#include "io/graph_io.h"
 #include "reduction_config.h"
 #include "parse_parameters.h"
 #include "branch_and_reduce_algorithm.h"
