@@ -222,6 +222,8 @@ inline void configuration_reduction::fast_reductions_cyclicFast( ReductionConfig
     config.disable_heavy_set3                     = true;
     config.disable_heavy_vertex                   = true;
     config.disable_generalized_fold               = true;
+    config.disable_critical_set                   = true;
+    config.disable_blow_up                        = true;
 }
 
 inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfig & config ) {

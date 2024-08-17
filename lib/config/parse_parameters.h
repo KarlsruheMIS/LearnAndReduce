@@ -397,6 +397,11 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
             cfg.very_fast(config);
             config.reduction_config_name = "very_fast";
         }
+        else if (!strcmp(reduction_config->sval[0], "fast_reductions_cyclicFast")) 
+        {
+            cfg.fast_reductions_cyclicFast(config);
+            config.reduction_config_name = "fast_reductions_cyclicFast";
+        }
         else if (!strcmp(reduction_config->sval[0], "all_reductions_cyclicFast")) 
         {
             cfg.all_reductions_cyclicFast(config);
