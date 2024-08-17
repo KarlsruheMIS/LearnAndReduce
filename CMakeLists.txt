@@ -169,6 +169,8 @@ add_library(lib STATIC $<TARGET_OBJECTS:lib_general>
                        $<TARGET_OBJECTS:lib_local_search>
                         )
 
+add_executable(graphchecker app/graphchecker.cpp)
+target_link_libraries(graphchecker ${OpenMP_CXX_LIBRARIES})
 
 add_executable(metis_to_cosmo "app/metis_to_cosmo.cpp" $<TARGET_OBJECTS:lib_general>)
 target_link_libraries(metis_to_cosmo PRIVATE lib)
