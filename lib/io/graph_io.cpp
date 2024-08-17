@@ -18,12 +18,12 @@ graph_io::~graph_io() {
 
 int graph_io::writeGraphWeighted(graph_access & G, const std::string & filename) {
         std::ofstream f(filename.c_str());
-        f << G.number_of_nodes() <<  " " <<  G.number_of_edges()/2 <<  " 11" <<  std::endl;
+        f << G.number_of_nodes() <<  " " <<  G.number_of_edges()/2 <<  " 10" <<  std::endl;
 
         forall_nodes(G, node) {
                 f <<  G.getNodeWeight(node) ;
                 forall_out_edges(G, e, node) {
-                        f << " " <<   (G.getEdgeTarget(e)+1) <<  " " <<  G.getEdgeWeight(e) ;
+                        f << " " <<   (G.getEdgeTarget(e)+1) ;
                 } endfor
                 f <<  "\n";
         } endfor
@@ -103,7 +103,6 @@ int graph_io::readGraphWeighted(graph_access & G, const std::string & filename) 
                 }
 
                 NodeID node = G.new_node(); node_counter++;
-                G.setMWISState(node, 0);
 
                 std::stringstream ss(line);
 
@@ -164,7 +163,7 @@ void graph_io::writeMWIS(graph_access & G, const std::string & filename) {
         std::cout << "writing MWIS to " << filename << " ... " << std::endl;
 
         forall_nodes(G, node) {
-                f << G.getMWISState(node) <<  "\n";
+                f << G.getPartitionIndex(node) <<  "\n";
         } endfor
 
         f.close();

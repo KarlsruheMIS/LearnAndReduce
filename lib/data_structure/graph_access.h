@@ -20,7 +20,6 @@
 struct Node {
     EdgeID firstEdge;
     NodeWeight weight;
-    bool inMWIS;
     PartitionID partitionID;
 };
 
@@ -165,9 +164,6 @@ class graph_access {
                 PartitionID getPartitionIndex(NodeID node);
                 void setPartitionIndex(NodeID node, PartitionID partition);
 
-                bool getMWISState(NodeID node);
-                void setMWISState(NodeID node, bool MWISState);
-
                 NodeWeight getNodeWeight(NodeID node);
                 void setNodeWeight(NodeID node, NodeWeight weight);
 
@@ -241,9 +237,9 @@ inline EdgeID graph_access::get_first_invalid_edge(NodeID node) {
 
 inline void graph_access::setPartitionIndex(NodeID node, PartitionID partitionID) {
 #ifdef NDEBUG
-        return graphref->m_nodes[node].partitionID = partitionID;
+        graphref->m_nodes[node].partitionID = partitionID;
 #else
-        return graphref->m_nodes.at(node).partitionID = partitionID;
+        graphref->m_nodes.at(node).partitionID = partitionID;
 #endif
 }
 
@@ -252,22 +248,6 @@ inline PartitionID graph_access::getPartitionIndex(NodeID node) {
         return graphref->m_nodes[node].partitionID;
 #else
         return graphref->m_nodes.at(node).partitionID;
-#endif
-}
-
-inline bool graph_access::getMWISState(NodeID node) {
-#ifdef NDEBUG
-        return graphref->m_nodes[node].inMWIS;
-#else
-        return graphref->m_nodes.at(node).inMWIS;
-#endif
-}
-
-inline void graph_access::setMWISState(NodeID node, bool MWISState) {
-#ifdef NDEBUG
-        graphref->m_nodes[node].inMWIS = MWISState;
-#else
-        graphref->m_nodes.at(node).inMWIS = MWISState;
 #endif
 }
 
@@ -419,7 +399,6 @@ inline int graph_access::build_from_metis(int n, int* xadj, int* adjncy) {
         for( unsigned i = 0; i < (unsigned)n; i++) {
                 NodeID node = new_node();
                 setNodeWeight(node, 1);
-                setMWISState(node, 0);
 
                 for( unsigned e = xadj[i]; e < (unsigned)xadj[i+1]; e++) {
                         EdgeID e_bar = new_edge(node, adjncy[e]);
@@ -442,7 +421,6 @@ inline int graph_access::build_from_metis_weighted(int n, int* xadj, int* adjncy
         for( unsigned i = 0; i < (unsigned)n; i++) {
                 NodeID node = new_node();
                 setNodeWeight(node, vwgt[i]);
-                setMWISState(node, 0);
 
                 for( unsigned e = xadj[i]; e < (unsigned)xadj[i+1]; e++) {
                         EdgeID e_bar = new_edge(node, adjncy[e]);
@@ -461,7 +439,6 @@ inline void graph_access::copy(graph_access & G_bar) {
         forall_nodes(ref, node) {
                 NodeID shadow_node = G_bar.new_node();
                 G_bar.setNodeWeight(shadow_node, getNodeWeight(node));
-                G_bar.setMWISState(shadow_node, getMWISState(node));
                 forall_out_edges(ref, e, node) {
                         NodeID target                   = getEdgeTarget(e);
                         EdgeID shadow_edge              = G_bar.new_edge(shadow_node, target);
