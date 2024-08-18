@@ -37,15 +37,36 @@
 #include "data_structure/graph_access.h"
 #include "dynamic_graph.h"
 #include "mwis_finder.h"
-#include "reductions.h"
-#include "high_degree_reduction.h"
-#include "bound_reduction.h"
-#include "extended_struction.h"
-#include "original_struction.h"
 #include "key_functions.h"
 #include "LRConv.h"
 
-class learn_and_reduce_algorithm;
+// reduction rules
+#include "general_reduction.h"
+#include "neighborhood_reduction.h"
+#include "fold1_reduction.h"
+#include "fold2_reduction.h"
+#include "clique_reduction.h"
+#include "twin_reduction.h"
+#include "domination_reduction.h"
+#include "extended_domination_reduction.h"
+#include "funnel_reduction.h"
+#include "funnel_fold_reduction.h"
+#include "single_edge_reduction.h"
+#include "extended_single_edge_reduction.h"
+#include "clique_neighborhood_reduction.h"
+#include "clique_neighborhood_fast_reduction.h"
+#include "generalized_fold_reduction.h"
+#include "critical_set_reduction.h"
+#include "cut_vertex_reduction.h"
+#include "heavy_set3_reduction.h"
+#include "heavy_set_reduction.h"
+// #include "high_degree_reduction.h"
+// #include "bound_reduction.h"
+#include "struction_reductions.h"
+#include "heuristic_exclude_reduction.h"
+#include "heuristic_include_reduction.h"
+#include "reductions.h"
+
 
 class branch_and_reduce_algorithm {
 public:
@@ -73,7 +94,6 @@ private:
     friend clique_neighborhood_reduction;
     friend clique_neighborhood_reduction_fast;
     friend critical_set_reduction;
-    friend heavy_vertex_reduction;
     friend heavy_set_reduction;
     friend heavy_set3_reduction;
     friend clique_reduction;
@@ -84,15 +104,14 @@ private:
     friend domination_reduction;
 	friend extended_domination_reduction;	
     friend twin_reduction;
-	friend high_degree_reduction;
-	friend bound_reduction;
+	// friend high_degree_reduction;
+	// friend bound_reduction;
     friend generalized_fold_reduction;
     friend cut_vertex_reduction;
-    friend component_reduction;
 	friend heuristic_include_reduction;
 	friend heuristic_exclude_reduction;
 
-    friend path_reduction;
+    // friend path_reduction;
     template<typename struction_type, reduction_type type, int new_nodes>
     friend class iterative_struction;
     template<typename pick_function, typename struction_type, reduction_type type>
@@ -109,7 +128,6 @@ private:
     friend IncreaseKey;
 
 	friend LRConv;
-    friend learn_and_reduce_algorithm;
 
     struct node_pos {
 		NodeID node;

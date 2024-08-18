@@ -3,7 +3,7 @@
 #include "branch_and_reduce_algorithm.h"
 #include "graph_extractor.h"
 #include "strongly_connected_components.h"
-#include "partition_cover.h"
+// #include "partition_cover.h"
 
 typedef branch_and_reduce_algorithm::IS_status IS_status;
 
@@ -16,7 +16,7 @@ bool bound_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     #endif
 
     auto& config = br_alg->config;
-
+// 
     graph_access globalG;
     auto& reverse_mapping = br_alg->buffers[0];
     reverse_mapping.resize(status.remaining_nodes);
@@ -67,7 +67,7 @@ bool bound_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
         reduced_nodes += (oldn - br_alg->status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
     #endif
-    if (partition_graphs.size() > 0) clear_partition_graphs();
+    // if (partition_graphs.size() > 0) clear_partition_graphs();
     br_alg->config.disable_bound_reduction = true;
 	return oldn != br_alg->status.remaining_nodes;
 }
@@ -128,121 +128,121 @@ void bound_reduction::reduce_component(branch_and_reduce_algorithm* br_alg, grap
         		br_alg->set(reverse_mapping[br_alg->local_mapping[node]], IS_status::included);
             }
 	    } endfor
-        if (use_partition) clear_partition_graphs();
+        // if (use_partition) clear_partition_graphs();
         return; 
     }
-    if (use_partition) reduce_by_partition_bound(br_alg, G, lb, ub); 
+    // if (use_partition) reduce_by_partition_bound(br_alg, G, lb, ub); 
     else reduce_by_clique_cover_bound(br_alg, G, lb, ub, vertices_to_include, reverse_clique_mapping, n_cliques);
 }
 
-void bound_reduction::reduce_by_partition_bound(branch_and_reduce_algorithm* br_alg, graph_access& G, NodeWeight lb, NodeWeight ub)
-{
-    auto& config = br_alg->config;
-    auto& reverse_mapping = br_alg->buffers[0];
-    auto& lb_solution_set = br_alg->set_1;
-    auto& ub_solution_set = br_alg->double_set;
-    auto& neighbors_set = br_alg->set_2;
+// void bound_reduction::reduce_by_partition_bound(branch_and_reduce_algorithm* br_alg, graph_access& G, NodeWeight lb, NodeWeight ub)
+// {
+//     auto& config = br_alg->config;
+//     auto& reverse_mapping = br_alg->buffers[0];
+//     auto& lb_solution_set = br_alg->set_1;
+//     auto& ub_solution_set = br_alg->double_set;
+//     auto& neighbors_set = br_alg->set_2;
 
-    for (size_t i = 0; i < k; i++)
-    {
-        auto& graph = partition_graphs[i];
-        std::vector<NodeID> vertices_included;
-        std::vector<NodeID> vertices_excluded;
-        for (NodeID node = 0; node < graph->number_of_nodes(); node++)
-        {
-            if (ub_solution_set.get(partition_mappings[i][node]))
-                vertices_included.push_back(node);
-            else
-                vertices_excluded.push_back(node);
-        }
-        std::vector<NodeWeight> potential_decrease(graph->number_of_nodes(), 0);
-        for (NodeID node : vertices_excluded)
-        {
-            for (EdgeID e = graph->get_first_edge(node); e < graph->get_first_invalid_edge(node); e++)
-            {
-                NodeID neighbor = graph->getEdgeTarget(e);
-                if (ub_solution_set.get(partition_mappings[i][neighbor]))
-                    potential_decrease[node] += graph->getNodeWeight(neighbor);
-            }
-            assert(potential_decrease[node] >= graph->getNodeWeight(node));
-            potential_decrease[node] -= graph->getNodeWeight(node);
-        }
+//     for (size_t i = 0; i < k; i++)
+//     {
+//         auto& graph = partition_graphs[i];
+//         std::vector<NodeID> vertices_included;
+//         std::vector<NodeID> vertices_excluded;
+//         for (NodeID node = 0; node < graph->number_of_nodes(); node++)
+//         {
+//             if (ub_solution_set.get(partition_mappings[i][node]))
+//                 vertices_included.push_back(node);
+//             else
+//                 vertices_excluded.push_back(node);
+//         }
+//         std::vector<NodeWeight> potential_decrease(graph->number_of_nodes(), 0);
+//         for (NodeID node : vertices_excluded)
+//         {
+//             for (EdgeID e = graph->get_first_edge(node); e < graph->get_first_invalid_edge(node); e++)
+//             {
+//                 NodeID neighbor = graph->getEdgeTarget(e);
+//                 if (ub_solution_set.get(partition_mappings[i][neighbor]))
+//                     potential_decrease[node] += graph->getNodeWeight(neighbor);
+//             }
+//             assert(potential_decrease[node] >= graph->getNodeWeight(node));
+//             potential_decrease[node] -= graph->getNodeWeight(node);
+//         }
 
-        std::sort(vertices_included.begin(), vertices_included.end(), [&graph](const NodeID lhs, const NodeID rhs)
-                  { return graph->getNodeWeight(lhs) > graph->getNodeWeight(rhs); });
-        std::sort(vertices_excluded.begin(), vertices_excluded.end(), [&graph, &potential_decrease](const NodeID lhs, const NodeID rhs)
-                  { return  potential_decrease[lhs] > potential_decrease[rhs]; });
+//         std::sort(vertices_included.begin(), vertices_included.end(), [&graph](const NodeID lhs, const NodeID rhs)
+//                   { return graph->getNodeWeight(lhs) > graph->getNodeWeight(rhs); });
+//         std::sort(vertices_excluded.begin(), vertices_excluded.end(), [&graph, &potential_decrease](const NodeID lhs, const NodeID rhs)
+//                   { return  potential_decrease[lhs] > potential_decrease[rhs]; });
 
-        for (NodeID node : vertices_excluded)
-        {
-            NodeID global_node = reverse_mapping[br_alg->local_mapping[partition_mappings[i][node]]];
-            if (br_alg->status.node_status[global_node] != IS_status::not_set) continue;
-            if (ub - 0.5*potential_decrease[node] > lb) break;
+//         for (NodeID node : vertices_excluded)
+//         {
+//             NodeID global_node = reverse_mapping[br_alg->local_mapping[partition_mappings[i][node]]];
+//             if (br_alg->status.node_status[global_node] != IS_status::not_set) continue;
+//             if (ub - 0.5*potential_decrease[node] > lb) break;
             
-            NodeWeight new_part_ub = recompute_partition_weight_including_node(i, node, config); 
+//             NodeWeight new_part_ub = recompute_partition_weight_including_node(i, node, config); 
 
-            if (new_part_ub == std::numeric_limits<NodeWeight>::max()) continue;
-            NodeWeight new_ub = ub - partition_solution_weights[i] + new_part_ub;
-            if (new_ub < lb || (new_ub == lb && !lb_solution_set.get(partition_mappings[i][node])))
-            {
-                printf("excluding lb: %lu, old ub: %d, new_ub: %lu\n", lb, ub, new_ub);
-                br_alg->set(global_node, IS_status::excluded);
-            }
-        }
+//             if (new_part_ub == std::numeric_limits<NodeWeight>::max()) continue;
+//             NodeWeight new_ub = ub - partition_solution_weights[i] + new_part_ub;
+//             if (new_ub < lb || (new_ub == lb && !lb_solution_set.get(partition_mappings[i][node])))
+//             {
+//                 printf("excluding lb: %lu, old ub: %d, new_ub: %lu\n", lb, ub, new_ub);
+//                 br_alg->set(global_node, IS_status::excluded);
+//             }
+//         }
 
 
-        for (auto node : vertices_included)
-        {
-            NodeID global_node = reverse_mapping[br_alg->local_mapping[partition_mappings[i][node]]];
-            if (br_alg->status.node_status[global_node] != IS_status::not_set) continue;
-            // start excluding one node
-            if (ub - graph->getNodeWeight(node) <= lb) {
-                NodeWeight new_part_ub = recompute_partition_weight_excluding_node(i, node, config); 
-                if (new_part_ub == std::numeric_limits<NodeWeight>::max()) continue;
-                NodeWeight new_ub = ub - partition_solution_weights[i] + new_part_ub;
-                    // printf("excluding lb: %lu, old ub: %d new_ub: %lu\n", lb, ub, new_ub);
-                if (new_ub < lb || (new_ub == lb && lb_solution_set.get(partition_mappings[i][node])))
-                {
-                    printf("including lb: %lu, old ub: %d new_ub: %lu\n", lb, ub, new_ub);
-                    br_alg->set(global_node, IS_status::included);
-                    continue;
-                }
-                // try excluding two nodes from the upper bound solution:
-                // if successfull, we can exclude their common neighbors
-                // std::vector<NodeID> nodes = {node};
-                // for (NodeID second_node : vertices_included)
-                // {
-                //     if (second_node == node) continue;
-                //     nodes.push_back(second_node);
-                //     NodeWeight new_part_ub = recompute_partition_weight_excluding_nodes(i, nodes, config); 
-                //     if (new_part_ub == std::numeric_limits<NodeWeight>::max()) {
-                //         nodes.pop_back();
-                //         continue;
-                //     }
-                //     nodes.pop_back();
-                //     NodeWeight new_ub = ub - partition_solution_weights[i] + new_part_ub;
-                //     if (new_ub < lb || (new_ub == lb && lb_solution_set.get(partition_mappings[i][node])))
-                //     {
-                //         printf("excluding lb: %lu, new_ub: %lu\n", lb, new_ub);
-                //         // exclude common neighbors
-                //         neighbors_set.clear();
-                //         for (EdgeID e = graph->get_first_edge(node); e < graph->get_first_invalid_edge(node); e++)
-                //             neighbors_set.add(graph->getEdgeTarget(e));
+//         for (auto node : vertices_included)
+//         {
+//             NodeID global_node = reverse_mapping[br_alg->local_mapping[partition_mappings[i][node]]];
+//             if (br_alg->status.node_status[global_node] != IS_status::not_set) continue;
+//             // start excluding one node
+//             if (ub - graph->getNodeWeight(node) <= lb) {
+//                 NodeWeight new_part_ub = recompute_partition_weight_excluding_node(i, node, config); 
+//                 if (new_part_ub == std::numeric_limits<NodeWeight>::max()) continue;
+//                 NodeWeight new_ub = ub - partition_solution_weights[i] + new_part_ub;
+//                     // printf("excluding lb: %lu, old ub: %d new_ub: %lu\n", lb, ub, new_ub);
+//                 if (new_ub < lb || (new_ub == lb && lb_solution_set.get(partition_mappings[i][node])))
+//                 {
+//                     printf("including lb: %lu, old ub: %d new_ub: %lu\n", lb, ub, new_ub);
+//                     br_alg->set(global_node, IS_status::included);
+//                     continue;
+//                 }
+//                 // try excluding two nodes from the upper bound solution:
+//                 // if successfull, we can exclude their common neighbors
+//                 // std::vector<NodeID> nodes = {node};
+//                 // for (NodeID second_node : vertices_included)
+//                 // {
+//                 //     if (second_node == node) continue;
+//                 //     nodes.push_back(second_node);
+//                 //     NodeWeight new_part_ub = recompute_partition_weight_excluding_nodes(i, nodes, config); 
+//                 //     if (new_part_ub == std::numeric_limits<NodeWeight>::max()) {
+//                 //         nodes.pop_back();
+//                 //         continue;
+//                 //     }
+//                 //     nodes.pop_back();
+//                 //     NodeWeight new_ub = ub - partition_solution_weights[i] + new_part_ub;
+//                 //     if (new_ub < lb || (new_ub == lb && lb_solution_set.get(partition_mappings[i][node])))
+//                 //     {
+//                 //         printf("excluding lb: %lu, new_ub: %lu\n", lb, new_ub);
+//                 //         // exclude common neighbors
+//                 //         neighbors_set.clear();
+//                 //         for (EdgeID e = graph->get_first_edge(node); e < graph->get_first_invalid_edge(node); e++)
+//                 //             neighbors_set.add(graph->getEdgeTarget(e));
 
-                //         for (EdgeID e = graph->get_first_edge(second_node); e < graph->get_first_invalid_edge(second_node); e++)
-                //         {
-                //             NodeID neighbor = graph->getEdgeTarget(e);
-                //             NodeID global_neighbor = reverse_mapping[br_alg->local_mapping[partition_mappings[i][neighbor]]]; 
-                //             if (neighbors_set.get(neighbor) && !is_reduced(global_neighbor, br_alg))
-                //                 br_alg->set(global_neighbor, IS_status::excluded);
-                //         }
-                //     }
-                // }
-            } else break;
-        }
+//                 //         for (EdgeID e = graph->get_first_edge(second_node); e < graph->get_first_invalid_edge(second_node); e++)
+//                 //         {
+//                 //             NodeID neighbor = graph->getEdgeTarget(e);
+//                 //             NodeID global_neighbor = reverse_mapping[br_alg->local_mapping[partition_mappings[i][neighbor]]]; 
+//                 //             if (neighbors_set.get(neighbor) && !is_reduced(global_neighbor, br_alg))
+//                 //                 br_alg->set(global_neighbor, IS_status::excluded);
+//                 //         }
+//                 //     }
+//                 // }
+//             } else break;
+//         }
 
-    }
-}
+//     }
+// }
 
 void bound_reduction::reduce_by_clique_cover_bound(branch_and_reduce_algorithm* br_alg, graph_access& G, NodeWeight lb, NodeWeight ub, std::vector<NodeID>& vertices_to_include, std::vector<NodeID>& reverse_mapping, int n_cliques)
 {
@@ -429,104 +429,103 @@ NodeWeight bound_reduction::compute_cover_pruning_bound(branch_and_reduce_algori
 	return upper_bound;
 }
 
-void bound_reduction::build_component_graphs(graph_access &G, ReductionConfig &config)
-{
-    graph_extractor extractor;
-    if (partition_graphs.size() == 0) {
-        for (size_t i = 0; i < k; i++)
-        {
-            graph_access *graph = new graph_access();
-            partition_mappings[i].clear();
-            extractor.extract_block(G, *graph, i, partition_mappings[i]);
-            partition_graphs.push_back(graph);
-        }
-    } else {
-        for (size_t i = 0; i < k; i++)
-        {
-            partition_mappings[i].clear();
-            extractor.extract_block(G, *partition_graphs[i], i, partition_mappings[i]);
-        }
-    }
-}
+// void bound_reduction::build_component_graphs(graph_access &G, ReductionConfig &config)
+// {
+//     graph_extractor extractor;
+//     if (partition_graphs.size() == 0) {
+//         for (size_t i = 0; i < k; i++)
+//         {
+//             graph_access *graph = new graph_access();
+//             partition_mappings[i].clear();
+//             extractor.extract_block(G, *graph, i, partition_mappings[i]);
+//             partition_graphs.push_back(graph);
+//         }
+//     } else {
+//         for (size_t i = 0; i < k; i++)
+//         {
+//             partition_mappings[i].clear();
+//             extractor.extract_block(G, *partition_graphs[i], i, partition_mappings[i]);
+//         }
+//     }
+// }
 
-NodeWeight bound_reduction::solve_partition(size_t i, ReductionConfig &config, bool apply_solution)
-{   
-    NodeWeight solution_weight = 0;
-    auto c = config;
-    double time_limit = c.time_limit; 
-    c.time_limit = 20;
-    c.use_partition_cover = false;
-    branch_and_reduce_algorithm solver(*partition_graphs[i], c, true);
-    solver.ch.disable_cout();
-    if (solver.run_branch_reduce()) {
-            solution_weight = solver.get_current_is_weight();
-            if (apply_solution) solver.apply_branch_reduce_solution(*partition_graphs[i]);
-            solver.ch.enable_cout();
-    } else {
-            solver.ch.enable_cout();
-            std::cout << "component not solved optimally" << std::endl;
-            solution_weight = std::numeric_limits<NodeWeight>::max();
-    }
-    config.time_limit = time_limit;
-    return solution_weight;
-}
+// NodeWeight bound_reduction::solve_partition(size_t i, ReductionConfig &config, bool apply_solution)
+// {   
+//     NodeWeight solution_weight = 0;
+//     auto c = config;
+//     double time_limit = c.time_limit; 
+//     c.time_limit = 20;
+//     c.use_partition_cover = false;
+//     branch_and_reduce_algorithm solver(*partition_graphs[i], c, true);
+//     solver.ch.disable_cout();
+//     if (solver.run_branch_reduce()) {
+//             solution_weight = solver.get_current_is_weight();
+//             if (apply_solution) solver.apply_branch_reduce_solution(*partition_graphs[i]);
+//             solver.ch.enable_cout();
+//     } else {
+//             solver.ch.enable_cout();
+//             std::cout << "component not solved optimally" << std::endl;
+//             solution_weight = std::numeric_limits<NodeWeight>::max();
+//     }
+//     return solution_weight;
+// }
 
-NodeWeight bound_reduction::recompute_partition_weight_including_node(size_t i, NodeID node, ReductionConfig& config)
-{
-    std::vector<NodeWeight> original_neighbor_weights;
-    for (EdgeID e = partition_graphs[i]->get_first_edge(node); e < partition_graphs[i]->get_first_invalid_edge(node); e++)
-    {
-        NodeID neighbor = partition_graphs[i]->getEdgeTarget(e);
-        original_neighbor_weights.push_back(partition_graphs[i]->getNodeWeight(neighbor));
-        partition_graphs[i]->setNodeWeight(neighbor,0);
-    }
-    assert(partition_graphs[i]->getPartitionIndex(node) == 0);
-    NodeWeight solution_weight = solve_partition(i, config);
-    NodeID weight_index = 0;
-    for (EdgeID e = partition_graphs[i]->get_first_edge(node); e < partition_graphs[i]->get_first_invalid_edge(node); e++)
-    {
-        NodeID neighbor = partition_graphs[i]->getEdgeTarget(e);
-        partition_graphs[i]->setNodeWeight(neighbor,original_neighbor_weights[weight_index++]);
-    }
+// NodeWeight bound_reduction::recompute_partition_weight_including_node(size_t i, NodeID node, ReductionConfig& config)
+// {
+//     std::vector<NodeWeight> original_neighbor_weights;
+//     for (EdgeID e = partition_graphs[i]->get_first_edge(node); e < partition_graphs[i]->get_first_invalid_edge(node); e++)
+//     {
+//         NodeID neighbor = partition_graphs[i]->getEdgeTarget(e);
+//         original_neighbor_weights.push_back(partition_graphs[i]->getNodeWeight(neighbor));
+//         partition_graphs[i]->setNodeWeight(neighbor,0);
+//     }
+//     assert(partition_graphs[i]->getPartitionIndex(node) == 0);
+//     NodeWeight solution_weight = solve_partition(i, config);
+//     NodeID weight_index = 0;
+//     for (EdgeID e = partition_graphs[i]->get_first_edge(node); e < partition_graphs[i]->get_first_invalid_edge(node); e++)
+//     {
+//         NodeID neighbor = partition_graphs[i]->getEdgeTarget(e);
+//         partition_graphs[i]->setNodeWeight(neighbor,original_neighbor_weights[weight_index++]);
+//     }
  
-    return solution_weight; 
-}
+//     return solution_weight; 
+// }
 
-NodeWeight bound_reduction::recompute_partition_weight_excluding_node(size_t i, NodeID node, ReductionConfig& config)
-{
-    NodeWeight original_node_weight = partition_graphs[i]->getNodeWeight(node);
-    partition_graphs[i]->setNodeWeight(node, 0);
-    assert(partition_graphs[i]->getPartitionIndex(node) == 1);
-    NodeWeight solution_weight = solve_partition(i, config);
-    partition_graphs[i]->setNodeWeight(node, original_node_weight);
-    return solution_weight;
-}
+// NodeWeight bound_reduction::recompute_partition_weight_excluding_node(size_t i, NodeID node, ReductionConfig& config)
+// {
+//     NodeWeight original_node_weight = partition_graphs[i]->getNodeWeight(node);
+//     partition_graphs[i]->setNodeWeight(node, 0);
+//     assert(partition_graphs[i]->getPartitionIndex(node) == 1);
+//     NodeWeight solution_weight = solve_partition(i, config);
+//     partition_graphs[i]->setNodeWeight(node, original_node_weight);
+//     return solution_weight;
+// }
 
-NodeWeight bound_reduction::recompute_partition_weight_excluding_nodes(size_t i, std::vector<NodeID>& nodes, ReductionConfig& config)
-{
-    std::vector<NodeWeight> original_node_weights;
-    for (auto node : nodes)
-    {
-        original_node_weights.push_back(partition_graphs[i]->getNodeWeight(node));
-        partition_graphs[i]->setNodeWeight(node, 0);
-    }
-    NodeWeight solution_weight = solve_partition(i, config);
-    for (size_t node = 0; node < nodes.size(); node++)
-    {
-        partition_graphs[i]->setNodeWeight(nodes[node], original_node_weights[node]);
-    }
-    return solution_weight;
-}
+// NodeWeight bound_reduction::recompute_partition_weight_excluding_nodes(size_t i, std::vector<NodeID>& nodes, ReductionConfig& config)
+// {
+//     std::vector<NodeWeight> original_node_weights;
+//     for (auto node : nodes)
+//     {
+//         original_node_weights.push_back(partition_graphs[i]->getNodeWeight(node));
+//         partition_graphs[i]->setNodeWeight(node, 0);
+//     }
+//     NodeWeight solution_weight = solve_partition(i, config);
+//     for (size_t node = 0; node < nodes.size(); node++)
+//     {
+//         partition_graphs[i]->setNodeWeight(nodes[node], original_node_weights[node]);
+//     }
+//     return solution_weight;
+// }
 
-void bound_reduction::clear_partition_graphs()
-{
-    for (size_t i = 0; i < k; i++)
-    {
-        delete partition_graphs[i];
-        partition_graphs[i] = nullptr;
-    }
-    partition_graphs.clear();
-}
+// void bound_reduction::clear_partition_graphs()
+// {
+//     for (size_t i = 0; i < k; i++)
+//     {
+//         delete partition_graphs[i];
+//         partition_graphs[i] = nullptr;
+//     }
+//     partition_graphs.clear();
+// }
 
 inline bool bound_reduction::reduce_vertex(branch_and_reduce_algorithm* br_alg, NodeID v) {
     return false;

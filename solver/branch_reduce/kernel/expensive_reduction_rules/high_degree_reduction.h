@@ -1,5 +1,7 @@
 #pragma once
+
 #include "reductions.h"
+#include "general_reduction.h"
 
 struct high_degree_reduction : public general_reduction
 {

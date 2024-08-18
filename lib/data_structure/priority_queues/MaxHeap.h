@@ -5,11 +5,13 @@
 #ifndef COMPONENTS_MAXHEAP_H
 #define COMPONENTS_MAXHEAP_H
 
+#include <cassert>
 #include <limits>
 #include <vector>
 #include <unordered_map>
 #include <execinfo.h>
 #include <definitions.h>
+
 
 template < typename Data, typename Key >
 class QElem {
@@ -264,7 +266,7 @@ inline void MaxHeap<Key>::changeKey(NodeID node, Key key) {
 
 template<typename Key>
 inline void MaxHeap<Key>::decreaseKey(NodeID node, Key key) {
-    ASSERT_TRUE(m_element_index.find(node) != m_element_index.end());
+    assert(m_element_index.find(node) != m_element_index.end());
     int queue_idx = m_element_index[node];
     int heap_idx  = m_elements[queue_idx].get_index();
     m_elements[queue_idx].set_key(key);
@@ -274,7 +276,7 @@ inline void MaxHeap<Key>::decreaseKey(NodeID node, Key key) {
 
 template<typename Key>
 inline void MaxHeap<Key>::increaseKey(NodeID node, Key key) {
-    ASSERT_TRUE(m_element_index.find(node) != m_element_index.end());
+    assert(m_element_index.find(node) != m_element_index.end());
     int queue_idx = m_element_index[node];
     int heap_idx  = m_elements[queue_idx].get_index();
     m_elements[queue_idx].set_key(key);

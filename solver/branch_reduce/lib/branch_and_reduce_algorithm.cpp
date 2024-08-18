@@ -31,6 +31,7 @@
 #include "solution_check.h"
 #include "struction_log.h"
 #include "LRConv.h"
+#include "struction_reductions.h"
 // #include "partition_cover.h"
 
 #include <algorithm>
@@ -147,8 +148,6 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
 			if (!config.disable_clique_neighborhood)
 				global_status.transformations.emplace_back(new clique_neighborhood_reduction(global_status.n));
-			if (!config.disable_heavy_vertex)
-				global_status.transformations.emplace_back(new heavy_vertex_reduction(global_status.n));
 			if (!config.disable_decreasing_struction)
 				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 			if (!config.disable_plateau_struction)
@@ -1890,11 +1889,11 @@ void branch_and_reduce_algorithm::print_reduction_progress()
 	size_t i = 0;
 	double factor = 1.0/status.n;
 	std::cout << "\r [";
-	for (; i < (status.n-status.remaining_nodes)*factor*100; i++)
+	for (; i < (status.n-status.remaining_nodes)*factor*50; i++)
 		std::cout << "=";
-	for (; i < status.n*factor*100; i++)
+	for (; i < status.n*factor*50; i++)
 		std::cout << " ";
-	std::cout << "] " << (status.n-status.remaining_nodes)*factor*100 << "% \n";
+	std::cout << "] " << (status.n-status.remaining_nodes)*factor*50 << "% \n";
 	std::cout << "\033[A" << std::flush;
 }
 
