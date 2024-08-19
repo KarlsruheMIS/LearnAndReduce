@@ -51,7 +51,6 @@ struct ReductionConfig : public Config {
     bool disable_high_degree = false;
     bool disable_funnel = false;
     bool disable_funnel_fold = false;
-    bool disable_heavy_vertex = false;
     bool disable_heavy_set = false;
     bool disable_heavy_set3 = false;
     bool disable_bound_reduction = false;

@@ -98,7 +98,6 @@ inline void configuration_reduction::disable_new_reductions( ReductionConfig & c
     config.disable_cut_vertex                     = true;
     config.disable_funnel                         = true;
     config.disable_funnel_fold                    = true;
-    config.disable_heavy_vertex                   = true;
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
     config.disable_high_degree                    = true;
@@ -116,7 +115,6 @@ inline void configuration_reduction::enable_new_reductions( ReductionConfig & co
     config.disable_cut_vertex                     = false;
     config.disable_funnel                         = false;
     config.disable_funnel_fold                    = false;
-    config.disable_heavy_vertex                   = false;
     config.disable_heavy_set                      = false;
     config.disable_heavy_set3                     = false;
     config.disable_high_degree                    = false;
@@ -165,7 +163,6 @@ inline void configuration_reduction::mmwis( ReductionConfig & config ) {
     config.disable_cut_vertex                     = true;
     config.disable_funnel                         = true;
     config.disable_funnel_fold                    = true;
-    config.disable_heavy_vertex                   = true;
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
     config.subgraph_node_limit                    = 150;
@@ -177,7 +174,6 @@ inline void configuration_reduction::fast( ReductionConfig & config ) {
     config.disable_cut_vertex                     = true;
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
-    config.disable_heavy_vertex                   = true;
     config.disable_critical_set                   = true;
     config.disable_clique_neighborhood            = true;
     config.disable_generalized_fold               = true;
@@ -194,7 +190,6 @@ inline void configuration_reduction::very_fast( ReductionConfig & config ) {
     config.disable_cut_vertex                     = true;
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
-    config.disable_heavy_vertex                   = true;
     config.disable_critical_set                   = true;
     config.disable_clique_neighborhood            = true;
     config.disable_generalized_fold               = true;
@@ -220,7 +215,6 @@ inline void configuration_reduction::fast_reductions_cyclicFast( ReductionConfig
     config.disable_cut_vertex                     = true;
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
-    config.disable_heavy_vertex                   = true;
     config.disable_generalized_fold               = true;
     config.disable_critical_set                   = true;
     config.disable_blow_up                        = true;

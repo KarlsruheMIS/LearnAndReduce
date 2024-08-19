@@ -15,9 +15,10 @@ bool iterative_struction<struction_type, type, vertex_increase>::reduce(branch_a
     #endif
     bool applied = false;
     for_each_changed_vertex(br_alg, [&](NodeID v)
-                            {
-        if (reduce_vertex(br_alg, v))
-            applied = true; });
+            {   if (br_alg->t.elapsed() > br_alg->config.time_limit)
+                    return;
+                if (reduce_vertex(br_alg, v))
+                    applied = true; });
 
 #ifdef REDUCTION_INFO
     reduced_nodes += oldn - br_alg->status.remaining_nodes;
@@ -131,7 +132,7 @@ bool blow_up_struction<key_function, struction_type, type>::is_done()
     auto &status = br_alg->status;
     size_t cur_kernel = status.remaining_nodes;
     size_t max_kernel = config.phase_blow_up_factor * phase_start_kernel;
-    return max_kernel < cur_kernel || blow_ups == config.phase_blow_ups;
+    return max_kernel < cur_kernel || blow_ups == config.phase_blow_ups || br_alg->t.elapsed() > config.time_limit;
 }
 
 template <typename key_function, typename struction_type, reduction_type type>

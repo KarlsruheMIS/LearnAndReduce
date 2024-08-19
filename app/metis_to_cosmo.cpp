@@ -68,7 +68,6 @@ int write_weights_and_reductions_to_csv(graph_access & G, const std::string & re
     if (!config.disable_clique_neighborhood_fast) reduction_names.push_back("clique_nbh_fast");
     if (!config.disable_clique_neighborhood) reduction_names.push_back("clique_neighborhood");
     if (!config.disable_decreasing_struction) reduction_names.push_back("decreasing_struction");
-    if (!config.disable_heavy_vertex) reduction_names.push_back("heavy_vertex");
     if (!config.disable_generalized_fold) reduction_names.push_back("generalized_fold");
     if (!config.disable_heavy_set) reduction_names.push_back("heavy_set");
     if (!config.disable_heavy_set3) reduction_names.push_back("heavy_set3");

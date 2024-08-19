@@ -106,7 +106,6 @@ class ReductionArguments : public BaseArguments {
             disable_critical_set        = arg_lit0(NULL, "disable_critical_set", "Disable critical set reduction.");
             disable_clique              = arg_lit0(NULL, "disable_clique", "Disable clique reduction.");
             disable_twin                = arg_lit0(NULL, "disable_twin", "Disable twin reduction."); 
-            disable_heavy_vertex        = arg_lit0(NULL, "disable_heavy_vertex", "Disable heavy vertex reduction.");
             disable_heavy_set           = arg_lit0(NULL, "disable_heavy_set", "Disable heavy set reduction.");
             disable_heavy_set3          = arg_lit0(NULL, "disable_heavy_set3", "Disable heavy set3 reduction.");
             disable_cut_vertex          = arg_lit0(NULL, "disable_cut_vertex", "Disable cut vertex reduction.");
@@ -177,7 +176,6 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_critical_set;
         struct arg_lit * disable_clique;
         struct arg_lit * disable_twin;
-        struct arg_lit * disable_heavy_vertex;
         struct arg_lit * disable_heavy_set;
         struct arg_lit * disable_heavy_set3;
         struct arg_lit * disable_cut_vertex;
@@ -326,7 +324,6 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_critical_set,
         disable_clique,
         disable_twin,
-        disable_heavy_vertex,
         disable_heavy_set,
         disable_heavy_set3,
         disable_cut_vertex,
@@ -546,9 +543,6 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (disable_twin->count > 0) {
         config.disable_twin = true;
-    }
-    if (disable_heavy_vertex->count > 0) {
-        config.disable_heavy_vertex = true;
     }
     if (disable_heavy_set->count > 0) {
         config.disable_heavy_set = true;

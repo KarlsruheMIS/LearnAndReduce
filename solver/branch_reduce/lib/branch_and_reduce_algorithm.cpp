@@ -1454,8 +1454,8 @@ void branch_and_reduce_algorithm::build_graph_access(graph_access &G, std::vecto
 	}
 
 	// Create the adjacency array
-	std::vector<int> xadj(status.remaining_nodes + 1);
-	std::vector<int> adjncy(edge_count + 1);
+	std::vector<EdgeID> xadj(status.remaining_nodes + 1);
+	std::vector<NodeID> adjncy(edge_count + 1);
 	size_t adjncy_counter = 0;
 
 	for (size_t i = 0; i < status.remaining_nodes; ++i)
