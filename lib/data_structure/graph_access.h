@@ -184,8 +184,8 @@ class graph_access {
                 int* UNSAFE_metis_style_vwgt_array();
                 int* UNSAFE_metis_style_adjwgt_array();
 
-                int build_from_metis(int n, int* xadj, int* adjncy);
-                int build_from_metis_weighted(int n, int* xadj, int* adjncy, int * vwgt, int* adjwgt);
+                int build_from_metis(NodeID n, EdgeID* xadj, NodeID* adjncy);
+                int build_from_metis_weighted(NodeID n, EdgeID* xadj, NodeID* adjncy, NodeWeight* vwgt, EdgeWeight* adjwgt);
 
                 void copy(graph_access & Gcopy);
         protected:
@@ -389,7 +389,7 @@ inline int* graph_access::UNSAFE_metis_style_adjwgt_array() {
         return adjwgt;
 }
 
-inline int graph_access::build_from_metis(int n, int* xadj, int* adjncy) {
+inline int graph_access::build_from_metis(NodeID n, EdgeID* xadj, NodeID* adjncy) {
         if (graphref != nullptr) {
             delete graphref;
         }
@@ -411,7 +411,7 @@ inline int graph_access::build_from_metis(int n, int* xadj, int* adjncy) {
         return 0;
 }
 
-inline int graph_access::build_from_metis_weighted(int n, int* xadj, int* adjncy, int * vwgt, int* adjwgt) {
+inline int graph_access::build_from_metis_weighted(NodeID n, EdgeID* xadj, NodeID* adjncy, NodeWeight* vwgt, EdgeWeight* adjwgt) {
         if (graphref != nullptr) {
             delete graphref;
         }
