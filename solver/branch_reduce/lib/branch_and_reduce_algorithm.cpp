@@ -15,11 +15,6 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
-// TODO, Remove this def
-// #ifndef gen_training_data
-// #define gen_training_data
-// #endif
-
 #include "branch_and_reduce_algorithm.h"
 #include "reductions.h"
 #include "ils/ils.h"
@@ -52,11 +47,11 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	bool_buffer.reserve(global_status.n);
 	weight_buffer.reserve(global_status.n);
 
-	if (config.generate_training_data)
-	{
-		is_included_vertex = std::vector<bool>(global_status.n, false);
-		is_excluded_vertex = std::vector<bool>(global_status.n, false);
-	}
+	// if (config.generate_training_data)
+	// {
+	// 	is_included_vertex = std::vector<bool>(global_status.n, false);
+	// 	is_excluded_vertex = std::vector<bool>(global_status.n, false);
+	// }
 	// others are locally applied if config.reduce_by_vertex
 	global_transformations = {critical_set, struction_plateau, struction_blow};
 
@@ -1682,8 +1677,8 @@ void branch_and_reduce_algorithm::get_training_data_for_graph_size(graph_access 
 
 	branch_and_reduce_algorithm br_alg(modifiable_graph, config, false);
 	br_alg.generate_initial_reduce_data(reduction_data, i);
-	exclude_data = br_alg.is_excluded_vertex;
-	include_data = br_alg.is_included_vertex;
+	// exclude_data = br_alg.is_excluded_vertex;
+	// include_data = br_alg.is_included_vertex;
 }
 
 void branch_and_reduce_algorithm::get_exact_training_data_for_graph_size(graph_access &graph, NodeID n)

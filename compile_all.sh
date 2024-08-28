@@ -30,7 +30,12 @@ else
         # cmake ../ -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=${buildtype} 
         cmake ../ -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
     else
-        cmake ../ -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=${buildtype} -DREDUCTION_INFO=ON
+        if [[ "$buildtype" == "GenData" ]]; then
+            cmake ../ -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CXX_FLAGS="-Dgen_training_data"
+
+        else
+            cmake ../ -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=${buildtype} -DCMAKE_CXX_FLAGS="-DREDUCTION_INFO"
+        fi
     fi
 fi
 make -j $NCORES

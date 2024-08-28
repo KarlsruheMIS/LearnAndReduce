@@ -82,8 +82,8 @@ public:
 	cout_handler ch;
 
 	//generate training data
-	std::vector<bool> is_included_vertex;
-	std::vector<bool> is_excluded_vertex;
+	// std::vector<bool> is_included_vertex;
+	// std::vector<bool> is_excluded_vertex;
     void get_transformation_names(std::vector<std::string> &names);
 
 private:
