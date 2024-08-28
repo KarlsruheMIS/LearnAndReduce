@@ -273,12 +273,12 @@ void branch_and_reduce_algorithm::set(NodeID node, IS_status mis_status, bool pu
 	assert(status.node_status[node] == IS_status::not_set && "Node status set");
 	assert(status.remaining_nodes > 0 && "No nodes remaining to set");
 	status.node_status[node] = mis_status;
-	#ifdef gen_training_data
-		if (mis_status == IS_status::included)
-			is_included_vertex[node] = true;
-		else if (mis_status == IS_status::excluded)
-			is_excluded_vertex[node] = true;
-	#endif
+	// #ifdef gen_training_data
+	// 	if (mis_status == IS_status::included)
+	// 		is_included_vertex[node] = true;
+	// 	else if (mis_status == IS_status::excluded)
+	// 		is_excluded_vertex[node] = true;
+	// #endif
 
 	status.remaining_nodes--;
 	status.graph.hide_node(node);
@@ -1873,6 +1873,7 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::
 	global_status = std::move(status);
 	std::swap(global_transformation_map, local_transformation_map);
 }
+
 // function to get transformations
 void branch_and_reduce_algorithm::get_transformation_names(std::vector<std::string> &names)
 {

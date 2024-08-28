@@ -27,8 +27,10 @@ typedef int 		EdgeWeight;
 
 #ifdef MODE64BITNODEWEIGHTS
 typedef unsigned long long 	NodeWeight;
+typedef long long int Gain;
 #else
 typedef unsigned int 	NodeWeight;
+typedef int Gain;
 #endif
 #ifdef MODE64BITEDGES
 typedef uint64_t 	EdgeID;
@@ -36,7 +38,6 @@ typedef uint64_t 	EdgeID;
 typedef unsigned int 	EdgeID;
 #endif
 typedef long FlowType;
-typedef NodeWeight Gain;
 typedef std::vector<NodeID> NodePermutationMap;
 
 

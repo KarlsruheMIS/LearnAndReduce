@@ -49,7 +49,6 @@ void general_reduction::get_neighborhood_vector(NodeID v, branch_and_reduce_algo
 {
     auto &status = br_alg->status;
     vec.clear();
-    assert(vec.capacity() > status.graph[v].size() && "vector capacity error");
     for (NodeID neighbor : status.graph[v])
     {
         if (status.node_status[neighbor] == IS_status::not_set)
