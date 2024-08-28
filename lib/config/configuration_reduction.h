@@ -41,6 +41,9 @@ class configuration_reduction {
         void fast( ReductionConfig & config );
         void very_fast( ReductionConfig & config );
         void extended_cyclicFast( ReductionConfig & config );
+
+        void generate_training_data_initial_reductions( ReductionConfig & config );
+        void generate_training_data_expensive_reductions( ReductionConfig & config );
 };
 
 
@@ -210,7 +213,7 @@ inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig 
 inline void configuration_reduction::fast_reductions_cyclicFast( ReductionConfig & config ) {
     all_reductions_cyclicFast(config);
     config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
-    config.reduction_style_name                   = "full";
+    config.reduction_style_name                   = "fast";
     enable_new_reductions(config);
     config.disable_cut_vertex                     = true;
     config.disable_heavy_set                      = true;
@@ -246,4 +249,22 @@ inline void configuration_reduction::extended_cyclicFast( ReductionConfig & conf
     config.disable_funnel                         = false;
     config.disable_funnel_fold                    = false;
     config.disable_clique_neighborhood_fast       = false;
+}
+
+inline void configuration_reduction::generate_training_data_initial_reductions( ReductionConfig & config ) {
+    all_decreasing(config);
+    config.generate_training_data                 = true;
+
+    config.disable_generalized_fold               = true;
+    config.disable_clique_neighborhood            = true;
+    config.disable_clique_neighborhood_fast       = true;
+    config.disable_cut_vertex                     = true;
+    config.disable_heavy_set                      = true;
+    config.disable_heavy_set3                     = true;
+    config.disable_high_degree                    = true;
+    config.disable_bound_reduction                = true;
+    config.disable_critical_set                   = true;
+    config.disable_heuristic_exclude              = true;
+    config.disable_heuristic_include              = true;
+    config.subgraph_node_limit                    = 30;
 }
