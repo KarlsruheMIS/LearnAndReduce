@@ -19,7 +19,7 @@ struct heuristic_exclude_reduction : public general_reduction
     virtual reduction_type get_reduction_type() const final { return reduction_type::heuristic_exclude; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual std::string get_reduction_name() final { return "heuristic_exclude"; }
-    virtual std::string get_model_path() final { return "~/projects/MWIS_learn_and_reduce/models/reduction.gnn"; } // "models/exclude.gnn"; }
+    virtual std::string get_model_path() final { return "models/reduction.gnn"; } 
 
 };
 
