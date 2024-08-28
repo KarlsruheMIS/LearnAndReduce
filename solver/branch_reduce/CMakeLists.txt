@@ -51,9 +51,12 @@ set(LIB_REDUCTION
 add_library(lib_reduction OBJECT ${LIB_REDUCTION})
 target_include_directories(lib_reduction PUBLIC ${REDUCTION_INCLUDES})
 
-add_executable(generate_training_data "app/generate_training_data.cpp" $<TARGET_OBJECTS:lib_reduction>)
-target_link_libraries(generate_training_data PRIVATE lib)
-target_include_directories(generate_training_data PUBLIC ${REDUCTION_INCLUDES})
+add_executable(generate_full_graph_training_data "app/generate_full_graph_training_data.cpp" $<TARGET_OBJECTS:lib_reduction>)
+target_link_libraries(generate_full_graph_training_data PRIVATE lib)
+target_include_directories(generate_full_graph_training_data PUBLIC ${REDUCTION_INCLUDES})
+# add_executable(generate_training_data "app/generate_training_data.cpp" $<TARGET_OBJECTS:lib_reduction>)
+# target_link_libraries(generate_training_data PRIVATE lib)
+# target_include_directories(generate_training_data PUBLIC ${REDUCTION_INCLUDES})
 add_executable(branch_reduce_convergence "app/branch_reduce.cpp" $<TARGET_OBJECTS:lib_reduction>)
 target_link_libraries(branch_reduce_convergence PRIVATE lib)
 target_include_directories(branch_reduce_convergence PUBLIC ${REDUCTION_INCLUDES})
@@ -61,7 +64,8 @@ add_executable(kernelization "app/kernelization.cpp" $<TARGET_OBJECTS:lib_reduct
 target_link_libraries(kernelization PRIVATE lib)
 target_include_directories(kernelization PUBLIC ${REDUCTION_INCLUDES})
 
-install(TARGETS generate_training_data DESTINATION bin)
+install(TARGETS generate_full_graph_training_data DESTINATION bin)
+# install(TARGETS generate_training_data DESTINATION bin)
 install(TARGETS branch_reduce_convergence DESTINATION bin)
 install(TARGETS kernelization DESTINATION bin)
 

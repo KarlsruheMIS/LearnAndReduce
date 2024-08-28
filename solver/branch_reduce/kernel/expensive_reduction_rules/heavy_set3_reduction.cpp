@@ -122,9 +122,9 @@ bool heavy_set3_reduction::is_heavy_set(NodeID v, fast_set& v_neighbors_set, Nod
     graph_access subgraph;
 
     std::vector<NodeID> w_neighbors_vec(status.graph[w].size());
-    get_neighborhood_vector(v, br_alg,v_neighbors_vec);
-    get_neighborhood_vector(u, br_alg,u_neighbors_vec);
-    get_neighborhood_vector(w, br_alg,w_neighbors_vec);
+    get_neighborhood_vector(v, br_alg, v_neighbors_vec);
+    get_neighborhood_vector(u, br_alg, u_neighbors_vec);
+    get_neighborhood_vector(w, br_alg, w_neighbors_vec);
 
     assert(!status.graph.adjacent(v, u) && "ERROR: heavy_set_reduction::is_heavy_set: v and u must be not adjacent");
     assert(!status.graph.adjacent(v, w) && "ERROR: heavy_set_reduction::is_heavy_set: v and w must be not adjacent");

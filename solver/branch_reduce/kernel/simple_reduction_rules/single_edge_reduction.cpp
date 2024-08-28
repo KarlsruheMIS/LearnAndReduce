@@ -27,7 +27,10 @@ inline bool single_edge_reduction::reduce_vertex(branch_and_reduce_algorithm *br
 {
     // if (br_alg->config.disable_basic_se) return false;
     if (br_alg->deg(v) == 0)
-        return false;
+    {
+        br_alg->set(v, IS_status::included);
+        return true;
+    }
 
     auto &status = br_alg->status;
     auto &graph = br_alg->status.graph;
@@ -56,10 +59,6 @@ inline bool single_edge_reduction::reduce_vertex(branch_and_reduce_algorithm *br
 
 // note: weight of v is in partial_neighbor_sum included
 // if N(neighbor) \subset N(v) partial_neighbor_sum = weights[v]
-#ifdef gen_training_data
-            if (partial_neighbor_sum == weights[v])
-                break; // should be domination
-#endif
             if (partial_neighbor_sum <= weights[neighbor])
             {
                 br_alg->set(v, IS_status::excluded);

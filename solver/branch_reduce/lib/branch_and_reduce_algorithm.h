@@ -338,7 +338,7 @@ public:
 	void pick_nodes_by_BFS_sample(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void pick_nodes_by_nodeID(NodeID n, std::vector<NodeID> &nodes_vec, fast_set &nodes_set);
     void generate_initial_reduce_data(std::vector<std::vector<bool>> &reduction_data, size_t i);
-
+	void generate_initial_reduce_data(graph_access &G, std::vector<std::vector<bool>> &reduction_data); 
 
     // printing
     void print_reduction_info();

@@ -1816,6 +1816,80 @@ void branch_and_reduce_algorithm::pick_nodes_by_nodeID(NodeID n, std::vector<Nod
 	}
 }
 
+void branch_and_reduce_algorithm::generate_initial_reduce_data(graph_access &G, std::vector<std::vector<bool>> &reduction_data)
+{
+	std::swap(global_transformation_map, local_transformation_map);
+	status = std::move(global_status);
+
+	// get data for critical set rule
+	for (size_t i = 0; i < status.transformations.size(); i++)
+	{
+		if (status.transformations[i]->get_reduction_type() == critical_set)
+		{
+			auto &&critical_set_reduction = status.transformations[i];
+			critical_set_reduction->reduce(this);
+			while (status.modified_stack.size() > 0)
+			{
+				NodeID restore_node = status.modified_stack.back();
+				reduction_data[i][restore_node] = true;
+				status.modified_stack.pop_back();
+				status.graph.restore_node(restore_node);
+				status.node_status[restore_node] = IS_status::not_set;
+				status.remaining_nodes++;
+			}
+			break;
+		}
+	}
+
+	for (NodeID node = 0; node < status.n; node++)
+	{
+		for (size_t i = 0; i < status.transformations.size(); i++) // status.num_reductions
+		{
+			// printf("%s\n", status.transformations[i]->get_reduction_name().c_str());
+			if (std::find(global_transformations.begin(), global_transformations.end(), status.transformations[i]->get_reduction_type()) != global_transformations.end())
+				continue;
+			status.is_weight = 0;
+			auto &&reduction = status.transformations[i];
+			reduction_timer.restart();
+			bool node_progress = reduction->reduce_vertex(this, node);
+			reduction->reduction_time += reduction_timer.elapsed();
+			if (node_progress)
+			{
+				reduction->reduced_nodes += 1;
+				reduction_data[i][node] = true;
+				while (status.modified_stack.size() > 0)
+				{
+					NodeID restore_node = status.modified_stack.back();
+					status.modified_stack.pop_back();
+					if (restore_node == MODIFIED_TOKEN)
+					{ // for reductions that do not reduce but only modify the graph
+						status.folded_stack.pop_back();
+						reduction->restore(this);
+					}
+					else if (status.node_status[restore_node] == IS_status::folded)
+					{
+						status.folded_stack.pop_back();
+						reduction->restore(this);
+					}
+					else
+					{
+						status.graph.restore_node(restore_node);
+						status.node_status[restore_node] = IS_status::not_set;
+						status.remaining_nodes++;
+					}
+				}
+				assert(status.modified_stack.size() == 0 && "folded stack should be empty");
+				assert(status.remaining_nodes == status.n && "graph should be restored to original size");
+			}
+		}
+	}
+
+	if (config.print_reduction_info)
+		print_reduction_info();
+
+	global_status = std::move(status);
+	std::swap(global_transformation_map, local_transformation_map);
+}
 void branch_and_reduce_algorithm::generate_initial_reduce_data(std::vector<std::vector<bool>> &reduction_data, size_t i)
 {
 	std::swap(global_transformation_map, local_transformation_map);
