@@ -734,10 +734,10 @@ void branch_and_reduce_algorithm::reduce_graph_internal_before_blow_up()
 
 		init_transformation_step(reduction);
 		bool progress = reduction->reduce(this);
-		if (progress && config.print_reduction_info)
-		{
-			print_reduction_progress();
-		}
+  /* if (progress && config.print_reduction_info) */
+  /* { */
+  /* 	print_reduction_progress(); */
+  /* } */
 		active_reduction_index = progress ? 0 : active_reduction_index + 1;
 		if (status.remaining_nodes == 0)
 			break;
