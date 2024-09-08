@@ -7,6 +7,7 @@
 
 
 #include <vector>
+#include <limits>
 #include "definitions.h"
 #include "dynamic_graph.h"
 

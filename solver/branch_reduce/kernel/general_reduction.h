@@ -7,7 +7,6 @@
 #include "graph_access.h"
 #include "reduction_config.h"
 #include "vertex_marker.h"
-// #include "branch_and_reduce_algorithm.h"
 
 // system includes
 #include <iostream>

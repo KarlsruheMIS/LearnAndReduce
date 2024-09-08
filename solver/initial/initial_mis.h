@@ -8,6 +8,9 @@
 #define _INITIAL_MIS_H_
 
 #include "data_structure/graph_access.h"
+#include <vector>
+
+typedef std::vector<NodeID> NodePermutationMap;
 
 class initial_mis {
     public:

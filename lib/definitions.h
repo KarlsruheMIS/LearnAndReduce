@@ -8,14 +8,6 @@
 #ifndef DEFINITIONS_H_CHR
 #define DEFINITIONS_H_CHR
 
-#include <cstdint>
-#include <limits>
-#include <queue>
-#include <vector>
-
-#include "limits.h"
-#include "stdio.h"
-
 
 /**********************************************
  * Constants
@@ -38,8 +30,5 @@ typedef uint64_t 	EdgeID;
 typedef unsigned int 	EdgeID;
 #endif
 typedef long FlowType;
-typedef std::vector<NodeID> NodePermutationMap;
-
-
 #endif
 

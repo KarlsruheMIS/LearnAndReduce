@@ -7,6 +7,7 @@
  *****************************************************************************/
 
 #include "operation_log.h"
+#include <cstdio>
 
 operation_log::operation_log() {
     

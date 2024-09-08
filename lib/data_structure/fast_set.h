@@ -7,6 +7,7 @@
 #define FAST_SET_H
 
 #include <cassert>
+#include <cstddef>
 #include <vector>
 #include "definitions.h"
 

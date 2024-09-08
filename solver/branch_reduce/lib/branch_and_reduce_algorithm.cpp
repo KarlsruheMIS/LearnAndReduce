@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <chrono>
 #include <numeric>
+#include <climits>
 
 constexpr NodeID branch_and_reduce_algorithm::BRANCHING_TOKEN;
 constexpr NodeID branch_and_reduce_algorithm::MODIFIED_TOKEN;

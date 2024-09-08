@@ -25,6 +25,7 @@
 #define DYNAMIC_GRAPH_H
 
 #include <vector>
+#include <limits>
 #include <algorithm>
 #include "graph_access.h"
 #include "fast_set.h"
