@@ -51,6 +51,25 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<bool>> &r
     return true;
 }
 
+void generate_data(branch_and_reduce_algorithm *reducer, graph_access &G, ReductionConfig &config, std::string name)
+{
+    std::vector<std::string> transformation_names;
+    reducer->get_transformation_names(transformation_names);
+    size_t num_of_reductions = transformation_names.size();
+    std::vector<std::vector<bool>> reduction_data(num_of_reductions, std::vector<bool>(G.number_of_nodes(), false));
+
+    reducer->generate_initial_reduce_data(G, reduction_data); 
+    write_reduction_data_csv(G, reduction_data, "training_data/csv/" + name , transformation_names);
+}
+graph_access& write_kernel_data_csv(branch_and_reduce_algorithm *reducer, std::string name)
+{
+    graph_operations go;
+    graph_access& k = reducer->kernelize();
+    go.writeGraphWeighted_to_csv(k, "training_data/csv/" + name + "_kernel_graph.csv");
+    go.writeWeights_to_csv(k, "training_data/csv/" + name + "_kernel_weights.csv");
+    return k;
+}
+
 int main(int argn, char **argv)
 {
     struction_log::instance()->restart_total_timer();
@@ -84,27 +103,10 @@ int main(int argn, char **argv)
     struction_log::instance()->set_graph(G);
     struction_log::instance()->print_graph();
 
-    //initially reduce graph with simple reductions
-    std::vector<std::string> transformation_names;
     branch_and_reduce_algorithm reducer(G, config);
-    reducer.get_transformation_names(transformation_names);
-    size_t num_of_reductions = transformation_names.size();
-    std::vector<std::vector<bool>> reduction_data(num_of_reductions, std::vector<bool>(G.number_of_nodes(), false));
-
-    reducer.generate_initial_reduce_data(G, reduction_data); 
-    write_reduction_data_csv(G, reduction_data, "training_data/csv/" + name + "_initial" , transformation_names);
-
-    // build and write the kernel
-    graph_access &kernel = reducer.kernelize();
-    go.writeGraphWeighted_to_csv(kernel, "training_data/csv/" + name + "_kernel_graph.csv");
-    go.writeWeights_to_csv(kernel, "training_data/csv/" + name + "_kernel_weights.csv");
-
-    // config for full reductions
-    if (kernel.number_of_nodes() == 0)
-    {
-        std::cout << "Kernel is empty, no further reductions possible." << std::endl;
-        return 0;
-    }
+    generate_data(&reducer, G, config, name+"_set1");
+    graph_access &kernel = write_kernel_data_csv(&reducer, name+"_set1");
+    if (kernel.number_of_nodes() == 0 ) return 0;
 
     // enable expensive reductions
     config.disable_generalized_fold           = false;
@@ -114,15 +116,11 @@ int main(int argn, char **argv)
     config.disable_heavy_set                  = false;
     config.disable_heavy_set3                 = false;
     config.disable_critical_set               = false;
-  
-    std::vector<std::string> transformation_names_full;
-    branch_and_reduce_algorithm kernel_reducer(kernel, config);
-    kernel_reducer.get_transformation_names(transformation_names_full);
-    size_t num_of_reductions_full = transformation_names_full.size();
-    std::vector<std::vector<bool>> reduction_data_full(num_of_reductions_full, std::vector<bool>(kernel.number_of_nodes(), false));
+    config.disable_plateau_struction          = false;
+    config.disable_decreasing_struction       = false;
 
-    kernel_reducer.generate_initial_reduce_data(kernel, reduction_data_full); 
-    write_reduction_data_csv(kernel, reduction_data_full, "training_data/csv/" + name + "_kernel" , transformation_names_full);
-
+    branch_and_reduce_algorithm reducer2(kernel, config);
+    generate_data(&reducer2, kernel, config, name+"_set2");
+    graph_access &kernel2 = write_kernel_data_csv(&reducer2, name+"_set2");
     return 0;
 }

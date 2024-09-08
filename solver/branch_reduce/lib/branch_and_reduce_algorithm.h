@@ -65,6 +65,7 @@
 #include "struction_reductions.h"
 #include "heuristic_exclude_reduction.h"
 #include "heuristic_include_reduction.h"
+#include "unconfined_csr_reduction.h"
 #include "reductions.h"
 
 
@@ -110,6 +111,7 @@ private:
     friend cut_vertex_reduction;
 	friend heuristic_include_reduction;
 	friend heuristic_exclude_reduction;
+	friend unconfined_csr_reduction;
 
     // friend path_reduction;
     template<typename struction_type, reduction_type type, int new_nodes>

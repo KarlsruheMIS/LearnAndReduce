@@ -10,9 +10,15 @@ set(REDUCTION_INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/expensive_reduction_rules
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/struction_reduction_rules
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/heuristic_reduction_rules
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/csr_reductions
 )
 set(REDUCTION_INCLUDES ${REDUCTION_INCLUDES} PARENT_SCOPE)
 
+set_source_files_properties(
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/csr_reductions/src/graph.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/csr_reductions/src/reductions.c
+    PROPERTIES LANGUAGE C
+)
 set(LIB_REDUCTION
         ${CMAKE_CURRENT_SOURCE_DIR}/tools/struction_log.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/general_reduction.cpp
@@ -43,6 +49,9 @@ set(LIB_REDUCTION
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/expensive_reduction_rules/generalized_fold_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/heuristic_reduction_rules/heuristic_include_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/heuristic_reduction_rules/heuristic_exclude_reduction.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/csr_reductions/src/graph.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/csr_reductions/src/reductions.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/csr_reductions/unconfined_csr_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/LRConv.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/bounds.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/branch_and_reduce_algorithm.cpp

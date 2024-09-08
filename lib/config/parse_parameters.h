@@ -109,7 +109,7 @@ class ReductionArguments : public BaseArguments {
             disable_heavy_set           = arg_lit0(NULL, "disable_heavy_set", "Disable heavy set reduction.");
             disable_heavy_set3          = arg_lit0(NULL, "disable_heavy_set3", "Disable heavy set3 reduction.");
             disable_cut_vertex          = arg_lit0(NULL, "disable_cut_vertex", "Disable cut vertex reduction.");
-            disable_component           = arg_lit0(NULL, "disable_component", "Disable component reduction.");
+            disable_unconfined          = arg_lit0(NULL, "disable_unconfined", "Disable unconfined reduction.");
             disable_funnel              = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
             disable_funnel_fold         = arg_lit0(NULL, "disable_funnel_fold", "Disable funnel fold reduction.");
             disable_high_degree         = arg_lit0(NULL, "disable_high_degree", "Disable high degree reduction.");
@@ -179,7 +179,7 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_heavy_set;
         struct arg_lit * disable_heavy_set3;
         struct arg_lit * disable_cut_vertex;
-        struct arg_lit * disable_component;
+        struct arg_lit * disable_unconfined;
         struct arg_lit * disable_funnel;
         struct arg_lit * disable_funnel_fold;
         struct arg_lit * disable_high_degree;
@@ -327,7 +327,7 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_heavy_set,
         disable_heavy_set3,
         disable_cut_vertex,
-        disable_component,
+        disable_unconfined,
         disable_funnel,
         disable_funnel_fold,
         disable_high_degree,
@@ -553,8 +553,8 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     if (disable_cut_vertex->count > 0) {
         config.disable_cut_vertex = true;
     }
-    if (disable_component->count > 0) {
-        config.disable_component = true;
+    if (disable_unconfined->count > 0) {
+        config.disable_unconfined = true;
     }
     if (disable_funnel_fold->count > 0) {
         config.disable_funnel_fold = true;

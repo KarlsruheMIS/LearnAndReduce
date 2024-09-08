@@ -104,6 +104,7 @@ inline void configuration_reduction::disable_new_reductions( ReductionConfig & c
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
     config.disable_high_degree                    = true;
+    config.disable_unconfined                     = true;
 }
 
 inline void configuration_reduction::enable_new_reductions( ReductionConfig & config ) {
@@ -121,6 +122,7 @@ inline void configuration_reduction::enable_new_reductions( ReductionConfig & co
     config.disable_heavy_set                      = false;
     config.disable_heavy_set3                     = false;
     config.disable_high_degree                    = false;
+    config.disable_unconfined                     = false;
 }
 
 inline void configuration_reduction::original_cyclicFast( ReductionConfig & config ) {
@@ -234,6 +236,7 @@ inline void configuration_reduction::all_decreasing( ReductionConfig & config ) 
     standard(config);
     config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
     config.disable_blow_up                        = true;
+    enable_new_reductions(config);
 }
 
 inline void configuration_reduction::extended_cyclicFast( ReductionConfig & config ) {
@@ -249,12 +252,15 @@ inline void configuration_reduction::extended_cyclicFast( ReductionConfig & conf
     config.disable_funnel                         = false;
     config.disable_funnel_fold                    = false;
     config.disable_clique_neighborhood_fast       = false;
+    config.disable_unconfined                     = false;
 }
 
 inline void configuration_reduction::generate_training_data_initial_reductions( ReductionConfig & config ) {
     all_decreasing(config);
     config.generate_training_data                 = true;
 
+    config.disable_decreasing_struction           = true;
+    config.disable_plateau_struction              = true;
     config.disable_generalized_fold               = true;
     config.disable_clique_neighborhood            = true;
     config.disable_clique_neighborhood_fast       = true;

@@ -35,7 +35,7 @@ enum reduction_type
     funnel,
     funnel_fold,
     bound,
-    path,
+    unconfined_csr,
     struction_decrease,
     struction_plateau,
     struction_blow,

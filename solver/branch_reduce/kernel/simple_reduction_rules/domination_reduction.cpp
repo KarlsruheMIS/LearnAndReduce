@@ -69,7 +69,6 @@ inline bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm *br_
             }
         }
 
-        // if (is_subset && status.weights[neighbor] >= status.weights[v]) {
         if (is_subset)
         {
             br_alg->set(v, IS_status::excluded);

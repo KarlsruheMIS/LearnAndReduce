@@ -136,7 +136,7 @@ bool cut_vertex_reduction::DFS(branch_and_reduce_algorithm* br_alg, NodeID u, in
     auto& low = br_alg->buffers[0];
     auto& disc = br_alg->buffers[1];
     auto& parent = br_alg->buffers[2];
-    low.assign(status.n,INT_MAX);
+    low.assign(status.n,std::numeric_limits<int>::max());
     disc.assign(status.n,0);
     parent.assign(status.n, status.n);
     std::vector<NodeID> stack;

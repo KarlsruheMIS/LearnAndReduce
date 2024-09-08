@@ -54,7 +54,7 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	// 	is_excluded_vertex = std::vector<bool>(global_status.n, false);
 	// }
 	// others are locally applied if config.reduce_by_vertex
-	global_transformations = {critical_set, struction_plateau, struction_blow};
+	global_transformations = {critical_set, struction_plateau, struction_blow, unconfined_csr};
 
 	if (!config.disable_neighborhood)
 		global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
@@ -73,6 +73,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	if (!config.disable_twin)
 		global_status.transformations.emplace_back(new twin_reduction(global_status.n));
 
+	global_status.num_reductions = global_status.transformations.size();
+
 	if (!called_from_fold) {
 		if (!config.disable_funnel)
 			global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
@@ -80,11 +82,13 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
 		if (!config.disable_clique_neighborhood_fast)
 			global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
+		if (!config.disable_extended_domination)
+			global_status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
+		if (!config.disable_unconfined)
+			global_status.transformations.emplace_back(new unconfined_csr_reduction(global_status.n));
 
 		if (config.reduction_style == ReductionConfig::Reduction_Style::EARLY_STRUCTION)
 		{
-			if (!config.disable_extended_domination)
-				global_status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
 			if (!config.disable_decreasing_struction)
 				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 			if (!config.disable_plateau_struction)
@@ -110,8 +114,6 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.emplace_back(new cut_vertex_reduction(global_status.n));
 		} else if (config.reduction_style == ReductionConfig::Reduction_Style::EARLY_CS)
 		{
-			if (!config.disable_extended_domination)
-				global_status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
 			if (!config.disable_critical_set)
 				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
 			if (!config.disable_decreasing_struction)
@@ -138,8 +140,6 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 
 
 		} else { // FULL and tests
-			if (!config.disable_extended_domination)
-				global_status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
 			if (!config.disable_clique_neighborhood_fast)
 				global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
 			if (!config.disable_clique_neighborhood)
@@ -740,11 +740,6 @@ void branch_and_reduce_algorithm::reduce_graph_internal_before_blow_up()
 	}
 
 	timeout |= t.elapsed() > config.time_limit;
-	// for (auto& transformation : status.transformations)
-	// {
-	// 	transformation->marker.clear_next();
-	// }
-	// std::cout << "\ncurrent weight: " << status.is_weight << "  weight offset: " << status.reduction_offset << "  remaining nodes: " << status.remaining_nodes << std::endl;
 }
 
 
@@ -1817,13 +1812,17 @@ void branch_and_reduce_algorithm::generate_initial_reduce_data(graph_access &G, 
 	std::swap(global_transformation_map, local_transformation_map);
 	status = std::move(global_status);
 
-	// get data for critical set rule
+	// get data for critical set and unconfined rule
 	for (size_t i = 0; i < status.transformations.size(); i++)
 	{
-		if (status.transformations[i]->get_reduction_type() == critical_set)
+		if (status.transformations[i]->get_reduction_type() == critical_set || status.transformations[i]->get_reduction_type() == unconfined_csr)
 		{
-			auto &&critical_set_reduction = status.transformations[i];
-			critical_set_reduction->reduce(this);
+			auto &&reduction = status.transformations[i];
+			if (status.transformations[i]->get_reduction_type() == unconfined_csr)
+				reduction->marker.fill_current_ascending(status.n);
+				// reduction->marker.clear_next();
+
+			reduction->reduce(this);
 			while (status.modified_stack.size() > 0)
 			{
 				NodeID restore_node = status.modified_stack.back();

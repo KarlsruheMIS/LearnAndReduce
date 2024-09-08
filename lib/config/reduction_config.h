@@ -54,7 +54,7 @@ struct ReductionConfig : public Config {
     bool disable_heavy_set = false;
     bool disable_heavy_set3 = false;
     bool disable_bound_reduction = false;
-    bool disable_component = false;
+    bool disable_unconfined = false;
     bool disable_heuristic_include = false;
     bool disable_heuristic_exclude = false;
     bool use_hils_intersection = false;
