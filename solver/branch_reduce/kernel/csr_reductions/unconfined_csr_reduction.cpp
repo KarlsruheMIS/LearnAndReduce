@@ -71,6 +71,7 @@ graph unconfined_csr_reduction::build_graph(branch_and_reduce_algorithm *br_alg)
 bool unconfined_csr_reduction::reduce(branch_and_reduce_algorithm *br_alg)
 {
     if (br_alg->config.disable_unconfined) return false;
+    if (br_alg->blowing_up) return false;
     auto &status = br_alg->status;
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
