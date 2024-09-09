@@ -119,7 +119,8 @@ bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, R
     c.disable_blow_up = true;
     c.disable_generalized_fold = true;
     // c.time_limit = graph.number_of_nodes() / 10.0;
-    c.time_limit = config.reduction_time_limit*0.1;
+    // c.time_limit = config.reduction_time_limit*0.1;
+    c.time_limit = 1;
     c.max_swaps = 1000;
 
     branch_and_reduce_algorithm solver(graph, c, true);

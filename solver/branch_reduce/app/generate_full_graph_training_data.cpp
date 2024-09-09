@@ -105,10 +105,36 @@ int main(int argn, char **argv)
 
     branch_and_reduce_algorithm reducer(G, config);
     generate_data(&reducer, G, config, name+"_set1");
-    graph_access &kernel = write_kernel_data_csv(&reducer, name+"_set1");
+
+
+    // disable reductions for kernel computation
+    config.disable_unconfined                 = true;
+    config.disable_extended_se                = true;
+    config.disable_basic_se                   = true;
+    config.disable_funnel                     = true;
+    config.disable_funnel_fold                = true;
+    config.disable_generalized_fold           = true;
+    config.disable_clique_neighborhood        = true;
+    config.disable_clique_neighborhood_fast   = true;
+    config.disable_cut_vertex                 = true;
+    config.disable_heavy_set                  = true;
+    config.disable_heavy_set3                 = true;
+    config.disable_critical_set               = true;
+    config.disable_plateau_struction          = true;
+    config.disable_decreasing_struction       = true;
+
+
+
+    branch_and_reduce_algorithm reducer2(G, config);
+    graph_access &kernel = write_kernel_data_csv(&reducer2, name+"_set1");
     if (kernel.number_of_nodes() == 0 ) return 0;
 
-    // enable expensive reductions
+    // enable all reductions
+    config.disable_unconfined                 = false;
+    config.disable_extended_se                = false;
+    config.disable_basic_se                   = false;
+    config.disable_funnel                     = false;
+    config.disable_funnel_fold                = false;
     config.disable_generalized_fold           = false;
     config.disable_clique_neighborhood        = false;
     config.disable_clique_neighborhood_fast   = false;
@@ -119,8 +145,8 @@ int main(int argn, char **argv)
     config.disable_plateau_struction          = false;
     config.disable_decreasing_struction       = false;
 
-    branch_and_reduce_algorithm reducer2(kernel, config);
-    generate_data(&reducer2, kernel, config, name+"_set2");
-    graph_access &kernel2 = write_kernel_data_csv(&reducer2, name+"_set2");
+    branch_and_reduce_algorithm reducer3(kernel, config);
+    generate_data(&reducer3, kernel, config, name+"_set2");
+    graph_access &kernel2 = write_kernel_data_csv(&reducer3, name+"_set2");
     return 0;
 }
