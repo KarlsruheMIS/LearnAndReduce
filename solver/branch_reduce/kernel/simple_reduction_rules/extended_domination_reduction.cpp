@@ -126,3 +126,43 @@ void extended_domination_reduction::apply(branch_and_reduce_algorithm* br_alg) {
         }
     }
 }
+int extended_domination_reduction::generate_data(branch_and_reduce_algorithm* br_alg, NodeID v, std::vector<NodeID>& label) {
+	auto& status = br_alg->status;
+	auto& neighbors = br_alg->set_1;
+	size_t oldn = status.remaining_nodes;
+
+    size_t neighbors_count = status.graph[v].size();
+    bool is_subset;
+    bool progress = false;
+
+    neighbors.clear();
+    neighbors.add(v);
+    for (NodeID neighbor : status.graph[v]) {
+        neighbors.add(neighbor);
+    }
+
+    for (NodeID neighbor : status.graph[v]) {
+        if (br_alg->deg(neighbor) > neighbors_count)
+            continue;
+
+        is_subset = true;
+
+        for (NodeID neighbor2 : status.graph[neighbor]) {
+            if (!neighbors.get(neighbor2)) {
+                is_subset = false;
+                break;
+            }
+        }
+
+        if (is_subset) {
+            progress = true;
+            if (status.weights[neighbor] < status.weights[v])
+            {
+                label.push_back(v);
+	            return true;
+            }
+        }
+    }
+    
+	return false;
+}

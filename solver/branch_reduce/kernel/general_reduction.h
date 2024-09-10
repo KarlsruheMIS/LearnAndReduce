@@ -78,8 +78,13 @@ struct general_reduction
     bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, bool apply_solution = false);
     bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution = false);
     bool is_reduced(NodeID v, branch_and_reduce_algorithm *br_alg);
-    virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg); 
-
+    virtual bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg);
+    // for generating training data
+    bool solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &nodes_vec, const fast_set &nodes_set, std::vector<NodeID> &reverse_mapping, int &label);
+    bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, int &label);
+    bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, int &label);
+    virtual int generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label) { return 0;}
+    virtual bool generate_global_data(branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &label) { return false;}
 
     template <typename F>
     inline void for_each_changed_vertex(branch_and_reduce_algorithm *br_alg, F f)

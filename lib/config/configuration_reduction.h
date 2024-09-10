@@ -259,18 +259,18 @@ inline void configuration_reduction::generate_training_data_initial_reductions( 
     all_decreasing(config);
     config.generate_training_data                 = true;
 
-    // config.disable_decreasing_struction           = true;
-    // config.disable_plateau_struction              = true;
+    config.disable_decreasing_struction           = true;
+    config.disable_plateau_struction              = true;
     // config.disable_generalized_fold               = true;
-    // config.disable_clique_neighborhood            = true;
+    config.disable_clique_neighborhood            = true;
     // config.disable_clique_neighborhood_fast       = true;
     // config.disable_cut_vertex                     = true;
     // config.disable_heavy_set                      = true;
     // config.disable_heavy_set3                     = true;
-    // config.disable_high_degree                    = true;
-    // config.disable_bound_reduction                = true;
+    config.disable_high_degree                    = true;
+    config.disable_bound_reduction                = true;
     // config.disable_critical_set                   = true;
-    // config.disable_heuristic_exclude              = true;
-    // config.disable_heuristic_include              = true;
+    config.disable_heuristic_exclude              = true;
+    config.disable_heuristic_include              = true;
     config.subgraph_node_limit                    = 30;
 }

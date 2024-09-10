@@ -24,6 +24,9 @@ struct heavy_set3_reduction : public general_reduction
     virtual std::string get_model_path() final { return "models/heavy_set3.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
+    int generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label);
+
+    bool is_heavy_set(NodeID v, fast_set &v_neighbors_set, NodeID u, fast_set &u_neighbors_set, NodeID w, branch_and_reduce_algorithm *br_alg, int &l);
 
 private:
     enum v_combination

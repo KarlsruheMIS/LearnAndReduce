@@ -26,6 +26,7 @@ struct cut_vertex_reduction : public general_reduction
     bool find_cut_vertex(branch_and_reduce_algorithm *br_alg, NodeID &cut_v, std::vector<NodeID> &cut_component, std::vector<NodeID> &reverse_mapping, fast_set &tested);
     bool DFS(branch_and_reduce_algorithm *br_alg, NodeID u, int &step, NodeID &cut_vertex, std::vector<NodeID> &smallComponent);
     bool get_fold_data(branch_and_reduce_algorithm *br_alg, NodeID cut_v, std::vector<NodeID> &cut_v_included_i, std::vector<NodeID> &cut_v_included_e, std::vector<NodeID> &cut_v_excluded_i, std::vector<NodeID> &cut_v_excluded_e, NodeWeight &large_cutMWIS_weight, NodeWeight &small_cutMWIS_weight);
+    bool generate_global_data(branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &label);
 
 private:
     struct fold_data

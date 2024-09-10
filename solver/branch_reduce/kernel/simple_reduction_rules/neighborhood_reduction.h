@@ -23,6 +23,7 @@ struct neighborhood_reduction : public general_reduction
     virtual std::string get_reduction_name() final { return "neighborhood"; }
 
     bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg);
+    int generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label);
 };
 
 #endif // NEIGHBORHOOD_REDUCTION_H

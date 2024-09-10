@@ -203,3 +203,135 @@ void heavy_set_reduction::set_weights(graph_access& graph, std::vector<NodeID>& 
         graph.setNodeWeight(reverse_mapping[n], weights[n]);
     }
 }
+inline int heavy_set_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID common_neighbor, std::vector<NodeID>& label)
+{
+    auto &config = br_alg->config;
+    if (br_alg->deg(common_neighbor) < 2)
+        return 0; 
+
+	auto& status = br_alg->status;
+    // check if common neighbor is suitable
+    if (std::all_of(status.graph[common_neighbor].begin(), status.graph[common_neighbor].end(), [&](NodeID neighbor)
+                    { return br_alg->deg(neighbor) > config.subgraph_node_limit; }))
+        return 0;
+    size_t oldn = status.remaining_nodes;
+    auto &v_neighbors_set = br_alg->set_1;
+    auto &candidates = status.graph[common_neighbor];
+    int l = 0;
+    for (size_t v_idx = 0; v_idx < candidates.size() - 1; v_idx++)
+    {
+        NodeID v = candidates[v_idx];
+        if (is_reduced(v, br_alg))
+            continue;
+        if (br_alg->deg(v) > config.subgraph_node_limit)
+            continue; // too many neighbors
+        if (br_alg->deg(v) < 3)
+            continue; // use other reduction
+        NodeID deg_v = br_alg->deg(v);
+        get_neighborhood_set(v, br_alg, v_neighbors_set);
+
+        // find second heavy vertex u (not adjacent to v)
+        for (size_t u_idx = v_idx + 1; u_idx < candidates.size(); u_idx++)
+        {
+            NodeID u = candidates[u_idx];
+            if (v_neighbors_set.get(u))
+                continue; // look for non adjacent nodes
+            if (is_reduced(u, br_alg))
+                continue;
+            if (br_alg->deg(u) + deg_v > config.subgraph_node_limit)
+                continue; // subgraph too large
+            if (br_alg->deg(u) < 3)
+                continue; // use other reduction
+
+            int current_l = heavy_set_label(v, v_neighbors_set, u, br_alg);
+            if (current_l == 1){
+                return 1;
+            }
+            if (current_l == 2){
+                l = 2;
+            }
+        }
+    }
+
+    return l;
+}
+int heavy_set_reduction::heavy_set_label(NodeID v, fast_set &v_neighbors_set, NodeID u, branch_and_reduce_algorithm *br_alg)
+{
+    auto &config = br_alg->config;
+    auto &status = br_alg->status;
+    auto &weights = status.weights;
+    auto &v_neighbors_vec = br_alg->buffers[0];
+    auto &u_neighbors_vec = br_alg->buffers[1];
+    auto &graph_nodes = br_alg->buffers[2];
+    auto &graph_nodes_set = br_alg->double_set;
+    auto &reverse_mapping = br_alg->buffers[3];
+    size_t oldn = status.remaining_nodes;
+    reverse_mapping.resize(status.n);
+    graph_nodes.clear();
+    graph_nodes_set.clear();
+    graph_access subgraph;
+    int label = 0;
+
+    get_neighborhood_vector(v, br_alg, v_neighbors_vec);
+    get_neighborhood_vector(u, br_alg, u_neighbors_vec);
+
+    for (auto n : v_neighbors_vec)
+    {
+        graph_nodes.push_back(n);
+        graph_nodes_set.add(n);
+    }
+    for (auto n : u_neighbors_vec)
+    {
+        if (graph_nodes_set.get(n))
+            continue; // only add nodes once
+        graph_nodes.push_back(n);
+        graph_nodes_set.add(n);
+    }
+
+    std::vector<NodeWeight> MWIS_weights(4, 0);
+    MWIS_weights[v_combination::uv] = weights[u] + weights[v];
+    // compute MWIS in N(v) + N(u) + N(w):
+    if (!solve_induced_subgraph_from_set(MWIS_weights[v_combination::uv], MWIS_weights[v_combination::oo], subgraph, br_alg, graph_nodes, graph_nodes_set, reverse_mapping,label))
+        return label;
+
+    if (std::min(weights[v], weights[u]) >= MWIS_weights[v_combination::oo])
+    {
+        return 1;
+    }
+    else if (MWIS_weights[v_combination::uv] < MWIS_weights[v_combination::oo])
+    {
+        return 0;
+    }
+    bool original_heavy_set = false;
+    NodeWeight no_limit = std::numeric_limits<NodeWeight>::max();
+    // compute MWIS[uo] in N(v)\N(u): (included u)
+    unset_weights(subgraph, u_neighbors_vec, reverse_mapping);
+    if (!solve_graph(MWIS_weights[v_combination::uo], subgraph, config, no_limit, label))
+        return label;
+    MWIS_weights[v_combination::uo] += weights[u];
+
+    // compute MWIS[ov] in N(u)\N(v): (included v)
+    set_weights(subgraph, u_neighbors_vec, reverse_mapping, weights);
+    unset_weights(subgraph, v_neighbors_vec, reverse_mapping);
+    if (!solve_graph(MWIS_weights[v_combination::ov], subgraph, config, no_limit, label))
+        return label;
+    MWIS_weights[v_combination::ov] += weights[v];
+    label = 1;
+    // get max weights by weight and if equal by participating vertices in the permutation
+    v_combination max_weight_combination = static_cast<v_combination>(std::max_element(MWIS_weights.begin(), MWIS_weights.end()) - MWIS_weights.begin());
+    NodeWeight best_weight_excluding = 0;
+    std::vector<NodeWeight> weights_including(2, 0);
+    switch (max_weight_combination)
+    {
+    case v_combination::uv:
+        break;
+    case v_combination::uo:
+        break;
+    case v_combination::ov:
+        break;
+    default:
+        label = 0;
+        break;
+    }
+    return label;
+}

@@ -69,3 +69,39 @@ inline bool single_edge_reduction::reduce_vertex(branch_and_reduce_algorithm *br
 
     return oldn != status.remaining_nodes;
 }
+inline int single_edge_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+{
+    auto &status = br_alg->status;
+    auto &graph = br_alg->status.graph;
+    auto &weights = br_alg->status.weights;
+    auto &neighbors = br_alg->set_1;
+    size_t oldn = status.remaining_nodes;
+
+    get_neighborhood_set(v, br_alg, neighbors);
+
+    for (NodeID neighbor : graph[v])
+    {
+        if (weights[v] <= weights[neighbor])
+        { // otherwise not applicable to this edge
+            NodeWeight partial_neighbor_sum = 0;
+            for (NodeID second_neighbor : status.graph[neighbor])
+            {
+                if (!neighbors.get(second_neighbor))
+                {
+                    partial_neighbor_sum += status.weights[second_neighbor];
+                    if (partial_neighbor_sum > weights[neighbor])
+                        break;
+                }
+            }
+
+// note: weight of v is in partial_neighbor_sum included
+// if N(neighbor) \subset N(v) partial_neighbor_sum = weights[v]
+            if (partial_neighbor_sum <= weights[neighbor])
+            {   
+                label.push_back(v);
+                return true;
+            }
+        }
+    }
+    return false;
+}

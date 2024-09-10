@@ -77,9 +77,6 @@ struct ReductionConfig : public Config {
     std::string reduction_style_name = "full";
     double reduction_time_limit;
 
-    // apply every reduction to one vertex
-    bool reduce_by_vertex;
-
     // early terminate solving subgraphs is best weight found is already to large for reduction to be applied
     bool disable_early_termination;
 

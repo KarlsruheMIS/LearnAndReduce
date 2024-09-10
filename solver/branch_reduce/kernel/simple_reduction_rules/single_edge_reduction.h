@@ -20,7 +20,7 @@ struct single_edge_reduction : public general_reduction
     virtual std::string get_model_path() final { return "models/single_edge.gnn"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
+    int generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label);
 };
-
 
 #endif // SINDLE_EDGE_REDUCTION_H

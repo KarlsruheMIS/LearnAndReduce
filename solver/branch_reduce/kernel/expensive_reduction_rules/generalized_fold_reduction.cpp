@@ -333,3 +333,110 @@ void generalized_fold_reduction::apply(branch_and_reduce_algorithm *br_alg)
         status.is_weight += status.weights[nodes.main];
     }
 }
+inline int generalized_fold_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+{
+    if (br_alg->deg(v) <= 1)
+        return 0;
+    auto &status = br_alg->status;
+    auto &neighbors = br_alg->buffers[0];
+    auto &neighbors_set = br_alg->set_1;
+    auto &MWIS_set = br_alg->set_2;
+    auto &reverse_mapping = br_alg->buffers[1];
+    size_t oldn = status.remaining_nodes;
+
+    graph_access neighborhood_graph;
+
+    get_neighborhood_set(v, br_alg, neighbors_set);
+    get_neighborhood_vector(v, br_alg, neighbors);
+
+    if (status.graph[v].size() > br_alg->config.subgraph_node_limit)
+    {
+        label.push_back(v);
+        return 2;
+    }
+
+    // compute MWIS in N(v)
+
+    NodeWeight MWIS_weight = 0;
+    NodeWeight min_MWIS_neighbor_weight = std::numeric_limits<NodeWeight>::max();
+    bool solved_exact = solve_induced_subgraph_from_set(min_MWIS_neighbor_weight, MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping, true);
+    if (!solved_exact)
+    {
+        label.push_back(v);
+        return 2;
+    }
+
+    if (status.weights[v] >= MWIS_weight)
+    {
+        label.push_back(v);
+        return 1;
+    }
+
+    MWIS_set.clear();
+
+    forall_nodes(neighborhood_graph, node)
+    {
+        if (neighborhood_graph.getPartitionIndex(node) == 1)
+        {
+            const NodeID neighbor = neighbors[node];
+            MWIS_set.add(neighbor);
+
+            if (status.weights[neighbor] < min_MWIS_neighbor_weight)
+                min_MWIS_neighbor_weight = status.weights[neighbor];
+        }
+    }
+    endfor
+
+    if (status.weights[v] < MWIS_weight - min_MWIS_neighbor_weight)
+    {
+        // multiple IS exist that have bigger weight than v
+        label.push_back(v);
+        return 0;
+    }
+
+    bool check_failed = false;
+    int l = 0;
+
+    // check that no other IS in N(v) exists with weight greater than v
+    for (const NodeID neighbor : status.graph[v])
+    {
+        if (!MWIS_set.get(neighbor))
+            continue;
+
+        auto iter = std::find(neighbors.begin(), neighbors.end(), neighbor);
+        assert(iter != neighbors.end());
+        std::swap(*iter, neighbors.back());
+        neighbors.pop_back();
+        neighbors_set.remove(neighbor);
+
+        NodeWeight MWIS_weight = 0;
+        bool solved_exact = solve_induced_subgraph_from_set(status.weights[v], MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping,l);
+        if (!solved_exact)
+        {
+            check_failed = true;
+        }
+        else if (MWIS_weight >= status.weights[v])
+        {
+            l = 0;
+            check_failed = true;
+        }
+
+        neighbors.push_back(neighbor);
+        neighbors_set.add(neighbor);
+
+        if (check_failed)
+            break;
+    }
+
+    if (!check_failed)
+    {
+        for (const NodeID neighbor : status.graph[v])
+        {
+            if (MWIS_set.get(neighbor))
+                label.push_back(neighbor);
+        }
+        return 1;
+    }
+
+    return l;
+}

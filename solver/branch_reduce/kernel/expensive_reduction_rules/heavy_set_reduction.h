@@ -33,5 +33,7 @@ private:
     bool is_heavy_set(NodeID v, fast_set &v_neighbors_set, NodeID u, branch_and_reduce_algorithm *br_alg);
     void unset_weights(graph_access &graph, std::vector<NodeID> &nodes, std::vector<NodeID> &reverse_mapping);
     void set_weights(graph_access &graph, std::vector<NodeID> &nodes, std::vector<NodeID> &reverse_mapping, std::vector<NodeWeight> &weights);
+    int heavy_set_label(NodeID v, fast_set &v_neighbors_set, NodeID u, branch_and_reduce_algorithm *br_alg);
+    int generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label);
 };
 #endif // HEAVY_SET_H

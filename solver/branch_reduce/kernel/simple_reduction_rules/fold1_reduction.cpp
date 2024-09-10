@@ -98,3 +98,16 @@ bool fold1_reduction::is_suited(NodeID v, branch_and_reduce_algorithm *br_alg)
 {
     return br_alg->deg(v) <= 1;
 }
+inline int fold1_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+{
+    // if (br_alg->config.disable_fold1) return false;
+    auto &status = br_alg->status;
+    size_t oldn = status.remaining_nodes;
+    assert(status.node_status[v] == IS_status::not_set);
+
+    if (status.weights[v] == 0 || br_alg->deg(v) == 0 || br_alg->deg(v) == 1)
+    {
+        label.push_back(v);
+    }
+    return label.size() > 0;
+}

@@ -39,15 +39,10 @@ inline bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algo
     NodeID max_weight_neighbor = get_max_weight_neighbor(v, br_alg);
     assert(max_weight_neighbor != v && "ERROR: max_weight_neighbor == v");
     if (weights[v] < neighbors_weight - weights[max_weight_neighbor])
-    {
         return false;
-    }
-#ifndef gen_training_data
     if (try_neighborhood_reduction(v, br_alg, neighbors_weight))
-    {
         return oldn != br_alg->status.remaining_nodes;
-    }
-#endif
+    
     get_neighborhood_set(v, br_alg, neighbors);
     get_neighborhood_vector(v, br_alg, neighbors_vec);
 
@@ -55,12 +50,10 @@ inline bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algo
               { return weights[a] > weights[b]; });
     for (NodeID max_neighbor : neighbors_vec)
     {
-#ifndef gen_training_data
         if (v > max_neighbor)
             continue;
-#endif
         if (weights[v] < neighbors_weight - weights[max_neighbor])
-            break;
+            return oldn != status.remaining_nodes;
 
         bool progress = false;
         for (NodeID neighbor : status.graph[max_neighbor])
@@ -77,9 +70,51 @@ inline bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algo
             }
         }
 
-        if (progress)
-            break;
+        // if (progress)
+        //     break;
     }
 
     return oldn != status.remaining_nodes;
+}
+
+inline int extended_single_edge_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+{
+    if (br_alg->deg(v) == 0)
+        return 0;
+	auto& status = br_alg->status;
+    auto& weights = status.weights;
+	size_t oldn = status.remaining_nodes;
+	auto& neighbors = br_alg->set_1;
+	auto& neighbors_vec = br_alg->buffers[0];
+
+
+    NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
+    NodeID max_weight_neighbor = get_max_weight_neighbor(v, br_alg);
+    assert(max_weight_neighbor != v && "ERROR: max_weight_neighbor == v");
+    assert(label.size() == 0 && "ERROR: labeld_vertices not empty");
+    if (weights[v] < neighbors_weight - weights[max_weight_neighbor])
+        return 0;
+    
+    get_neighborhood_set(v, br_alg, neighbors);
+    get_neighborhood_vector(v, br_alg, neighbors_vec);
+
+    std::sort(neighbors_vec.begin(), neighbors_vec.end(), [&](NodeID a, NodeID b)
+              { return weights[a] > weights[b]; });
+    for (NodeID max_neighbor : neighbors_vec)
+    {
+        if (weights[v] < neighbors_weight - weights[max_neighbor])
+            return 0;
+
+        for (NodeID neighbor : status.graph[max_neighbor])
+        {
+            if (neighbor == v)
+                continue;
+            // exclude neighborhood intersection and update neighborhood
+            if (neighbors.get(neighbor))
+                label.push_back(neighbor);
+        }
+
+    }
+
+    return label.size() > 0;
 }

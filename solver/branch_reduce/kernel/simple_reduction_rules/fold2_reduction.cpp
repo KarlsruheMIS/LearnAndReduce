@@ -390,3 +390,13 @@ bool fold2_reduction::is_suited(NodeID v, branch_and_reduce_algorithm *br_alg)
 {
     return br_alg->deg(v) == 2;
 }
+
+inline int fold2_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+{
+     if (br_alg->deg(v) == 2)
+     {
+        label.push_back(v);
+        return true;
+     }
+     return false;
+}

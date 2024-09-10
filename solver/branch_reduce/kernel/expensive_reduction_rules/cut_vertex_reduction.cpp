@@ -20,7 +20,6 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
     auto& cut_v_neighbor_set = br_alg->double_set; // since set_2 used in later iterative function call
     auto& reverse_mapping = br_alg->buffers[1];
     auto config = br_alg->config;
-    graph_access cut_graph;
     size_t oldn = status.remaining_nodes;
     NodeID cut_v;
     std::vector<NodeID> unreduced_mapping(status.remaining_nodes, status.n);
@@ -184,9 +183,11 @@ bool cut_vertex_reduction::DFS(branch_and_reduce_algorithm* br_alg, NodeID u, in
                 // check if current is a cut vertex
                 if ((parent[current] == status.n && disc[current] != low[current]) || // root node
                     (parent[current] != status.n && low[current] >= disc[parent[current]]))
-                    if (check_components(br_alg, current, cut_vertex, smallComponent))
                     {
-                        return true;
+                        if (check_components(br_alg, current, cut_vertex, smallComponent))
+                        {
+                            return true;
+                        }
                     }
             }
             if (!edge_stack.empty())
@@ -524,153 +525,74 @@ bool cut_vertex_reduction::get_fold_data(branch_and_reduce_algorithm* br_alg, No
         return true;
     }
 }
-// bool cut_vertex_reduction::check_components(branch_and_reduce_algorithm* br_alg, NodeID u, NodeID& cut_vertex, std::vector<NodeID>& smallComponent) {
-//     auto& status = br_alg->status;
-//     auto& config = br_alg->config;
-//     auto& component_visited = br_alg->bool_buffer;
+bool cut_vertex_reduction::generate_global_data(branch_and_reduce_algorithm* br_alg, std::vector<NodeID>& label)
+{
+    auto& status = br_alg->status;
+    auto& graph = br_alg->status.graph;
+    auto& visited = br_alg->bool_buffer;
+    auto& low = br_alg->buffers[0];
+    auto& disc = br_alg->buffers[1];
+    auto& parent = br_alg->buffers[2];
+    low.assign(status.n,std::numeric_limits<int>::max());
+    disc.assign(status.n,0);
+    parent.assign(status.n, status.n);
+    std::vector<NodeID> stack;
+    std::vector<std::pair<NodeID, NodeID>> edge_stack;
+    stack.reserve(br_alg->status.remaining_nodes);
+    edge_stack.reserve(br_alg->status.remaining_nodes);
 
-//     // Mark all nodes that are not to be considered as already visited
-//     for (NodeID n = 0; n < status.n; ++n) {
-//         if (status.node_status[n] == IS_status::not_set) {
-//             component_visited[n] = false;
-//         } else {
-//             component_visited[n] = true;
-//         }
-//     }
+    int step = 0;
+    for (NodeID u = 0; u < br_alg->status.remaining_nodes; ++u)
+    {
+        if (visited[u])
+            continue;
 
-//     component_visited[u] = true;
-//     cut_vertex = u;
+        stack.push_back(u);
+        while (!stack.empty() && br_alg->config.reduction_time_limit > br_alg->t.elapsed())
+        {
+            NodeID current = stack.back();
 
-//     for (NodeID n : status.graph[u]){
-//         if (!component_visited[n]) {
-//             if (br_alg->config.reduction_time_limit < br_alg->t.elapsed()) return false;
-//             smallComponent.clear();
+            int children = 0;
+            disc[current] = low[current] = ++step;
+            visited[current] = true;
 
-//             if (!build_small_component(n, br_alg, smallComponent, component_visited)) {
-//                 // If component is too large, early terminate and set the visited status for this part
-//                 dfs_fill_visited(n, br_alg, component_visited);
-//             } else if (smallComponent.size() <= config.subgraph_node_limit) {
-//                 // A small enough component was found, no need to check further
-//                 return true;
-//             }
-//         }
-//     }
-//     // After exploring all components and no valid small component was found
-//     return false;
-// }
-// bool cut_vertex_reduction::build_small_component(NodeID u, branch_and_reduce_algorithm* br_alg, std::vector<NodeID>& component, std::vector<bool>& component_visited) 
-// {
-//     auto& status = br_alg->status;
-//     std::vector<NodeID> stack;
-//     stack.reserve(status.n);
-//     stack.push_back(u);
+            bool pushedChild = false;
+            for (NodeID v : graph[current])
+            {
+                // Avoid reprocessing an edge in the undirected graph
+                if (!edge_stack.empty() && edge_stack.back() == std::make_pair(v, current))
+                    continue;
 
-//     while (!stack.empty()) {
-//         NodeID current = stack.back();
-//         stack.pop_back();
+                if (!visited[v])
+                {
+                    stack.push_back(v);
+                    edge_stack.push_back(std::make_pair(current, v)); // Track the edge
+                    children++;
+                    parent[v] = current;
+                    pushedChild = true;
+                    break;
+                }
+                else if (v != parent[current])
+                {
+                    low[current] = std::min(low[current], disc[v]);
+                }
+            }
+            if (!pushedChild)
+            {
+                stack.pop_back(); // Finish processing current node
+                if (!stack.empty())
+                {
+                    low[parent[current]] = std::min(low[parent[current]], low[current]);
 
-//         if (component_visited[current]) continue;
-
-//         component_visited[current] = true;
-//         component.push_back(current);
-
-//         // If the component exceeds the maximum size, return false to indicate failure
-//         if (component.size() > br_alg->config.subgraph_node_limit) {
-//             for (NodeID n : component) component_visited[n] = false;
-//             component.clear();
-//             return false;
-//         }
-
-//         for (NodeID neighbor : status.graph[current]) {
-//             if (!component_visited[neighbor]) {
-//                 stack.push_back(neighbor);
-//             }
-//         }
-//     }
-//     return true;
-// }
-// void cut_vertex_reduction::dfs_fill_visited(NodeID u, branch_and_reduce_algorithm* br_alg, std::vector<bool>& component_visited) {
-//     auto& status = br_alg->status;
-//     std::vector<NodeID> stack;
-//     stack.reserve(status.n);
-//     stack.push_back(u);
-
-//     while (!stack.empty() && br_alg->config.reduction_time_limit > br_alg->t.elapsed()) {
-//         NodeID current = stack.back();
-//         stack.pop_back();
-
-//         if (component_visited[current]) {
-//             continue;
-//         }
-
-//         component_visited[current] = true;
-//         // if (global_visited.size() > 0) global_visited[current] = true; // not used in reduce by vertex
-
-//         for (NodeID neighbor : br_alg->status.graph[current]) {
-//             if (!component_visited[neighbor]) {
-//                 stack.push_back(neighbor);
-//             }
-//         }
-//     }
-// }
-// void cut_vertex_reduction::fold(branch_and_reduce_algorithm* br_alg, fold_data& data, std::vector<NodeID>& cut_v_included_i, std::vector<NodeID>& cut_v_included_e, std::vector<NodeID>& cut_v_excluded_i, std::vector<NodeID>& cut_v_excluded_e)
-// {
-//     auto& status = br_alg->status;
-// 	restore_vec.push_back({data, cut_v_included_i, cut_v_included_e, cut_v_excluded_i, cut_v_excluded_e});
-// 	for (int i = data.cut_component.size() - 1; i >= 1; i--) {
-//         br_alg->set(data.cut_component[i], IS_status::folded, false);
-//     }
-//     br_alg->set(data.cut_component[0], IS_status::folded);
-
-//     status.reduction_offset += data.large_cutMWIS_weight;
-//     status.weights[data.cut_vertex] += data.small_cutMWIS_weight;
-//     status.weights[data.cut_vertex] -= data.large_cutMWIS_weight;
-
-//     status.folded_stack.push_back(get_reduction_type());
-
-//     br_alg->add_next_level_node(data.cut_vertex);
-//     br_alg->add_next_level_neighborhood(data.cut_vertex);
-// }
-// void cut_vertex_reduction::restore(branch_and_reduce_algorithm* br_alg) {
-//     auto& status = br_alg->status;
-//     auto& data = restore_vec.back().data;
-
-//     status.reduction_offset -= data.large_cutMWIS_weight;
-//     status.weights[data.cut_vertex] = data.cut_vertex_weight;
-
-//     for (int i = 0; i < data.cut_component.size(); i++) {
-//         br_alg->unset(data.cut_component[i]);
-//     }
-
-//     restore_vec.pop_back();
-// }
-// void cut_vertex_reduction::apply(branch_and_reduce_algorithm* br_alg) {
-// 	auto& node_status = br_alg->status.node_status;
-//     NodeWeight& is_weight = br_alg->status.is_weight;
-//     auto restore_info = restore_vec.back();
-//     NodeID cut_v = restore_info.data.cut_vertex;
-//     assert(restore_info.data.large_cutMWIS_weight < restore_info.data.cut_vertex_weight + restore_info.data.small_cutMWIS_weight && "ERROR: cut_vertex_reduction::apply: large_cutMWIS_weight must be larger than small_cutMWIS_weight");
-
-//     IS_status cut_status = node_status[cut_v];
-
-// 	restore(br_alg);
-
-//     if (cut_status == IS_status::included) {
-//         for (NodeID neighbor : restore_info.case_cut_v_included_nodes_to_exclude) {
-//             node_status[neighbor] = IS_status::excluded;
-//         }
-//         for (NodeID neighbor : restore_info.case_cut_v_included_nodes_to_include) {
-//             node_status[neighbor] = IS_status::included;
-//         }
-//         is_weight += restore_info.data.small_cutMWIS_weight;
-//         is_weight += restore_info.data.cut_vertex_weight;
-//     } else {
-//         for (NodeID neighbor : restore_info.case_cut_v_excluded_nodes_to_exclude) {
-//             node_status[neighbor] = IS_status::excluded;
-//         }
-//         for (NodeID neighbor : restore_info.case_cut_v_excluded_nodes_to_include) {
-//             node_status[neighbor] = IS_status::included;
-//         }
-//         is_weight += restore_info.data.large_cutMWIS_weight;
-//     }
-// }
+                    // check if current is a cut vertex
+                    if ((parent[current] == status.n && disc[current] != low[current]) || // root node
+                        (parent[current] != status.n && low[current] >= disc[parent[current]]))
+                            label.push_back(current);
+                }
+                if (!edge_stack.empty())
+                    edge_stack.pop_back(); // Pop the edge after processing
+            }
+        }
+    }
+    return label.size() > 0;
+}

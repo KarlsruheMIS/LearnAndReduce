@@ -26,6 +26,8 @@ struct fold2_reduction : public general_reduction
     virtual void apply(branch_and_reduce_algorithm *br_alg) final;
     bool is_suited(NodeID v, branch_and_reduce_algorithm *br_alg);
 
+    int generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label);
+
 private:
     struct fold_nodes
     {

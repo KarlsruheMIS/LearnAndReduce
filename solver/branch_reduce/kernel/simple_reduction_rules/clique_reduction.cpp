@@ -169,6 +169,7 @@ inline bool clique_reduction::reduce_vertex(branch_and_reduce_algorithm *br_alg,
         if (count != neighbors.size())
             return false;
     }
+    // TODO only simplicial vertices
 
     // one of "isolated" members has highest weight of clique: Add to IS
     // also handles completely isolated cliques
@@ -264,4 +265,45 @@ void clique_reduction::apply(branch_and_reduce_algorithm *br_alg)
     {
         status.node_status[isolated] = IS_status::excluded;
     }
+}
+int clique_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+{
+    auto &status = br_alg->status;
+    auto &set_1 = br_alg->set_1;
+    auto &neighbors = br_alg->buffers[0];
+    auto &isolated = br_alg->buffers[1];
+    size_t oldn = status.remaining_nodes;
+
+    get_neighborhood_set(v, br_alg, set_1);
+    get_neighborhood_vector(v, br_alg, neighbors);
+    set_1.add(v);
+
+    // check if clique and isolated vertices exist
+    isolated.clear();
+    isolated.push_back(v);
+
+    for (auto neighbor : neighbors)
+    {
+        size_t count = 0;
+        bool is_isolated = true;
+
+        for (NodeID neighbor_2nd : status.graph[neighbor])
+        {
+            if (set_1.get(neighbor_2nd))
+                count++;
+            else
+                is_isolated = false;
+        }
+
+        if (is_isolated)
+            isolated.push_back(neighbor);
+
+        if (count != neighbors.size())
+            return false;
+    }
+
+    for (auto neighbor : isolated)
+        label.push_back(neighbor);
+
+    return label.size() > 0;
 }

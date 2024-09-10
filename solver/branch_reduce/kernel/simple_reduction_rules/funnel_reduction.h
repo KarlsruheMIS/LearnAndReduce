@@ -23,6 +23,7 @@ struct funnel_reduction : public general_reduction
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
     virtual void apply(branch_and_reduce_algorithm *br_alg) final;
+    int generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label);
 
 private:
     struct fold_data

@@ -77,7 +77,6 @@ class ReductionArguments : public BaseArguments {
             kernel_filename             = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
 	        disable_reduction           = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
 	        print_reduction_info        = arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
-	        reduce_by_vertex            = arg_lit0(NULL, "reduce_by_vertex", "Reduce by vertex instead of by edge.");
             disable_early_termination   = arg_lit0(NULL, "disable_early_termination", "Disable early termination of solving subgraphs in reductions.");
             initial_filter              = arg_lit0(NULL, "initial_filter", "Use initial filter on vertices to apply reductions on.");
             gnn_filter                  = arg_lit0(NULL, "gnn_filter", "Use GNNs for initial filter on vertices to apply reductions on.");
@@ -149,7 +148,6 @@ class ReductionArguments : public BaseArguments {
     protected:
         struct arg_str * reduction_style;
         struct arg_dbl * reduction_time_limit;
-        struct arg_lit * reduce_by_vertex;
         struct arg_lit * disable_early_termination;
         struct arg_lit * initial_filter;
         struct arg_lit * gnn_filter;
@@ -291,7 +289,6 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_checks,
         weight_source,
         print_reduction_info,
-        reduce_by_vertex,
         disable_early_termination,
         initial_filter,
         gnn_filter,
@@ -462,11 +459,6 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
         config.reduction_time_limit = reduction_time_limit->dval[0];
     } else {
         config.reduction_time_limit = config.time_limit;
-    }
-    if (reduce_by_vertex->count > 0) {
-        config.reduce_by_vertex = true;
-    } else {
-        config.reduce_by_vertex = false;
     }
     if (disable_early_termination->count > 0) {
         config.disable_early_termination = true;

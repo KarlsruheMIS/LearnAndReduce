@@ -55,3 +55,16 @@ bool neighborhood_reduction::is_suited(NodeID v, branch_and_reduce_algorithm *br
 			if (status.node_status[neighbor] == IS_status::not_set) return sum + status.weights[neighbor]; 
 			else return sum; })));
 }
+
+inline int neighborhood_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+{
+    auto &status = br_alg->status;
+    size_t oldn = status.remaining_nodes;
+
+    NodeWeight neighbor_weights = get_neighborhood_weight(v, br_alg);
+    if (status.weights[v] >= neighbor_weights)
+    {
+        label.push_back(v);
+    }
+    return label.size() > 0;
+}

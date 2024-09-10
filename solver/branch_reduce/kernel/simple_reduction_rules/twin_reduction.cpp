@@ -132,3 +132,54 @@ void twin_reduction::apply(branch_and_reduce_algorithm *br_alg)
     }
 }
 
+inline int twin_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+{
+    auto &status = br_alg->status;
+    auto &neighbors = br_alg->buffers[0];
+    auto &twin_candidates_set = br_alg->set_1;
+    auto &tmp_set = br_alg->set_2;
+
+    size_t oldn = status.remaining_nodes;
+    NodeID twin;
+    NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
+    get_neighborhood_vector(v, br_alg, neighbors);
+
+    twin_candidates_set.clear();
+    bool candidates_empty = true;
+
+    for (NodeID neighbor : status.graph[neighbors[0]])
+    {
+        if (neighbor != v && br_alg->deg(neighbor) == neighbors.size())
+        {
+            twin_candidates_set.add(neighbor);
+            candidates_empty = false;
+            twin = neighbor;
+        }
+    }
+
+    for (size_t i = 1; i < neighbors.size() && !candidates_empty; i++)
+    {
+        NodeID neighbor = neighbors[i];
+        tmp_set.clear();
+        candidates_empty = true;
+
+        for (NodeID candidate : status.graph[neighbor])
+        {
+            if (twin_candidates_set.get(candidate))
+            {
+                tmp_set.add(candidate);
+                candidates_empty = false;
+                twin = candidate;
+            }
+        }
+
+        std::swap(twin_candidates_set, tmp_set);
+    }
+
+    if (candidates_empty)
+        return false;
+
+    label.push_back(v);
+    label.push_back(twin);
+    return true;
+}

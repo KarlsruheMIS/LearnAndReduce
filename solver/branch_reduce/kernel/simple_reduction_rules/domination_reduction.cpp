@@ -78,3 +78,46 @@ inline bool domination_reduction::reduce_vertex(branch_and_reduce_algorithm *br_
 
 	return oldn != status.remaining_nodes;
 }
+inline int domination_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)  
+{
+    auto &status = br_alg->status;
+    auto &neighbors = br_alg->set_1;
+    size_t oldn = status.remaining_nodes;
+    size_t neighbors_count = 0;
+    bool is_subset;
+
+    neighbors.clear();
+    neighbors.add(v);
+    for (NodeID neighbor : status.graph[v])
+    {
+        neighbors.add(neighbor);
+        neighbors_count++;
+    }
+
+    for (NodeID neighbor : status.graph[v])
+    {
+        if (br_alg->deg(neighbor) > neighbors_count)
+            continue;
+        if (status.weights[neighbor] < status.weights[v])
+            continue;
+
+        is_subset = true;
+
+        for (NodeID neighbor2 : status.graph[neighbor])
+        {
+            if (!neighbors.get(neighbor2))
+            {
+                is_subset = false;
+                break;
+            }
+        }
+
+        if (is_subset)
+        {
+            label.push_back(v);
+            return true;
+        }
+    }
+
+	return false;
+}

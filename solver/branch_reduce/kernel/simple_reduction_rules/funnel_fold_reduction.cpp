@@ -244,3 +244,31 @@ void funnel_fold_reduction::apply(branch_and_reduce_algorithm *br_alg)
         is_weight += weights[data.funnel_neighbor];
     }
 }
+inline int funnel_fold_reduction::generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label)
+{
+    auto &weights = br_alg->status.weights;
+    auto &remaining_n = br_alg->status.remaining_nodes;
+    auto &funnel_set = br_alg->set_1;
+    auto &neighbors = br_alg->buffers[0];
+    size_t oldn = remaining_n;
+    NodeID funnel_neighbor = br_alg->status.n;
+
+    get_neighborhood_vector(v, br_alg, neighbors);
+    funnel_set.clear();
+
+    if (std::none_of(neighbors.begin(), neighbors.end(), [&](NodeID neighbor)
+                     { return weights[neighbor] > weights[v]; }))
+    {
+
+        get_neighborhood_set(v, br_alg, funnel_set);
+        funnel_set.add(v);
+
+        if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, neighbors))
+        {
+            label.push_back(v);
+            return true;
+        }
+    }
+
+    return false;
+}

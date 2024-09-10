@@ -19,6 +19,7 @@ struct clique_neighborhood_reduction_fast : public general_reduction
     virtual std::string get_reduction_name() final { return "clique_nbh_fast"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
+    int generate_data(branch_and_reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label);
 };
 
 #endif // CLIQUE_NEIGHBORHOOD_FAST_REDUCTION_H

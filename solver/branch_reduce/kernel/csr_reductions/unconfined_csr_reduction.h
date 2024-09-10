@@ -30,6 +30,7 @@ struct unconfined_csr_reduction : public general_reduction
     virtual std::string get_reduction_name() final { return "unconfined_csr"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
     bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v, graph &g, int *A, void *R);
+    bool generate_global_data(branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &label);
 
     graph build_graph(branch_and_reduce_algorithm *br_alg);
 

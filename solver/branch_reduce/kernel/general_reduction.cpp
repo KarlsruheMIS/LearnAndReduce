@@ -167,3 +167,94 @@ bool general_reduction::is_reduced(NodeID v, branch_and_reduce_algorithm *br_alg
 {
     return br_alg->status.node_status[v] != IS_status::not_set;
 }
+// used for generating training data
+bool general_reduction::solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &nodes_vec, const fast_set &nodes_set, std::vector<NodeID> &reverse_mapping, int& label)
+{
+    if (nodes_vec.size() == 0)
+    {
+        solution = 0;
+        label = 1;
+        return true;
+    }
+    if (nodes_vec.size() == 1)
+    {
+        solution = br_alg->status.weights[nodes_vec[0]];
+        label = 1;
+        return true;
+    }
+    reverse_mapping.resize(br_alg->status.n);
+    br_alg->build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
+    return solve_graph(solution, graph, br_alg->config, weight_bound, label);
+}
+bool general_reduction::solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, int& label)
+{
+    br_alg->build_induced_neighborhood_subgraph(neighborhood_graph, v);
+    return solve_graph(solution, neighborhood_graph, br_alg->config, weight_bound, label);
+}
+bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, int& label)
+{
+    label = 1;
+    if (graph.number_of_nodes() == 0)
+    {
+        solution = 0;
+        return true;
+    }
+    if (graph.number_of_edges() == 0)
+    {
+        solution = 0;
+        forall_nodes(graph, node)
+        {
+            if (graph.getNodeWeight(node) > 0)
+            {
+                graph.setPartitionIndex(node, 1);
+                solution += graph.getNodeWeight(node);
+            }
+        }
+        endfor return true;
+    }
+    auto c = config;
+    c.disable_heuristic_exclude = true;
+    c.disable_heuristic_include = true;
+    c.use_partition_cover = false;
+    c.disable_critical_set = true;
+    c.disable_heavy_set = true;
+    c.disable_blow_up = true;
+    c.disable_generalized_fold = true;
+    // c.time_limit = graph.number_of_nodes() / 10.0;
+    // c.time_limit = config.reduction_time_limit*0.1;
+    c.time_limit = 1;
+    c.max_swaps = 1000;
+
+    branch_and_reduce_algorithm solver(graph, c, true);
+    solver.ch.disable_cout();
+    weight_bound = std::numeric_limits<NodeWeight>::max();
+
+    int lb = greedy_lb(graph);
+
+    if (lb > weight_bound)
+    {
+        solver.ch.enable_cout();
+        label = 0;
+        return false;
+    }
+
+    int ub = greedy_ub(graph);
+
+    if (weight_bound != -1 && ub <= weight_bound)
+    {
+        solver.ch.enable_cout();
+        return true;
+    }
+
+    bool solved = solver.run_branch_reduce();
+
+    if (!solved)
+    {
+        label = 2;
+        solver.ch.enable_cout();
+        return false;
+    }
+	solver.ch.enable_cout();
+    solution = solver.get_is_weight();
+    return true;
+}
