@@ -8,7 +8,7 @@
 typedef struct
 {
     NodeID *S, *NS, *T;
-    int *S_B, *NSI_B, *IS_B;
+    int *S_B, *NSI_B, *IS_B, *NS_B;
 } reduction_data;
 
 void *reduction_init(NodeID N, EdgeID M)
@@ -21,12 +21,15 @@ void *reduction_init(NodeID N, EdgeID M)
     rp->S_B = malloc(sizeof(int) * N);
     rp->NSI_B = malloc(sizeof(int) * N);
     rp->IS_B = malloc(sizeof(int) * N);
+    rp->NS_B = malloc(sizeof(int) * N);
+
 
     for (NodeID i = 0; i < N; i++)
     {
         rp->S_B[i] = 0;
         rp->NSI_B[i] = 0;
         rp->IS_B[i] = 0;
+        rp->NS_B[i] = 0;
     }
 
     return rp;
@@ -42,6 +45,7 @@ void reduction_free(void *R)
     free(rp->S_B);
     free(rp->NSI_B);
     free(rp->IS_B);
+    free(rp->NS_B);
     free(rp);
 }
 
@@ -77,6 +81,7 @@ int reduction_unconfined_csr(void *R, NodeID N, const EdgeID *V, const NodeID *E
         if (!A[E[i]])
             continue;
         rp->NS[m++] = E[i];
+        rp->NS_B[E[i]] = 1;
         rp->NSI_B[E[i]] = 1;
     }
 
@@ -84,6 +89,7 @@ int reduction_unconfined_csr(void *R, NodeID N, const EdgeID *V, const NodeID *E
     while (m > 0)
     {
         NodeID v = rp->NS[--m];
+        rp->NS_B[v] = 0;
         if (rp->S_B[v])
             continue;
 
@@ -133,6 +139,8 @@ int reduction_unconfined_csr(void *R, NodeID N, const EdgeID *V, const NodeID *E
         if (ind && sw + is <= W[v]) // Can reduce u
         {
             res = 1;
+            for (NodeID i = 0; i < m; i++)
+                rp->NS_B[rp->NS[i]] = 0; 
             break;
         }
         else if (ind && sw + is > W[v] && sw + is  <= W[v] + min) // Extend S
@@ -150,7 +158,11 @@ int reduction_unconfined_csr(void *R, NodeID N, const EdgeID *V, const NodeID *E
                 {
                     if (!A[E[j]])
                         continue;
-                    rp->NS[m++] = E[j];
+                    if (!rp->NS_B[E[j]])
+                    {
+                        rp->NS[m++] = E[j];
+                        rp->NS_B[E[j]] = 1;
+                    }
                     rp->NSI_B[E[j]] = 1;
                 }
             }
