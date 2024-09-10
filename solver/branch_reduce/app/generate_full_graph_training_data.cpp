@@ -30,7 +30,7 @@ bool write_reduction_data_csv(graph_access &G, std::vector<std::vector<int>> &re
 
     // write header
     file.open(filename + "_reduction_data.csv");
-    file << "id;w;";
+    file << "id;w";
     for (NodeID i = 0; i < reduction_data.size(); i++)
         file << ";" << reduction_names[i];
     file << std::endl;
@@ -61,14 +61,6 @@ void generate_data(branch_and_reduce_algorithm *reducer, graph_access &G, Reduct
     reducer->generate_initial_reduce_data(G, reduction_data); 
     write_reduction_data_csv(G, reduction_data, "training_data/csv/" + name , transformation_names);
 }
-graph_access& write_kernel_data_csv(branch_and_reduce_algorithm *reducer, std::string name)
-{
-    graph_operations go;
-    graph_access& k = reducer->kernelize();
-    go.writeGraphWeighted_to_csv(k, "training_data/csv/" + name + "_graph.csv");
-    // go.writeWeights_to_csv(k, "training_data/csv/" + name + "_weights.csv");
-    return k;
-}
 
 int main(int argn, char **argv)
 {
@@ -98,7 +90,6 @@ int main(int argn, char **argv)
 
     go.assign_weights(G, config);
     go.writeGraphWeighted_to_csv(G, "training_data/csv/" + name + "_original_graph.csv");
-    // go.writeWeights_to_csv(G, "training_data/csv/" + name + "_original_weights.csv");
 
     struction_log::instance()->set_graph(G);
     struction_log::instance()->print_graph();
@@ -127,6 +118,7 @@ int main(int argn, char **argv)
     branch_and_reduce_algorithm r(G, config);
     graph_access& kernel = r.kernelize();
     if (kernel.number_of_nodes() == 0 ) return 0;
+    go.writeGraphWeighted_to_csv(kernel, "training_data/csv/" + name + "kernel_graph.csv");
 
     // enable all reductions
     config.disable_unconfined                 = false;
@@ -145,6 +137,5 @@ int main(int argn, char **argv)
 
     branch_and_reduce_algorithm reducer2(kernel, config);
     generate_data(&reducer2, kernel, config, name+"_kernel");
-    graph_access &kernel2 = write_kernel_data_csv(&reducer2, name+"_kernel");
     return 0;
 }
