@@ -217,6 +217,7 @@ bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, R
     c.disable_heuristic_include = true;
     c.use_partition_cover = false;
     c.disable_critical_set = true;
+    c.disable_heavy_set3 = true;
     c.disable_heavy_set = true;
     c.disable_blow_up = true;
     c.disable_generalized_fold = true;
@@ -227,25 +228,6 @@ bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, R
 
     branch_and_reduce_algorithm solver(graph, c, true);
     solver.ch.disable_cout();
-    weight_bound = std::numeric_limits<NodeWeight>::max();
-
-    int lb = greedy_lb(graph);
-
-    if (lb > weight_bound)
-    {
-        solver.ch.enable_cout();
-        label = 0;
-        return false;
-    }
-
-    int ub = greedy_ub(graph);
-
-    if (weight_bound != -1 && ub <= weight_bound)
-    {
-        solver.ch.enable_cout();
-        return true;
-    }
-
     bool solved = solver.run_branch_reduce();
 
     if (!solved)

@@ -359,11 +359,12 @@ inline int generalized_fold_reduction::generate_data(branch_and_reduce_algorithm
 
     NodeWeight MWIS_weight = 0;
     NodeWeight min_MWIS_neighbor_weight = std::numeric_limits<NodeWeight>::max();
-    bool solved_exact = solve_induced_subgraph_from_set(min_MWIS_neighbor_weight, MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping, true);
+    int l = 0;
+    bool solved_exact = solve_induced_subgraph_from_set(min_MWIS_neighbor_weight, MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping, l);
     if (!solved_exact)
     {
         label.push_back(v);
-        return 2;
+        return l;
     }
 
     if (status.weights[v] >= MWIS_weight)
@@ -371,6 +372,7 @@ inline int generalized_fold_reduction::generate_data(branch_and_reduce_algorithm
         label.push_back(v);
         return 1;
     }
+    solve_induced_subgraph_from_set(min_MWIS_neighbor_weight, MWIS_weight, neighborhood_graph, br_alg, neighbors, neighbors_set, reverse_mapping, true);
 
     MWIS_set.clear();
 
@@ -395,7 +397,7 @@ inline int generalized_fold_reduction::generate_data(branch_and_reduce_algorithm
     }
 
     bool check_failed = false;
-    int l = 0;
+    l = 0;
 
     // check that no other IS in N(v) exists with weight greater than v
     for (const NodeID neighbor : status.graph[v])

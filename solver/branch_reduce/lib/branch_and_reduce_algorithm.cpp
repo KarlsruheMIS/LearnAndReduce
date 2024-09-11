@@ -48,12 +48,6 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 	bool_buffer.reserve(global_status.n);
 	weight_buffer.reserve(global_status.n);
 
-	// if (config.generate_training_data)
-	// {
-	// 	is_included_vertex = std::vector<bool>(global_status.n, false);
-	// 	is_excluded_vertex = std::vector<bool>(global_status.n, false);
-	// }
-
 	if (!config.disable_neighborhood)
 		global_status.transformations.emplace_back(new neighborhood_reduction(global_status.n));
 	if (!config.disable_fold1)
@@ -261,12 +255,6 @@ void branch_and_reduce_algorithm::set(NodeID node, IS_status mis_status, bool pu
 	assert(status.node_status[node] == IS_status::not_set && "Node status set");
 	assert(status.remaining_nodes > 0 && "No nodes remaining to set");
 	status.node_status[node] = mis_status;
-	// #ifdef gen_training_data
-	// 	if (mis_status == IS_status::included)
-	// 		is_included_vertex[node] = true;
-	// 	else if (mis_status == IS_status::excluded)
-	// 		is_excluded_vertex[node] = true;
-	// #endif
 
 	status.remaining_nodes--;
 	status.graph.hide_node(node);

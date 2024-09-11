@@ -118,7 +118,7 @@ int main(int argn, char **argv)
     branch_and_reduce_algorithm r(G, config);
     graph_access& kernel = r.kernelize();
     if (kernel.number_of_nodes() == 0 ) return 0;
-    go.writeGraphWeighted_to_csv(kernel, "training_data/csv/" + name + "kernel_graph.csv");
+    go.writeGraphWeighted_to_csv(kernel, "training_data/csv/" + name + "_kernel_graph.csv");
 
     // enable all reductions
     config.disable_unconfined                 = false;
@@ -132,8 +132,6 @@ int main(int argn, char **argv)
     config.disable_heavy_set                  = false;
     config.disable_heavy_set3                 = false;
     config.disable_critical_set               = false;
-    config.disable_plateau_struction          = false;
-    config.disable_decreasing_struction       = false;
 
     branch_and_reduce_algorithm reducer2(kernel, config);
     generate_data(&reducer2, kernel, config, name+"_kernel");

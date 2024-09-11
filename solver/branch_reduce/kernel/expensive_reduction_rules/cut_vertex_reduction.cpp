@@ -4,6 +4,8 @@
 #include "general_reduction.h"
 #include "branch_and_reduce_algorithm.h"
 
+#include <stack>
+
 typedef branch_and_reduce_algorithm::IS_status IS_status;
 
 bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
@@ -67,9 +69,6 @@ bool cut_vertex_reduction::reduce(branch_and_reduce_algorithm* br_alg) {
 
         if (!real_cut_v)
         { // directly solve the component without fold
-#ifdef gen_training_data
-            return false;
-#endif
             cut_component.push_back(cut_v);
             cut_component_set.add(cut_v);
             NodeWeight MWIS_weight = 0;
@@ -135,7 +134,7 @@ bool cut_vertex_reduction::DFS(branch_and_reduce_algorithm* br_alg, NodeID u, in
     auto& low = br_alg->buffers[0];
     auto& disc = br_alg->buffers[1];
     auto& parent = br_alg->buffers[2];
-    low.assign(status.n,std::numeric_limits<int>::max());
+    low.assign(status.n,std::numeric_limits<NodeID>::max());
     disc.assign(status.n,0);
     parent.assign(status.n, status.n);
     std::vector<NodeID> stack;
@@ -146,31 +145,29 @@ bool cut_vertex_reduction::DFS(branch_and_reduce_algorithm* br_alg, NodeID u, in
 
     while (!stack.empty() && br_alg->config.reduction_time_limit > br_alg->t.elapsed())
     {
-        NodeID current = stack.back();
+        NodeID c = stack.back();
 
-        int children = 0;
-        disc[current] = low[current] = ++step;
-        visited[current] = true;
+        disc[c] = low[c] = ++step;
+        visited[c] = true;
 
         bool pushedChild = false;
-        for (NodeID v : graph[current])
+        for (NodeID v : graph[c])
         {
             // Avoid reprocessing an edge in the undirected graph
-            if (!edge_stack.empty() && edge_stack.back() == std::make_pair(v, current))
+            if (!edge_stack.empty() && edge_stack.back() == std::make_pair(v, c))
                 continue;
 
             if (!visited[v])
             {
                 stack.push_back(v);
-                edge_stack.push_back(std::make_pair(current, v)); // Track the edge
-                children++;
-                parent[v] = current;
+                edge_stack.push_back(std::make_pair(c, v)); // Track the edge
+                parent[v] = c;
                 pushedChild = true;
                 break;
             }
-            else if (v != parent[current])
+            else if (v != parent[c])
             {
-                low[current] = std::min(low[current], disc[v]);
+                low[c] = std::min(low[c], disc[v]);
             }
         }
         if (!pushedChild)
@@ -178,13 +175,13 @@ bool cut_vertex_reduction::DFS(branch_and_reduce_algorithm* br_alg, NodeID u, in
             stack.pop_back(); // Finish processing current node
             if (!stack.empty())
             {
-                low[parent[current]] = std::min(low[parent[current]], low[current]);
+                low[parent[c]] = std::min(low[parent[c]], low[c]);
 
                 // check if current is a cut vertex
-                if ((parent[current] == status.n && disc[current] != low[current]) || // root node
-                    (parent[current] != status.n && low[current] >= disc[parent[current]]))
+                if ((parent[c] == status.n && disc[c] != low[c]) || // root node
+                    (parent[c] != status.n && low[c] >= disc[parent[c]]))
                     {
-                        if (check_components(br_alg, current, cut_vertex, smallComponent))
+                        if (check_components(br_alg, c, cut_vertex, smallComponent))
                         {
                             return true;
                         }
@@ -246,14 +243,14 @@ bool cut_vertex_reduction::build_small_component(NodeID u, branch_and_reduce_alg
 
     while (!stack.empty())
     {
-        NodeID current = stack.back();
+        NodeID c = stack.back();
         stack.pop_back();
 
-        if (visited[current])
+        if (visited[c])
             continue;
 
-        visited[current] = true;
-        component.push_back(current);
+        visited[c] = true;
+        component.push_back(c);
 
         // If the component exceeds the maximum size, return false to indicate failure
         if (component.size() > br_alg->config.subgraph_node_limit)
@@ -264,7 +261,7 @@ bool cut_vertex_reduction::build_small_component(NodeID u, branch_and_reduce_alg
             return false;
         }
 
-        for (NodeID neighbor : status.graph[current])
+        for (NodeID neighbor : status.graph[c])
         {
             if (!visited[neighbor])
             {
@@ -284,19 +281,19 @@ void cut_vertex_reduction::dfs_fill_visited(NodeID u, branch_and_reduce_algorith
 
     while (!stack.empty() && br_alg->config.reduction_time_limit > br_alg->t.elapsed())
     {
-        NodeID current = stack.back();
+        NodeID c = stack.back();
         stack.pop_back();
 
-        if (visited[current])
+        if (visited[c])
         {
             continue;
         }
 
         // Mark the current node as visited
-        visited[current] = true;
-        visited_dfs[current] = true;
+        visited[c] = true;
+        visited_dfs[c] = true;
 
-        for (NodeID neighbor : br_alg->status.graph[current])
+        for (NodeID neighbor : br_alg->status.graph[c])
         {
             if (!visited[neighbor])
             {
@@ -415,9 +412,6 @@ inline bool cut_vertex_reduction::reduce_vertex(branch_and_reduce_algorithm *br_
 
         if (!real_cut_v)
         { // directly solve the component without fold
-#ifdef gen_training_data
-            return false;
-#endif
             cut_component.push_back(cut_v);
             cut_component_set.add(cut_v);
             NodeWeight MWIS_weight = 0;
@@ -525,74 +519,70 @@ bool cut_vertex_reduction::get_fold_data(branch_and_reduce_algorithm* br_alg, No
         return true;
     }
 }
-bool cut_vertex_reduction::generate_global_data(branch_and_reduce_algorithm* br_alg, std::vector<NodeID>& label)
+bool cut_vertex_reduction::generate_global_data(branch_and_reduce_algorithm* br_alg, std::vector<NodeID>& articulation_points)
 {
+ 
     auto& status = br_alg->status;
     auto& graph = br_alg->status.graph;
     auto& visited = br_alg->bool_buffer;
     auto& low = br_alg->buffers[0];
     auto& disc = br_alg->buffers[1];
     auto& parent = br_alg->buffers[2];
-    low.assign(status.n,std::numeric_limits<int>::max());
-    disc.assign(status.n,0);
-    parent.assign(status.n, status.n);
-    std::vector<NodeID> stack;
-    std::vector<std::pair<NodeID, NodeID>> edge_stack;
-    stack.reserve(br_alg->status.remaining_nodes);
-    edge_stack.reserve(br_alg->status.remaining_nodes);
+    low.assign(status.n,status.n);
+    disc.assign(status.n,status.n);
+    parent.assign(status.n, status.n+1);
+    visited.assign(status.n, false);
+    std::stack<std::pair<NodeID, NodeID>> dfsStack;  // Stack to simulate recursion (pair of node and child index)
+    
+    int time = 0;  // To track discovery times
+    int rootChildren = 0;  // To track the number of children of the root
 
-    int step = 0;
-    for (NodeID u = 0; u < br_alg->status.remaining_nodes; ++u)
-    {
-        if (visited[u])
-            continue;
+    // Start DFS for all unvisited nodes (in case of disconnected graph)
+    for (int root = 0; root < status.remaining_nodes; ++root) {
+        if (disc[root] == status.n) {
+            // Initialize the DFS with the root
+            dfsStack.push({root, 0});
+            parent[root] = status.n;
+            disc[root] = low[root] = time++;
+            rootChildren = 0;
 
-        stack.push_back(u);
-        while (!stack.empty() && br_alg->config.reduction_time_limit > br_alg->t.elapsed())
-        {
-            NodeID current = stack.back();
+            while (!dfsStack.empty()) {
+                auto [u, childIndex] = dfsStack.top();
+                dfsStack.pop();
 
-            int children = 0;
-            disc[current] = low[current] = ++step;
-            visited[current] = true;
+                // If we haven't processed all neighbors
+                if (childIndex < status.graph[u].size()) {
+                    int v = status.graph[u][childIndex];
+                    dfsStack.push({u, childIndex + 1});  // Continue to the next child in the future
 
-            bool pushedChild = false;
-            for (NodeID v : graph[current])
-            {
-                // Avoid reprocessing an edge in the undirected graph
-                if (!edge_stack.empty() && edge_stack.back() == std::make_pair(v, current))
-                    continue;
-
-                if (!visited[v])
-                {
-                    stack.push_back(v);
-                    edge_stack.push_back(std::make_pair(current, v)); // Track the edge
-                    children++;
-                    parent[v] = current;
-                    pushedChild = true;
-                    break;
-                }
-                else if (v != parent[current])
-                {
-                    low[current] = std::min(low[current], disc[v]);
+                    if (disc[v] == status.n) {
+                        // v is an unvisited child of u
+                        parent[v] = u;
+                        disc[v] = low[v] = time++;
+                        dfsStack.push({v, 0});  // Process v next
+                        if (parent[u] == status.n) rootChildren++;  // If u is the root, increment rootChildren
+                    } else if (v != parent[u]) {
+                        // v is a back edge
+                        low[u] = std::min(low[u], disc[v]);
+                    }
+                } else {
+                    // All children of u have been processed
+                    if (parent[parent[u]] != status.n && parent[u] != status.n) {
+                        // Check articulation point condition for non-root nodes
+                        if (low[u] >= disc[parent[u]]) {
+                            articulation_points.push_back(parent[u]);
+                        }
+                        // Update the low value of the parent
+                        low[parent[u]] = std::min(low[parent[u]], low[u]);
+                    }
                 }
             }
-            if (!pushedChild)
-            {
-                stack.pop_back(); // Finish processing current node
-                if (!stack.empty())
-                {
-                    low[parent[current]] = std::min(low[parent[current]], low[current]);
 
-                    // check if current is a cut vertex
-                    if ((parent[current] == status.n && disc[current] != low[current]) || // root node
-                        (parent[current] != status.n && low[current] >= disc[parent[current]]))
-                            label.push_back(current);
-                }
-                if (!edge_stack.empty())
-                    edge_stack.pop_back(); // Pop the edge after processing
+            // Special case for root
+            if (parent[root] == status.n && rootChildren > 1) {
+                articulation_points.push_back(root);
             }
         }
     }
-    return label.size() > 0;
+    return articulation_points.size() > 0;
 }
