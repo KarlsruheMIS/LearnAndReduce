@@ -87,6 +87,11 @@ int main(int argn, char **argv)
     graph_access G;
     graph_operations go;
     graph_io::readGraphWeighted(G, graph_filepath);
+    if (G.number_of_nodes() < 1000)
+    {
+        std::cout << "Graph " << name << " is too small for training data generation" << std::endl;
+        return 0;
+    }
 
     go.assign_weights(G, config);
     go.writeGraphWeighted_to_csv(G, "training_data/csv/" + name + "_original_graph.csv");
