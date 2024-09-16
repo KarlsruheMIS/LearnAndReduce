@@ -95,6 +95,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 
 			if (!config.disable_critical_set)
 				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
+			if (!config.disable_extended_domination_reverse)
+				global_status.transformations.emplace_back(new extended_domination_reverse_reduction(global_status.n));
 			if (!config.disable_generalized_fold)
 				global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
 			if (!config.disable_heavy_set)
@@ -121,6 +123,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 			if (!config.disable_blow_up)
 				global_status.transformations.push_back(make_increasing_struction(config, global_status.n));
 
+			if (!config.disable_extended_domination_reverse)
+				global_status.transformations.emplace_back(new extended_domination_reverse_reduction(global_status.n));
 			if (!config.disable_generalized_fold)
 				global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
 			if (!config.disable_heavy_set)
@@ -146,6 +150,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 				global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
 			if (!config.disable_critical_set)
 				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
+			if (!config.disable_extended_domination_reverse)
+				global_status.transformations.emplace_back(new extended_domination_reverse_reduction(global_status.n));
 			if (!config.disable_generalized_fold)
 				global_status.transformations.emplace_back(new generalized_fold_reduction(global_status.n));
 			if (!config.disable_heavy_set)
