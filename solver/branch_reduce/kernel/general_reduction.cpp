@@ -127,22 +127,24 @@ bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, R
     solver.ch.disable_cout();
     if (config.disable_early_termination)
         weight_bound = std::numeric_limits<NodeWeight>::max();
-
-    int lb = greedy_lb(graph);
-
-    if (lb > weight_bound)
+    if (weight_bound == -1)
     {
-        solver.ch.enable_cout();
-        return false;
-    }
+        int lb = greedy_lb(graph);
 
-    int ub = greedy_ub(graph);
+        if (lb > weight_bound)
+        {
+            solver.ch.enable_cout();
+            return false;
+        }
 
-    if (weight_bound != -1 && ub <= weight_bound)
-    {
-        // printf("UB hit %d %d %d\n", weight_bound, lb, ub);
-        solver.ch.enable_cout();
-        return true;
+        int ub = greedy_ub(graph);
+
+        if (weight_bound != -1 && ub <= weight_bound)
+        {
+            // printf("UB hit %d %d %d\n", weight_bound, lb, ub);
+            solver.ch.enable_cout();
+            return true;
+        }
     }
 
     // timer t;
@@ -159,7 +161,7 @@ bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, R
     {
         solver.apply_branch_reduce_solution(graph);
     }
-	solver.ch.enable_cout();
+    solver.ch.enable_cout();
     solution = solver.get_is_weight();
     return true;
 }
@@ -168,7 +170,7 @@ bool general_reduction::is_reduced(NodeID v, branch_and_reduce_algorithm *br_alg
     return br_alg->status.node_status[v] != IS_status::not_set;
 }
 // used for generating training data
-bool general_reduction::solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &nodes_vec, const fast_set &nodes_set, std::vector<NodeID> &reverse_mapping, int& label)
+bool general_reduction::solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, graph_access &graph, branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &nodes_vec, const fast_set &nodes_set, std::vector<NodeID> &reverse_mapping, int &label)
 {
     if (nodes_vec.size() == 0)
     {
@@ -186,12 +188,12 @@ bool general_reduction::solve_induced_subgraph_from_set(NodeWeight weight_bound,
     br_alg->build_induced_subgraph(graph, nodes_vec, nodes_set, reverse_mapping);
     return solve_graph(solution, graph, br_alg->config, weight_bound, label);
 }
-bool general_reduction::solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, int& label)
+bool general_reduction::solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, graph_access &neighborhood_graph, branch_and_reduce_algorithm *br_alg, NodeID v, int &label)
 {
     br_alg->build_induced_neighborhood_subgraph(neighborhood_graph, v);
     return solve_graph(solution, neighborhood_graph, br_alg->config, weight_bound, label);
 }
-bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, int& label)
+bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, int &label)
 {
     label = 1;
     if (graph.number_of_nodes() == 0)
@@ -236,7 +238,7 @@ bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, R
         solver.ch.enable_cout();
         return false;
     }
-	solver.ch.enable_cout();
+    solver.ch.enable_cout();
     solution = solver.get_is_weight();
     return true;
 }
