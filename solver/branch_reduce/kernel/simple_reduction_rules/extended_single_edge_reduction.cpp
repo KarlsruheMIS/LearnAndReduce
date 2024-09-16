@@ -40,8 +40,8 @@ inline bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algo
     assert(max_weight_neighbor != v && "ERROR: max_weight_neighbor == v");
     if (weights[v] < neighbors_weight - weights[max_weight_neighbor])
         return false;
-    if (try_neighborhood_reduction(v, br_alg, neighbors_weight))
-        return oldn != br_alg->status.remaining_nodes;
+    // if (try_neighborhood_reduction(v, br_alg, neighbors_weight))
+    //     return oldn != br_alg->status.remaining_nodes;
     
     get_neighborhood_set(v, br_alg, neighbors);
     get_neighborhood_vector(v, br_alg, neighbors_vec);
@@ -50,12 +50,11 @@ inline bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algo
               { return weights[a] > weights[b]; });
     for (NodeID max_neighbor : neighbors_vec)
     {
-        if (v > max_neighbor)
+        if (v == max_neighbor)
             continue;
         if (weights[v] < neighbors_weight - weights[max_neighbor])
             return oldn != status.remaining_nodes;
 
-        bool progress = false;
         for (NodeID neighbor : status.graph[max_neighbor])
         {
             if (neighbor == v)
@@ -66,12 +65,9 @@ inline bool extended_single_edge_reduction::reduce_vertex(branch_and_reduce_algo
             if (neighbors.get(neighbor))
             {
                 br_alg->set(neighbor, IS_status::excluded);
-                progress = true;
             }
         }
 
-        // if (progress)
-        //     break;
     }
 
     return oldn != status.remaining_nodes;

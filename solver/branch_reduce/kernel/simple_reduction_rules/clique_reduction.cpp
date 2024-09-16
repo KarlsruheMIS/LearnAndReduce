@@ -169,7 +169,6 @@ inline bool clique_reduction::reduce_vertex(branch_and_reduce_algorithm *br_alg,
         if (count != neighbors.size())
             return false;
     }
-    // TODO only simplicial vertices
 
     // one of "isolated" members has highest weight of clique: Add to IS
     // also handles completely isolated cliques

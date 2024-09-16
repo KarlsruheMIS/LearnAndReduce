@@ -19,13 +19,12 @@ struct cut_vertex_reduction : public general_reduction
     virtual reduction_type get_reduction_type() const final { return reduction_type::cut_vertex; }
     virtual std::string get_reduction_name() final { return "cut_vertex"; }
     virtual bool reduce(branch_and_reduce_algorithm *br_alg) final;
-    virtual bool reduce_vertex(branch_and_reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(branch_and_reduce_algorithm *br_alg) final;
     virtual void apply(branch_and_reduce_algorithm *br_alg) final;
 
-    bool find_cut_vertex(branch_and_reduce_algorithm *br_alg, NodeID &cut_v, std::vector<NodeID> &cut_component, std::vector<NodeID> &reverse_mapping, fast_set &tested);
-    bool DFS(branch_and_reduce_algorithm *br_alg, NodeID u, int &step, NodeID &cut_vertex, std::vector<NodeID> &smallComponent);
+    void get_mappings_to_remaining_graph(branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &map, std::vector<NodeID> &reverse_map);
     bool get_fold_data(branch_and_reduce_algorithm *br_alg, NodeID cut_v, std::vector<NodeID> &cut_v_included_i, std::vector<NodeID> &cut_v_included_e, std::vector<NodeID> &cut_v_excluded_i, std::vector<NodeID> &cut_v_excluded_e, NodeWeight &large_cutMWIS_weight, NodeWeight &small_cutMWIS_weight);
+    void get_articulation_points(branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &articulation_points, std::vector<NodeID> &reverse_map, std::vector<NodeID> &map);
     bool generate_global_data(branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &label);
 
 private:
@@ -47,7 +46,7 @@ private:
         std::vector<NodeID> case_cut_v_excluded_nodes_to_exclude;
     };
 
-    bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, NodeID &cut_vertex, std::vector<NodeID> &smallComponent);
+    bool check_components(branch_and_reduce_algorithm *br_alg, NodeID u, std::vector<NodeID> &smallComponent);
     bool build_small_component(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<NodeID> &component, std::vector<bool> &component_visited);
     void dfs_fill_visited(NodeID u, branch_and_reduce_algorithm *br_alg, std::vector<bool> &component_visited);
     void fold(branch_and_reduce_algorithm *br_alg, fold_data &data, std::vector<NodeID> &cut_v_included_i, std::vector<NodeID> &cut_v_included_e, std::vector<NodeID> &cut_v_excluded_i, std::vector<NodeID> &cut_v_excluded_e);

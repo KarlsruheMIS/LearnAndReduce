@@ -8,7 +8,7 @@
 #include "definitions.h"
 #include "general_reduction.h"
 
-constexpr size_t REDUCTION_NUM = 29;
+constexpr size_t REDUCTION_NUM = 31;
 
 struct reduction_ptr
 {
