@@ -97,6 +97,8 @@ class ReductionArguments : public BaseArguments {
             disable_v_shape_mid         = arg_lit0(NULL, "disable_v_shape_mid", "Disable v_shape_mid reduction.");
             disable_domination          = arg_lit0(NULL, "disable_domination", "Disable domination reduction.");
             disable_extended_domination = arg_lit0(NULL, "disable_extended_domination", "Disable extended domination reduction.");
+            disable_extended_domination_reverse = arg_lit0(NULL, "disable_extended_domination_reverse", "Disable extended domination reverse reduction.");
+            disable_extended_twin       = arg_lit0(NULL, "disable_extended_twin", "Disable extended twin reduction.");
             disable_basic_se            = arg_lit0(NULL, "disable_basic_se", "Disable basic single edge reduction.");
             disable_extended_se         = arg_lit0(NULL, "disable_extended_se", "Disable extended single edge reduction.");
             disable_clique_neighborhood = arg_lit0(NULL, "disable_clique_neighborhood", "Disable neighborhood clique reduction.");
@@ -166,6 +168,8 @@ class ReductionArguments : public BaseArguments {
         struct arg_lit * disable_v_shape_mid;
         struct arg_lit * disable_domination;
         struct arg_lit * disable_extended_domination;
+        struct arg_lit * disable_extended_domination_reverse;
+        struct arg_lit * disable_extended_twin;
         struct arg_lit * disable_basic_se;
         struct arg_lit * disable_extended_se;
         struct arg_lit * disable_clique_neighborhood;
@@ -313,6 +317,8 @@ int ReductionArguments::setConfig(ReductionConfig & config) {
         disable_v_shape_mid,
         disable_domination,
         disable_extended_domination,
+        disable_extended_domination_reverse,
+        disable_extended_twin,
         disable_basic_se,
         disable_extended_se,
         disable_clique_neighborhood,
@@ -511,6 +517,12 @@ void ReductionArguments::parseParameters(ReductionConfig & config) {
     }
     if (disable_extended_domination->count > 0) {
         config.disable_extended_domination = true;
+    }
+    if (disable_extended_domination_reverse->count > 0) {
+        config.disable_extended_domination_reverse = true;
+    }
+    if (disable_extended_twin->count > 0) {
+        config.disable_extended_twin = true;
     }
     if (disable_basic_se->count > 0) {
         config.disable_basic_se = true;

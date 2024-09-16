@@ -64,6 +64,8 @@ branch_and_reduce_algorithm::branch_and_reduce_algorithm(graph_access &G, const 
 		global_status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
 	if (!config.disable_twin)
 		global_status.transformations.emplace_back(new twin_reduction(global_status.n));
+	if (!config.disable_extended_twin)
+		global_status.transformations.emplace_back(new extended_twin_reduction(global_status.n));
 
 	global_status.num_reductions = global_status.transformations.size();
 
@@ -1472,7 +1474,6 @@ void branch_and_reduce_algorithm::apply_branch_reduce_solution(graph_access &G)
 	endfor
 }
 
-
 /****************************************************
  * added for generating training_data
  * ************************************************/
@@ -1556,5 +1557,68 @@ void branch_and_reduce_algorithm::print_reduction_info()
 		std::cout << i << " ";
 		reduction->print_reduction_type();
 		std::cout << " reduced " << reduction->reduced_nodes << "\tnodes in " << reduction->reduction_time << " s" << std::endl;
+	}
+}
+void branch_and_reduce_algorithm::print_dyn_graph()
+{
+	print_dyn_graph(global_status);
+}
+void branch_and_reduce_algorithm::print_dyn_graph(graph_status &s)
+{
+	std::cout << "__________________________________" << std::endl;
+	std::cout << "Dynamic graph:" << std::endl;
+	for (size_t node = 0; node < s.graph.size(); node++)
+	{
+		switch (s.node_status[node])
+		{
+		case IS_status::included:
+			std::cout << " \t \t\t included w(" << s.weights[node] << ")\t";
+			break;
+		case IS_status::excluded:
+			std::cout << " \t \t\t excluded w(" << s.weights[node] << ")\t";
+			break;
+		case IS_status::folded:
+			std::cout << " \t \t\t folded w(" << s.weights[node] << ")\t";
+			break;
+		case IS_status::not_set:
+			std::cout << "not_set\t\t w(" << s.weights[node] << ")\t";
+			break;
+		}
+		s.graph.print_neighbors(node);
+	}
+	std::cout << "__________________________________" << std::endl;
+}
+
+void branch_and_reduce_algorithm::print_graph(graph_access &G)
+{
+	std::cout << "__________________________________" << std::endl;
+	std::cout << "Graph:" << std::endl;
+	forall_nodes(G, node)
+	{
+		std::cout << "Node: " << node << " w(" << G.getNodeWeight(node) << ")\t index(" << G.getPartitionIndex(node) << ")\t :";
+		forall_out_edges(G, e, node)
+		{
+			std::cout << G.getEdgeTarget(e) << " ";
+		}
+		endfor
+				std::cout
+			<< std::endl;
+	}
+	endfor
+}
+
+void branch_and_reduce_algorithm::print_subgraph(graph_status &G, std::vector<NodeID> &nodes)
+{
+	std::cout << "__________________________________" << std::endl;
+	std::cout << "Subgraph:" << std::endl;
+	for (auto node : nodes)
+	{
+		std::cout << "Node: " << node << " w(" << status.weights[node] << ")\t status(" << status.node_status[node] << ")\t :";
+		for (auto neighbor : status.graph[node])
+		{
+			std::cout << neighbor << " ";
+		}
+		std::cout << "\n"
+				  << std::endl;
 	}
 }

@@ -31,6 +31,8 @@ set(LIB_REDUCTION
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/simple_reduction_rules/twin_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/simple_reduction_rules/domination_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/simple_reduction_rules/extended_domination_reduction.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/simple_reduction_rules/extended_domination_reverse_reduction.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/simple_reduction_rules/extended_twin_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/simple_reduction_rules/single_edge_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/simple_reduction_rules/extended_single_edge_reduction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/simple_reduction_rules/funnel_reduction.cpp

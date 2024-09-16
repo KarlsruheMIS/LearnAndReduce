@@ -44,6 +44,8 @@ struct ReductionConfig : public Config {
     bool disable_neighborhood= false;
     bool disable_domination = false;
     bool disable_extended_domination = false;
+    bool disable_extended_domination_reverse = false;
+    bool disable_extended_twin = false;
     bool disable_decreasing_struction= false;
     bool disable_plateau_struction= false;
     bool disable_path= false;

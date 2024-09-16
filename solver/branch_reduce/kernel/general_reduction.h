@@ -23,6 +23,8 @@ enum reduction_type
     clique_neighborhood,
     domination,
     extended_domination,
+    extended_domination_reverse,
+    extended_twin,
     twin,
     critical_set,
     generalized_fold,
