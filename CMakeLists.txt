@@ -156,8 +156,8 @@ add_library(lib_initial_solver OBJECT ${INITIAL_SOLVER})
 add_subdirectory(solver/branch_reduce)
 
 set(LOCAL_SEARCH
-    solver/ils/ils.cpp
-    solver/ils/local_search.cpp
+    # solver/ils/ils.cpp
+    # solver/ils/local_search.cpp
     solver/hils/Solution.cpp
     )
 add_library(lib_local_search OBJECT ${LOCAL_SEARCH})

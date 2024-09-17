@@ -20,7 +20,8 @@ void reduction_log::print_config() {
     filebuffer_string << "=========================================="                            << std::endl;
     filebuffer_string << "Time limit:\t\t\t"         << log_config.time_limit                    << std::endl; 
     filebuffer_string << "Seed:\t\t\t\t"             << log_config.seed                          << std::endl; 
-    filebuffer_string << "Reduction Style:\t\t"           << log_config.reduction_style_name     << std::endl; 
+    filebuffer_string << "Reduction Style:\t\t"      << log_config.reduction_style_name          << std::endl; 
+    filebuffer_string << "Use GNN:\t\t"              << log_config.gnn_filter                    << std::endl;
     filebuffer_string << std::endl;
     
     std::cout << "\t\tConfiguration"        << std::endl;
@@ -28,6 +29,7 @@ void reduction_log::print_config() {
     std::cout << "Time limit:\t\t\t"         << log_config.time_limit                    << std::endl; 
     std::cout << "Seed:\t\t\t\t"             << log_config.seed                          << std::endl; 
     std::cout << "Reduction Style:\t\t"      << log_config.reduction_style_name          << std::endl;
+    std::cout << "Use GNN:\t\t"              << log_config.gnn_filter                    << std::endl;
     std::cout << std::endl;
 }
 

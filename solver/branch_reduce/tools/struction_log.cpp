@@ -101,6 +101,7 @@ void struction_log::print_one_line_kernel_data(ReductionConfig & mis_config, dou
                       << log_config.reduction_config_name << ","
                       << log_config.time_limit << ","
                       << log_config.seed << ","
+                      << log_config.gnn_filter << ","
                       << number_of_nodes << ","
                       << number_of_edges/2 << ","
                       << kernel_size_n << ","
@@ -114,6 +115,7 @@ void struction_log::print_one_line_kernel_data(ReductionConfig & mis_config, dou
                       << log_config.reduction_config_name << ","
                       << log_config.time_limit << ","
                       << log_config.seed << ","
+                      << log_config.gnn_filter << ","
                       << number_of_nodes << ","
                       << number_of_edges/2 << ","
                       << kernel_size_n << ","
@@ -125,21 +127,23 @@ void struction_log::print_one_line_kernel_data(ReductionConfig & mis_config, dou
 
  void struction_log::print_config() {
     filebuffer_string << "\t\tConfiguration"                                                    << std::endl;
-    filebuffer_string << "========================================="                           << std::endl;
+    filebuffer_string << "========================================="                            << std::endl;
     filebuffer_string << "Time limit:\t\t\t"         << log_config.time_limit                   << std::endl; 
     filebuffer_string << "Seed:\t\t\t\t"             << log_config.seed                         << std::endl; 
     filebuffer_string << "Reduction Style:\t\t"      << log_config.reduction_style_name         << std::endl; 
     filebuffer_string << "Heuristic Style:\t\t"      << log_config.heuristic_style_name         << std::endl; 
     filebuffer_string << "Reduction Config: \t\t"    << log_config.reduction_config_name        << std::endl;
+    filebuffer_string << "Use GNN:\t\t\t"            << log_config.gnn_filter                   << std::endl;
     filebuffer_string                                                                           << std::endl;
     
     std::cout << "\t\tConfiguration"                                                            << std::endl;
-    std::cout << "=========================================="                                  << std::endl;
+    std::cout << "=========================================="                                   << std::endl;
     std::cout << "Time limit:\t\t\t"         << log_config.time_limit                           << std::endl; 
     std::cout << "Seed:\t\t\t\t"             << log_config.seed                                 << std::endl; 
     std::cout << "Reduction Style:\t\t"      << log_config.reduction_style_name                 << std::endl;
     std::cout << "Heuristic Style:\t\t"      << log_config.heuristic_style_name                 << std::endl;
     std::cout << "Reduction Config: \t\t"    << log_config.reduction_config_name                << std::endl;
+    std::cout << "Use GNN:\t\t\t"            << log_config.gnn_filter                           << std::endl;
     std::cout                                                                                   << std::endl;
 } 
 

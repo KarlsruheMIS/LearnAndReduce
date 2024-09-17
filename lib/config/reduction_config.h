@@ -81,7 +81,6 @@ struct ReductionConfig : public Config {
     bool disable_early_termination;
 
     // filter reductions before adding to marker
-    bool initial_filter;
     bool gnn_filter;
 
     bool perform_hils;

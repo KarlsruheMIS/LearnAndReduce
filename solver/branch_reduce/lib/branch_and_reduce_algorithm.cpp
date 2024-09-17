@@ -538,7 +538,7 @@ size_t branch_and_reduce_algorithm::run_ils(const ReductionConfig &config, graph
 
 void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduction)
 {
-	if (config.initial_filter && !reduction->has_run && reduction->has_filtered_marker)
+	if (!reduction->has_run && reduction->has_filtered_marker)
 	{
 		reduction->marker.current.clear();
 		if (reduction->get_model_path() != "" && status.remaining_nodes > 1 && config.gnn_filter)
