@@ -12,62 +12,71 @@
 #include "argtable3.h"
 #include "string.h"
 
-class BaseArguments {
-    public:
-        BaseArguments(int argc, char **argv) : argc(argc), argv(argv) {
-            progname = argv[0];
+class BaseArguments
+{
+public:
+    BaseArguments(int argc, char **argv) : argc(argc), argv(argv)
+    {
+        progname = argv[0];
 
-            // Common parameters
-            help                = arg_lit0(NULL, "help", "Print help.");
-            user_seed           = arg_int0(NULL, "seed", NULL, "Seed to use for the PRNG.");
-            filename            = arg_strn(NULL, NULL, "FILE", 1, 1, "Path to graph file.");
-            output              = arg_str0(NULL, "output", NULL, "Path to store resulting independent set.");
-            time_limit          = arg_dbl0(NULL, "time_limit", NULL, "Total time limit in s. Default 1000s.");
-            console_log         = arg_lit0(NULL, "console_log", "Stream the log into the console");
-            disable_checks      = arg_lit0(NULL, "disable_checks", "Disable sortedness check during I/O.");
-            weight_source       = arg_str0(NULL, "weight_source", NULL, "Choose how the weights are assigned. Can be either: file (default), hybrid, uniform, geometric, unit.");
-            end                 = arg_end(100);  
+        // Common parameters
+        help = arg_lit0(NULL, "help", "Print help.");
+        user_seed = arg_int0(NULL, "seed", NULL, "Seed to use for the PRNG.");
+        verbose = arg_lit0(NULL, "verbose", "Print detailed information.");
+        filename = arg_strn(NULL, NULL, "FILE", 1, 1, "Path to graph file.");
+        output = arg_str0(NULL, "output", NULL, "Path to store resulting independent set.");
+        time_limit = arg_dbl0(NULL, "time_limit", NULL, "Total time limit in s. Default 1000s.");
+        console_log = arg_lit0(NULL, "console_log", "Stream the log into the console");
+        disable_checks = arg_lit0(NULL, "disable_checks", "Disable sortedness check during I/O.");
+        weight_source = arg_str0(NULL, "weight_source", NULL, "Choose how the weights are assigned. Can be either: file (default), hybrid, uniform, geometric, unit.");
+        end = arg_end(100);
+    }
+
+    bool checkHelp(void *argtable[])
+    {
+        if (help->count > 0)
+        {
+            printf("Usage: %s", progname);
+            arg_print_syntax(stdout, argtable, "\n");
+            arg_print_glossary(stdout, argtable, "  %-40s %s\n");
+            return true;
         }
-
-        bool checkHelp(void *argtable[]) {
-            if (help->count > 0) {
-                printf("Usage: %s", progname);
-                arg_print_syntax(stdout, argtable, "\n");
-                arg_print_glossary(stdout, argtable, "  %-40s %s\n");
-                return true;
-            }
-            return false;
+        return false;
+    }
+    void checkErrors(int nerrors)
+    {
+        if (nerrors > 0)
+        {
+            arg_print_errors(stdout, end, progname);
+            printf("Try '%s --help' for more information.\n", progname);
+            exit(EXIT_FAILURE);
         }
-        void checkErrors(int nerrors) {
-            if (nerrors > 0) {
-                arg_print_errors(stdout, end, progname);
-                printf("Try '%s --help' for more information.\n", progname);
-                exit(EXIT_FAILURE);
-            }
-        }
+    }
 
-        int setConfig(Config & config);
-        void parseParameters(Config& config);
+    int setConfig(Config &config);
+    void parseParameters(Config &config);
 
-    protected:
-        int argc;
-        char **argv;
-        const char *progname;
-        struct arg_lit *help;
-        struct arg_int *user_seed;
-        struct arg_str *filename;
-        struct arg_str *output;
-        struct arg_dbl *time_limit;
-        struct arg_lit *console_log;
-        struct arg_lit *disable_checks;
-        struct arg_str *weight_source;
-        struct arg_end *end;
+protected:
+    int argc;
+    char **argv;
+    const char *progname;
+    struct arg_lit *help;
+    struct arg_int *user_seed;
+    struct arg_str *filename;
+    struct arg_str *output;
+    struct arg_dbl *time_limit;
+    struct arg_lit *console_log;
+    struct arg_lit *verbose;
+    struct arg_lit *disable_checks;
+    struct arg_str *weight_source;
+    struct arg_end *end;
 };
 
-class ReductionArguments : public BaseArguments {
-    public:
-
-        ReductionArguments(int argc, char **argv) : BaseArguments(argc, argv) {
+class ReductionArguments : public BaseArguments
+{
+public:
+    ReductionArguments(int argc, char **argv) : BaseArguments(argc, argv)
+    {
 
             // Unique parameters
             reduction_style             = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: full, normal, dense, test1, test2.");

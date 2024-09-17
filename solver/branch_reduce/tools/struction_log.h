@@ -61,6 +61,12 @@ class struction_log {
          */
         void print_graph();
 
+
+        /**
+         * Print information in one line for experiments.
+         */
+        void print_one_line_kernel_data(ReductionConfig &mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m);
+
         /**
          * Print the current config.
          */
@@ -85,6 +91,7 @@ class struction_log {
          * Print the final results.
          * @param optimal Is the computed solution optimal.
          */
+        void print_full_reduction(ReductionConfig &mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m);
         void print_results(bool optimal);
 
         /**

@@ -36,6 +36,8 @@ struct Config {
     unsigned int max_swaps = 1000;
     // Time limit for the ils 
     /* double ils_time_limit; */
+    // Print detailed information 
+    bool verbose = false;
     // Write the log into a file
     bool print_log;
     // Write the inpendent set into a file

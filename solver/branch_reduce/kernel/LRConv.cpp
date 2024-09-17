@@ -69,7 +69,7 @@ void transpose(std::vector<float> &in, int offset, float *out, int N, int M)
 
 void LRConv::change_parameters(const std::string path)
 {
-    printf("%s\n", path.c_str());
+    // printf("%s\n", path.c_str());
     if (params.find(path) == params.end())
     {
         int n_params;
@@ -324,7 +324,7 @@ const float *LRConv::predict(branch_and_reduce_algorithm *br_alg)
     std::vector<NodeID> rm(br_alg->status.n);
     br_alg->build_graph_access(g, rm);
 
-    printf("%d %d\n", g.number_of_nodes(), g.number_of_edges());
+    // printf("%d %d\n", g.number_of_nodes(), g.number_of_edges());
 
     LRConv::compute_attr_norm(&x, &e, g);
     free(y);

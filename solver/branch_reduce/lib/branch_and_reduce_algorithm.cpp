@@ -571,7 +571,8 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 					if (y[u] > 0.0f)
 						reduction->marker.current.push_back(u);
 				}
-				printf("%s added %ld vertices from %ld\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
+				if (config.verbose)
+					printf("%s added %ld vertices from %ld\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
 			}
 			else
 			{
@@ -585,7 +586,8 @@ void branch_and_reduce_algorithm::init_transformation_step(reduction_ptr &reduct
 						reduction->marker.current.push_back(u);
 				}
 
-				printf("%s %lf parse, added %ld/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, reduction->marker.current.size(), c, t.elapsed());
+				if (config.verbose)
+					printf("%s %lf parse, added %ld/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, reduction->marker.current.size(), c, t.elapsed());
 			}
 		}
 		else
@@ -1539,6 +1541,10 @@ void branch_and_reduce_algorithm::get_transformation_names(std::vector<std::stri
 	}
 }
 
+/****************************************************
+ * added for printing
+ * ************************************************/
+
 void branch_and_reduce_algorithm::print_reduction_progress()
 {
 	// print progress bar for remaining nodes in graph
@@ -1594,7 +1600,6 @@ void branch_and_reduce_algorithm::print_dyn_graph(graph_status &s)
 	}
 	std::cout << "__________________________________" << std::endl;
 }
-
 void branch_and_reduce_algorithm::print_graph(graph_access &G)
 {
 	std::cout << "__________________________________" << std::endl;
@@ -1612,7 +1617,6 @@ void branch_and_reduce_algorithm::print_graph(graph_access &G)
 	}
 	endfor
 }
-
 void branch_and_reduce_algorithm::print_subgraph(graph_status &G, std::vector<NodeID> &nodes)
 {
 	std::cout << "__________________________________" << std::endl;
