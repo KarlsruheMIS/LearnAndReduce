@@ -26,10 +26,6 @@ struct Config {
     int seed;
     // Time limit for the total algorithm
     double time_limit;
-    // Force parameter for the mutation.
-    unsigned int force_k;
-    // Number of candidates for forced insertion.
-    unsigned int force_cand;
     // Threshold for local search 
     unsigned int local_search_threshold;
     // Number of swaps in ils pruning 

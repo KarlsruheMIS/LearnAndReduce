@@ -17,9 +17,9 @@
 
 #include "branch_and_reduce_algorithm.h"
 #include "reductions.h"
-#include "ils/ils.h"
+// #include "ils/ils.h"
 #include "hils/hils.h"
-#include "ils/local_search.h"
+// #include "ils/local_search.h"
 #include "strongly_connected_components.h"
 #include "graph_extractor.h"
 #include "ReduceAndPeel.h"
@@ -512,14 +512,6 @@ NodeWeight branch_and_reduce_algorithm::compute_cover_pruning_bound(int &n_cliqu
 
 size_t branch_and_reduce_algorithm::run_ils(const ReductionConfig &config, graph_access &G, std::vector<NodeID> &tmp_buffer, size_t max_swaps)
 {
-	if (!config.perform_hils)
-	{
-		greedy_initial_is(G, tmp_buffer);
-		ils local_search(config);
-		local_search.perform_ils(G, max_swaps);
-	}
-	else
-	{
 		if (config.reduce_and_peel)
 		{
 			ReduceAndPeel reducer(G);
@@ -529,7 +521,6 @@ size_t branch_and_reduce_algorithm::run_ils(const ReductionConfig &config, graph
 			greedy_initial_is(G, tmp_buffer);
 		hils local_search(config);
 		local_search.perform_ils(G, max_swaps);
-	}
 
 	size_t solution_weight = 0;
 

@@ -60,7 +60,7 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
     config.check_sorted                           = true;
     // ILS
     config.ils_iterations                         = 15000;
-    config.force_cand                             = 4;
+    // config.force_cand                             = 4;
 	config.sort_freenodes                         = true;
     // Reductions
 	config.perform_reductions                     = true;
@@ -261,7 +261,6 @@ inline void configuration_reduction::extended_cyclicFast( ReductionConfig & conf
 
 inline void configuration_reduction::generate_training_data_initial_reductions( ReductionConfig & config ) {
     all_decreasing(config);
-    config.generate_training_data                 = true;
 
     config.disable_decreasing_struction           = true;
     config.disable_plateau_struction              = true;

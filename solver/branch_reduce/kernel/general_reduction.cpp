@@ -111,9 +111,8 @@ bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, R
         endfor return true;
     }
     auto c = config;
-    c.disable_heuristic_exclude = true;
-    c.disable_heuristic_include = true;
-    c.use_partition_cover = false;
+    // c.disable_heuristic_exclude = true;
+    // c.disable_heuristic_include = true;
     c.disable_critical_set = true;
     c.disable_heavy_set = true;
     c.disable_blow_up = true;
@@ -215,9 +214,9 @@ bool general_reduction::solve_graph(NodeWeight &solution, graph_access &graph, R
         endfor return true;
     }
     auto c = config;
-    c.disable_heuristic_exclude = true;
-    c.disable_heuristic_include = true;
-    c.use_partition_cover = false;
+    // c.disable_heuristic_exclude = true;
+    // c.disable_heuristic_include = true;
+    // c.use_partition_cover = false;
     c.disable_critical_set = true;
     c.disable_heavy_set3 = true;
     c.disable_heavy_set = true;

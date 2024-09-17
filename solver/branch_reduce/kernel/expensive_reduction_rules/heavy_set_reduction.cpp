@@ -75,7 +75,7 @@ inline bool heavy_set_reduction::reduce_vertex(branch_and_reduce_algorithm *br_a
 
             if (is_heavy_set(v, v_neighbors_set, u, br_alg))
             {
-                // reduction was applied
+                // reduction was applied successfully
                 return oldn != status.remaining_nodes;
             }
         }

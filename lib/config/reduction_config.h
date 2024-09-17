@@ -69,8 +69,6 @@ struct ReductionConfig : public Config {
     bool all_reductions;
 	// Perform reduction
 	bool perform_reductions;
-    // Threshold for reductions
-    int reduction_threshold;
     // Choose reduction order and amount for given graph type
     Reduction_Style reduction_style = ReductionConfig::Reduction_Style::FULL;
     Heuristic_Style heuristic_style = Heuristic_Style::none;
@@ -82,20 +80,9 @@ struct ReductionConfig : public Config {
     // early terminate solving subgraphs is best weight found is already to large for reduction to be applied
     bool disable_early_termination;
 
-    // use hils solution to set edge weights in partition cover for upper bound
-    bool partition_cover_with_edge_weights = false;
-    int partition_cover_imbalance = 4;
-
     // filter reductions before adding to marker
     bool initial_filter;
     bool gnn_filter;
-
-    // use partition cover for upper bound
-    bool use_partition_cover = false;
-    // Lower bound for the change rate between best individuals
-    double best_limit;
-    // Number of candidates for forced insertion.
-    unsigned int force_cand;
 
     bool perform_hils;
 
@@ -114,15 +101,6 @@ struct ReductionConfig : public Config {
     bool reduce_and_peel;
     bool plain_struction;
     bool disable_blow_up;
-
-    // for training data generation
-    bool pick_nodes_by_NodeID;
-    bool pick_nodes_by_BFS;
-    bool exact_data;
-    int num_of_subgraphs = 10;
-    NodeID size_of_subgraph = 1000;
-    int num_initial_reductions = 3;
-    bool generate_training_data = false;
 
     void setReductionStyle(const std::string & style) {
         if (strCompare(style, "dense")) {
