@@ -76,6 +76,7 @@ struct ReductionConfig : public Config {
     std::string heuristic_style_name = "none";
     std::string reduction_style_name = "full";
     double reduction_time_limit;
+    double subgraph_time_limit=1;
 
     // early terminate solving subgraphs is best weight found is already to large for reduction to be applied
     bool disable_early_termination;
