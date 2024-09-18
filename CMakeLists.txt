@@ -104,7 +104,7 @@ if(64BITMODENODEWEIGHTS)
 endif()
 
 set(TSOLVER ${CMAKE_CURRENT_SOURCE_DIR}/solver/tiny_solver)
-set(BSOLVER ${CMAKE_CURRENT_SOURCE_DIR}/solver/branch_reduce)
+set(BSOLVER ${CMAKE_CURRENT_SOURCE_DIR}/solver/reducer)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
