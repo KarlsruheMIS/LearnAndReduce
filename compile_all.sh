@@ -23,24 +23,18 @@ rm -rf deploy
 mkdir -p build
 cd build
 
-if [[ "$buildtype" == "Profile" ]]; then
-  cmake ../ -DCMAKE_CXX_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg -DCMAKE_SHARED_LINKER_FLAGS=-pg
+if [[ "$buildtype" == "Release" ]]; then
+    cmake ../ -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ 
 else
-    if [[ "$buildtype" == "Release" ]]; then
-        # cmake ../ -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=${buildtype} 
-        cmake ../ -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
-    else
-        cmake ../ -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=${buildtype} -DCMAKE_CXX_FLAGS="-DREDUCTION_INFO"
-    fi
+    cmake ../ -DCMAKE_C_COMPILER=$(which gcc) -DCMAKE_CXX_COMPILER=$(which g++) -DCMAKE_BUILD_TYPE=${buildtype} -DCMAKE_CXX_FLAGS="-DREDUCTION_INFO"
 fi
 make -j $NCORES
 cd ..
 
 mkdir -p deploy
-cp -f ./build/solver/branch_reduce/branch_reduce_convergence    deploy/branch_reduce
-cp -f ./build/solver/branch_reduce/kernelization                deploy/kernelization
-cp -f ./build/solver/branch_reduce/generate_full_graph_training_data       deploy/generate_training_data
-cp -f ./build/metis_to_cosmo                                    deploy/metis_to_cosmo
-cp -f ./build/graphchecker                                      deploy/graphchecker
+cp -f ./build/kernelization                           deploy/kernelization
+cp -f ./build/generate_full_graph_training_data       deploy/generate_training_data
+cp -f ./build/metis_to_cosmo                          deploy/metis_to_cosmo
+cp -f ./build/graphchecker                            deploy/graphchecker
 
 

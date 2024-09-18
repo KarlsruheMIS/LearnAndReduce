@@ -80,7 +80,7 @@ add_definitions(-Wno-unused-result)
 endif()
 
 # check dependencies
-find_package(OpenMP)
+find_package(OpenMP REQUIRED)
 if(OpenMP_CXX_FOUND)
   message(STATUS "OpenMP support detected")
   add_definitions(${OpenMP_CXX_FLAGS})
@@ -103,6 +103,8 @@ if(64BITMODENODEWEIGHTS)
   add_definitions("-DPOINTER64=1")
 endif()
 
+set(TSOLVER ${CMAKE_CURRENT_SOURCE_DIR}/solver/tiny_solver)
+set(BSOLVER ${CMAKE_CURRENT_SOURCE_DIR}/solver/branch_reduce)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -115,63 +117,88 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/data_structure
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/data_structure/priority_queues
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/basics 
-    ${CMAKE_CURRENT_SOURCE_DIR}/solver
-    ${CMAKE_CURRENT_SOURCE_DIR}/solver/initial
-    ${CMAKE_CURRENT_SOURCE_DIR}/solver/ils
-    ${CMAKE_CURRENT_SOURCE_DIR}/solver/hils
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/argtable3-3.2.2
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${TSOLVER}
+    ${BSOLVER}
+    ${BSOLVER}/app 
+    ${BSOLVER}/lib
+    ${BSOLVER}/lib/bounds
+    ${BSOLVER}/tools
+    ${BSOLVER}/kernel
+    ${BSOLVER}/kernel/simple_reduction_rules
+    ${BSOLVER}/kernel/expensive_reduction_rules
+    ${BSOLVER}/kernel/struction_reduction_rules
+    ${BSOLVER}/kernel/heuristic_reduction_rules
+    ${BSOLVER}/kernel/csr_reductions
+)
+
+
+set_source_files_properties(
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/data_structure/csr_graph.c
+    ${TSOLVER}/tiny_solver.c
+    ${BSOLVER}/kernel/csr_reductions/src/reductions.c
+    PROPERTIES LANGUAGE C
 )
 
 set(GENERAL
     lib/io/graph_io.cpp
     lib/algorithms/push_relabel.cpp
-    lib/algorithms/strongly_connected_components.cpp
     lib/data_structure/operation_log.cpp
     lib/data_structure/priority_queues/bucket_array.cpp
-    lib/data_structure/mis_permutation.cpp
-    lib/data_structure/candidate_list.cpp
+    lib/data_structure/csr_graph.c
     lib/tools/random_functions.cpp
-    lib/tools/graph_extractor.cpp
     lib/config/mis_log.cpp
     lib/config/reduction_log.cpp
     lib/basics/cout_handler.cpp
     extern/argtable3-3.2.2/argtable3.c
-    )
-add_library(lib_general OBJECT ${GENERAL})
-
-set(INITIAL_SOLVER
-    solver/initial/initial_mis.cpp
-    solver/initial/greedy_mis.cpp
-    solver/initial/greedy_mwis.cpp
-    solver/initial/random_mis.cpp
-    solver/initial/greedy_mwis.cpp
-    solver/initial/greedy_mis.cpp
-    solver/initial/greedy_weighted_vertex.cpp
-    solver/initial/greedy_vertex.cpp
-    )
-add_library(lib_initial_solver OBJECT ${INITIAL_SOLVER})
-
-
-# build branch and reduce solvers 
-add_subdirectory(solver/branch_reduce)
-
-set(LOCAL_SEARCH
-    # solver/ils/ils.cpp
-    # solver/ils/local_search.cpp
-    solver/hils/Solution.cpp
-    )
-add_library(lib_local_search OBJECT ${LOCAL_SEARCH})
-target_include_directories(lib_local_search PUBLIC ${REDUCTION_INCLUDES})
-target_link_libraries(lib_local_search PUBLIC lib_reduction)
-
-add_library(lib STATIC $<TARGET_OBJECTS:lib_general>
-                       $<TARGET_OBJECTS:lib_initial_solver>
-                       $<TARGET_OBJECTS:lib_local_search>
-                        )
+    ${TSOLVER}/tiny_solver.c
+    ${BSOLVER}/tools/struction_log.cpp
+    ${BSOLVER}/lib/reduce_algorithm.cpp
+    ${BSOLVER}/kernel/general_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/fold1_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/fold2_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/neighborhood_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/clique_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/clique_neighborhood_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/clique_neighborhood_fast_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/twin_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/domination_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/extended_domination_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/extended_domination_reverse_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/extended_twin_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/single_edge_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/extended_single_edge_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/funnel_reduction.cpp
+    ${BSOLVER}/kernel/simple_reduction_rules/funnel_fold_reduction.cpp
+    ${BSOLVER}/kernel/struction_reduction_rules/mwis_finder.cpp
+    ${BSOLVER}/kernel/struction_reduction_rules/original_struction.cpp
+    ${BSOLVER}/kernel/struction_reduction_rules/extended_struction.cpp
+    ${BSOLVER}/kernel/struction_reduction_rules/key_functions.cpp
+    ${BSOLVER}/kernel/struction_reduction_rules/struction_reductions.cpp
+    ${BSOLVER}/kernel/expensive_reduction_rules/critical_set_reduction.cpp
+    ${BSOLVER}/kernel/expensive_reduction_rules/cut_vertex_reduction.cpp
+    ${BSOLVER}/kernel/expensive_reduction_rules/heavy_set_reduction.cpp
+    ${BSOLVER}/kernel/expensive_reduction_rules/heavy_set3_reduction.cpp
+    ${BSOLVER}/kernel/expensive_reduction_rules/generalized_fold_reduction.cpp
+    ${BSOLVER}/kernel/heuristic_reduction_rules/heuristic_include_reduction.cpp
+    ${BSOLVER}/kernel/heuristic_reduction_rules/heuristic_exclude_reduction.cpp
+    ${BSOLVER}/kernel/csr_reductions/src/reductions.c
+    ${BSOLVER}/kernel/csr_reductions/unconfined_csr_reduction.cpp
+    ${BSOLVER}/kernel/LRConv.cpp
+    ${BSOLVER}/lib/bounds.cpp
+)
+add_library(lib OBJECT ${GENERAL})
+target_link_libraries(lib PRIVATE OpenMP::OpenMP_C)
 
 add_executable(graphchecker app/graphchecker.cpp)
 target_link_libraries(graphchecker ${OpenMP_CXX_LIBRARIES})
 
-add_executable(metis_to_cosmo "app/metis_to_cosmo.cpp" $<TARGET_OBJECTS:lib_general>)
+add_executable(metis_to_cosmo "app/metis_to_cosmo.cpp")
 target_link_libraries(metis_to_cosmo PRIVATE lib)
-target_include_directories(metis_to_cosmo PUBLIC ${GENERAL_INCLUDES})
+
+add_executable(generate_full_graph_training_data "app/generate_full_graph_training_data.cpp")
+target_link_libraries(generate_full_graph_training_data PRIVATE lib)
+
+add_executable(kernelization "app/kernelization.cpp")
+target_link_libraries(kernelization PRIVATE lib)
