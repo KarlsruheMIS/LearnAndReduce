@@ -83,7 +83,7 @@ static inline void tiny_solver_reduce(tiny_solver *solver, int layer)
         // Trivial rule
         for (NodeID u = 0; u < N; u++)
         {
-            if (S[u] != 0 && W[u] == 0)
+            if (S[u] == 0 && W[u] == 0)
             {
                 imp = 1;
                 S[u] = -1;

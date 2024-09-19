@@ -20,8 +20,6 @@ struct extended_twin_reduction : public general_reduction
     virtual std::string get_model_path() final { return ""; }
     virtual bool reduce(reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(reduce_algorithm *br_alg, NodeID v) final;
-    virtual void restore(reduce_algorithm *br_alg) final;
-    virtual void apply(reduce_algorithm *br_alg) final;
 
     int generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label);
 
