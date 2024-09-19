@@ -9,6 +9,8 @@ address="results/single_reductions/${instance}"
 path_to_program="../deploy/${program}"
 path_to_instance="/home/ernestineg/test_instances/"
 database="/home/ernestineg/test_instances/${instance}"
+result_file="results_single_reduction.txt"
+error_file="error_in_single_reduction.txt"
 mkdir -p $address
 
 create_run() {
@@ -18,8 +20,8 @@ create_run() {
     identify=${instance}/${program}/${id}
     mkdir -p ${address2}
     
-    instruction="${path_to_program} ${id_instructions}"
-    echo " ${instruction} > ${address2}/result.txt ${solve_kernel} && sed -i '\|${identify}|d' ./${run_parallel} || echo '${address2}' " >> ${run_parallel}
+    instruction="echo -n '${id},' >> ${result_file} && ${path_to_program} ${id_instructions}"
+    echo " ${instruction} > ${address2}/result.txt || echo '${id} ${address2}' >> ${error_file} &&  cat ${address2}/result.txt >> ${result_file}; " >> ${run_parallel}
 }
 
 # no struction since they will always be disabled
@@ -30,6 +32,7 @@ reductions=("neighborhood" "fold1" "fold2" "clique" "twin" "extended_twin" "domi
 n_reductions=${#reductions[@]}
 rm -f ${run_parallel}
 
+echo "graph,red_style,red_config,time_limit,seed,gnn_filter,n,m,kernel_n,kernel_m,offset,time" > ${result_file}
 
     t=36000
             #########################################################
@@ -48,7 +51,7 @@ rm -f ${run_parallel}
                         disable+=" --disable_${reductions[j]} "
                     fi
                 done
-                overall="${disable} --reduction_config=${config} --reduction_style=${red_style} --print_reduction_info --initial_filter --subgraph_node_limit=${sg} --time_limit=${t} --seed=${seed} ${database}/${graph}.graph"
+                overall="${disable} --reduction_config=${config} --reduction_style=${red_style} --print_reduction_info --subgraph_node_limit=${sg} --time_limit=${t} --seed=${seed} ${database}/${graph}.graph"
 
                 ########## exact with gnn filtering
                 # id=${reductions[k]}/${graph}/sg${sg}/seed${seed}
