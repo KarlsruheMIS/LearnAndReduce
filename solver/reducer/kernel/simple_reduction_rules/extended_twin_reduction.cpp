@@ -85,8 +85,7 @@ int extended_twin_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, s
     get_neighborhood_vector(v, br_alg, neighbors);
     get_neighborhood_set(v, br_alg, neighbors_set);
 
-std:
-    sort(neighbors.begin(), neighbors.end(), [&](NodeID a, NodeID b)
+    std::sort(neighbors.begin(), neighbors.end(), [&](NodeID a, NodeID b)
          { return br_alg->deg(a) < br_alg->deg(b); });
 
     for (NodeID cand : status.graph[neighbors[0]])
@@ -94,6 +93,9 @@ std:
         if (cand != v && br_alg->deg(cand) >= neighbors.size())
         {
             NodeID common_node_count = 0;
+            NodeWeight cand_neighbors_weight = get_neighborhood_weight(cand, br_alg);
+            if (status.weights[v] + status.weights[cand] < cand_neighbors_weight)
+                continue;
             for (NodeID n : status.graph[cand])
             {
                 if (neighbors_set.get(n))
@@ -102,6 +104,9 @@ std:
             // if N[cand] is a superset of N[v]
             if (common_node_count == neighbors.size())
             {
+                label.push_back(v);
+                if (br_alg->deg(v) == br_alg->deg(cand)) // in this case v and cand are actual twins
+                    label.push_back(cand);
                 return true;
             }
         }
