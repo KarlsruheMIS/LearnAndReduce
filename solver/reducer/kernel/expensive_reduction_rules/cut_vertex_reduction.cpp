@@ -442,13 +442,13 @@ void cut_vertex_reduction::get_articulation_points(reduce_algorithm *br_alg, std
             }
         }
     }
-    assert(std::any_of(articulation_points.begin(), articulation_points.end(), [&](NodeID v) { return status.node_status[v] == IS_status::not_set; }) && "ERROR: cut_vertex_reduction::get_articulation_points: articulation point already set");
+    assert(articulation_points.size() == 0 || std::any_of(articulation_points.begin(), articulation_points.end(), [&](NodeID v) { return status.node_status[v] == IS_status::not_set; }) && "ERROR: cut_vertex_reduction::get_articulation_points: articulation point already set");
 }
 bool cut_vertex_reduction::generate_global_data(reduce_algorithm *br_alg, std::vector<NodeID> &articulation_points)
 {
     auto &status = br_alg->status;
-    auto &map = br_alg->buffers[0];
-    auto &reverse_map = br_alg->buffers[1];
+    auto &map = br_alg->buffers[2];
+    auto &reverse_map = br_alg->buffers[3];
     get_mappings_to_remaining_graph(br_alg, map, reverse_map);
     get_articulation_points(br_alg, articulation_points, reverse_map, map);
     return articulation_points.size();

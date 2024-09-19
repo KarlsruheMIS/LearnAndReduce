@@ -72,45 +72,7 @@ inline bool extended_twin_reduction::reduce_vertex(reduce_algorithm *br_alg, Nod
 
     return false;
 }
-void extended_twin_reduction::fold(reduce_algorithm *br_alg, NodeID v, NodeID cand)
-{
 
-    auto &status = br_alg->status;
-
-    status.modified_stack.push_back(br_alg->MODIFIED_TOKEN);
-    restore_vec.push_back({v, cand, status.weights[cand]});
-
-    status.weights[cand] += status.weights[v];
-    status.graph.add_edge_undirected(v, cand);
-
-    status.folded_stack.push_back(get_reduction_type());
-
-    br_alg->add_next_level_node(v);
-    br_alg->add_next_level_neighborhood(v);
-    br_alg->add_next_level_neighborhood(cand);
-}
-void extended_twin_reduction::restore(reduce_algorithm *br_alg)
-{
-    auto &status = br_alg->status;
-    auto &data = restore_vec.back();
-
-    status.weights[data.cand] = data.candWeight;
-    status.graph.hide_edge_undirected(data.v, data.cand);
-    restore_vec.pop_back();
-}
-void extended_twin_reduction::apply(reduce_algorithm *br_alg)
-{
-    auto &status = br_alg->status;
-    auto v = restore_vec.back().v;
-    auto cand = restore_vec.back().cand;
-    auto cand_status = status.node_status[cand];
-    auto v_status = status.node_status[v];
-    assert(status.graph.adjacent(v, cand) && "edge not present");
-    assert(!(v_status == IS_status::included && cand_status == IS_status::included) && "neighbor is included");
-    restore(br_alg);
-    if (cand_status == IS_status::included)
-        status.node_status[v] = IS_status::included;
-}
 int extended_twin_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label)
 {
     auto &status = br_alg->status;
