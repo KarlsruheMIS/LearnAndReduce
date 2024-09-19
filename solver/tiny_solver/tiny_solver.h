@@ -19,7 +19,7 @@ extern "C"
         NodeID *forward_map, *reverse_map;
 
         // Solution
-        NodeID *independent_set;
+        int *independent_set;
         NodeWeight independent_set_weight;
 
         // Flags

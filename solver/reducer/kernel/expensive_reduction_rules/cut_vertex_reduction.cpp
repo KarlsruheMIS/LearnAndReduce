@@ -35,8 +35,13 @@ bool cut_vertex_reduction::reduce(reduce_algorithm *br_alg)
 
     for (NodeID cut_v : articulation_points)
     {
+        if (status.node_status[cut_v] != IS_status::not_set)
+            continue;
         if (!check_components(br_alg, cut_v, cut_component))
             continue;
+        if (cut_component.size() <= 2)
+            continue;
+	    assert(std::all_of(cut_component.begin(), cut_component.end(), [&](NodeID v) { return status.node_status[v] == IS_status::not_set; }) && "all nodes need to be unset");
         assert(cut_component.size() <= config.subgraph_node_limit && "ERROR: cut_vertex_reduction::reduce: component size too large");
         cut_component_set.clear();
         get_neighborhood_set(cut_v, br_alg, cut_v_neighbor_set);
@@ -66,7 +71,7 @@ bool cut_vertex_reduction::reduce(reduce_algorithm *br_alg)
             for (NodeID node : cut_component)
             {
                 NodeID subgraph_node = solver->forward_map[node];
-                if (solver->independent_set[subgraph_node])
+                if (solver->independent_set[subgraph_node] == 1)
                     br_alg->set(node, IS_status::included);
             }
         }
@@ -121,9 +126,7 @@ bool cut_vertex_reduction::check_components(reduce_algorithm *br_alg, NodeID u, 
     for (NodeID n = 0; n < status.n; ++n)
     {
         if (status.node_status[n] == IS_status::not_set)
-        {
             visited_neighbors[n] = false;
-        }
     }
 
     visited_neighbors[u] = true;
@@ -155,7 +158,7 @@ bool cut_vertex_reduction::build_small_component(NodeID u, reduce_algorithm *br_
 {
     auto &status = br_alg->status;
     std::vector<NodeID> stack;
-    stack.reserve(status.n);
+    stack.reserve(status.remaining_nodes);
     stack.push_back(u);
 
     while (!stack.empty())
@@ -307,10 +310,11 @@ bool cut_vertex_reduction::get_fold_data(reduce_algorithm *br_alg, NodeID cut_v,
     cut_v_excluded_e.clear();
     cut_v_excluded_i.clear();
     cut_v_excluded_e.push_back(cut_v);
+    assert(!std::all_of(cut_component.begin(), cut_component.end(), [&](NodeID v) { return solver->independent_set[solver->forward_map[v]]==1; }) && "all nodes need to be unset");
     for (NodeID node : cut_component)
     {
         NodeID subgraph_node = solver->forward_map[node];
-        if (solver->independent_set[subgraph_node])
+        if (solver->independent_set[subgraph_node] == 1)
             cut_v_excluded_i.push_back(node);
         else
             cut_v_excluded_e.push_back(node);
@@ -344,9 +348,9 @@ bool cut_vertex_reduction::get_fold_data(reduce_algorithm *br_alg, NodeID cut_v,
 
         for (NodeID node : cut_component)
         {
-            if (solver->independent_set[solver->forward_map[node]])
+            if (solver->independent_set[solver->forward_map[node]] == 1)
             {
-                // assert(cut_v_neighbor_set.get(node));
+                assert(!cut_v_neighbor_set.get(node));
                 cut_v_included_i.push_back(node);
             }
             else
@@ -376,6 +380,7 @@ void cut_vertex_reduction::get_articulation_points(reduce_algorithm *br_alg, std
     // Start DFS for all unvisited nodes (in case of disconnected graph)
     for (int root = 0; root < status.remaining_nodes; ++root)
     {
+        assert(status.node_status[reverse_map[root]] == IS_status::not_set);
         if (disc[root] == status.n)
         {
             // Initialize the DFS with the root
@@ -393,6 +398,7 @@ void cut_vertex_reduction::get_articulation_points(reduce_algorithm *br_alg, std
                 if (childIndex < status.graph[reverse_map[u]].size())
                 {
                     NodeID v = map[status.graph[reverse_map[u]][childIndex]];
+                    assert(status.node_status[reverse_map[v]] == IS_status::not_set);
                     assert(v < status.remaining_nodes);
                     dfsStack.push({u, childIndex + 1}); // Continue to the next child in the future
 
@@ -436,6 +442,7 @@ void cut_vertex_reduction::get_articulation_points(reduce_algorithm *br_alg, std
             }
         }
     }
+    assert(std::any_of(articulation_points.begin(), articulation_points.end(), [&](NodeID v) { return status.node_status[v] == IS_status::not_set; }) && "ERROR: cut_vertex_reduction::get_articulation_points: articulation point already set");
 }
 bool cut_vertex_reduction::generate_global_data(reduce_algorithm *br_alg, std::vector<NodeID> &articulation_points)
 {

@@ -80,6 +80,15 @@ static inline void tiny_solver_reduce(tiny_solver *solver, int layer)
     while (imp)
     {
         imp = 0;
+        // Trivial rule
+        for (NodeID u = 0; u < N; u++)
+        {
+            if (S[u] != 0 && W[u] == 0)
+            {
+                imp = 1;
+                S[u] = -1;
+            }
+        }
 
         // Neighbourhood rule
         for (NodeID u = 0; u < N; u++)
@@ -171,13 +180,13 @@ void tiny_solver_solve(tiny_solver *solver, double tl, NodeWeight Wl)
 
         // Find max degree vertex
         vertex = solver->subgraph_N;
-        int max_degree = 0;
-        for (int i = 0; i < solver->subgraph_N; i++)
+        NodeID max_degree = 0;
+        for (NodeID i = 0; i < solver->subgraph_N; i++)
         {
             if (solver->per_layer_solution[layer][i] != 0)
                 continue;
-            int degree = 0;
-            for (int j = 0; j < solver->subgraph_N; j++)
+            NodeID degree = 0;
+            for (NodeID j = 0; j < solver->subgraph_N; j++)
                 if (i != j && solver->subgraph[i][j] &&
                     solver->per_layer_solution[layer][j] == 0)
                     degree++;
@@ -189,8 +198,8 @@ void tiny_solver_solve(tiny_solver *solver, double tl, NodeWeight Wl)
         }
 
         // Fast upperbound
-        long long ub = solver->per_layer_weight[layer];
-        for (int i = 0; i < solver->subgraph_N; i++)
+        NodeWeight ub = solver->per_layer_weight[layer];
+        for (NodeID i = 0; i < solver->subgraph_N; i++)
             if (solver->per_layer_solution[layer][i] == 0)
                 ub += solver->subgraph_W[i];
 
@@ -201,7 +210,7 @@ void tiny_solver_solve(tiny_solver *solver, double tl, NodeWeight Wl)
             if (solver->per_layer_weight[layer] > solver->independent_set_weight)
             {
                 solver->independent_set_weight = solver->per_layer_weight[layer];
-                for (int i = 0; i < solver->subgraph_N; i++)
+                for (NodeID i = 0; i < solver->subgraph_N; i++)
                     solver->independent_set[i] = solver->per_layer_solution[layer][i];
 
                 if (solver->independent_set_weight > Wl)
@@ -230,7 +239,7 @@ void tiny_solver_solve(tiny_solver *solver, double tl, NodeWeight Wl)
             solver->per_layer_solution[layer][vertex] = 1;
             solver->per_layer_weight[layer] = solver->per_layer_weight[layer - 1] + solver->subgraph_W[vertex];
 
-            for (int u = 0; u < solver->subgraph_N; u++)
+            for (NodeID u = 0; u < solver->subgraph_N; u++)
                 if (u != vertex && solver->subgraph[vertex][u])
                     solver->per_layer_solution[layer][u] = -1;
 
@@ -241,7 +250,7 @@ void tiny_solver_solve(tiny_solver *solver, double tl, NodeWeight Wl)
         {
             layer++;
             solver->branch[layer] = 1;
-            for (int i = 0; i < solver->subgraph_N; i++)
+            for (NodeID i = 0; i < solver->subgraph_N; i++)
                 solver->per_layer_solution[layer][i] = solver->per_layer_solution[layer - 1][i];
 
             solver->per_layer_solution[layer][vertex] = -1;

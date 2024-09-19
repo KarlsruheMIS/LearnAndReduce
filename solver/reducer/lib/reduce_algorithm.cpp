@@ -685,56 +685,57 @@ NodeID reduce_algorithm::get_heuristically_reduced_vertices() const
 	return global_status.heuristically_reduced_n;
 }
 
-csr_graph reduce_algorithm::build_global_graph_csr() 
+csr_graph reduce_algorithm::build_global_graph_csr()
 {
-    auto &reverse_map = buffers[0]; 
-    auto &map = buffers[1]; 
-    auto &V = buffers[2]; 
-    auto &E = buffers[3];
-    auto &W = weight_buffer;
+	auto &reverse_map = buffers[0];
+	auto &map = buffers[1];
+	auto &V = buffers[2];
+	auto &E = buffers[3];
+	auto &W = weight_buffer;
 
-    reverse_map.resize(status.remaining_nodes, status.n);
-    map.resize(status.n, status.n);
+	reverse_map.resize(status.remaining_nodes, status.n);
+	map.resize(status.n, status.n);
 
-    NodeID N = status.remaining_nodes;
-    EdgeID M = 0;
-    NodeID u = 0;
-    for (NodeID v = 0; v < status.n; v++)
-    {
-        if (! status.node_status[v] == IS_status::not_set) continue;
-        map[v] = u;
-        reverse_map[u] = v;
-        u++;
-        M += status.graph[v].size();
-    }
-    V.resize(N + 1);
-    E.resize(M);
-    W.resize(N);
+	NodeID N = status.remaining_nodes;
+	EdgeID M = 0;
+	NodeID u = 0;
+	for (NodeID v = 0; v < status.n; v++)
+	{
+		if (!status.node_status[v] == IS_status::not_set)
+			continue;
+		map[v] = u;
+		reverse_map[u] = v;
+		u++;
+		M += status.graph[v].size();
+	}
+	V.resize(N + 1);
+	E.resize(M);
+	W.resize(N);
 
-    // build CSR
-    std::vector<NodeID> tmp;
-    tmp.reserve(N);
-    EdgeID ei = 0;
-    for (NodeID u : reverse_map)
-    {
-        assert(map[u] < status.n && "map is not set");
-        V[map[u]] = ei;
-        W[map[u]] = status.weights[u];
+	// build CSR
+	std::vector<NodeID> tmp;
+	tmp.reserve(N);
+	EdgeID ei = 0;
+	for (NodeID u : reverse_map)
+	{
+		assert(map[u] < status.n && "map is not set");
+		V[map[u]] = ei;
+		W[map[u]] = status.weights[u];
 
-        // get the sorted, unreduced neighborhood
-        tmp.clear();
-        for (NodeID neighbor : status.graph[u])
-        {
-            if (status.node_status[neighbor] == IS_status::not_set)
-                tmp.push_back(map[neighbor]);
-        }
+		// get the sorted, unreduced neighborhood
+		tmp.clear();
+		for (NodeID neighbor : status.graph[u])
+		{
+			if (status.node_status[neighbor] == IS_status::not_set)
+				tmp.push_back(map[neighbor]);
+		}
 
-        std::sort(tmp.begin(), tmp.end());
-        for (NodeID v : tmp)
-            E[ei++] = v;
-    }
-    V[N] = ei;
-    return (csr_graph){N, V.data(), E.data(), W.data()};
+		std::sort(tmp.begin(), tmp.end());
+		for (NodeID v : tmp)
+			E[ei++] = v;
+	}
+	V[N] = ei;
+	return (csr_graph){N, V.data(), E.data(), W.data()};
 }
 
 void reduce_algorithm::tiny_solver_solve_neighbourhood(const NodeWeight Wl, const NodeID v)
@@ -764,28 +765,30 @@ void reduce_algorithm::tiny_solver_solve_neighbourhood(const NodeWeight Wl, cons
 	for (NodeID u : status.graph[v])
 	{
 		NodeID u_subgraph = subgraph_solver->forward_map[u];
-        subgraph_solver->subgraph[u_subgraph][u_subgraph] = 1;
+		subgraph_solver->subgraph[u_subgraph][u_subgraph] = 1;
 		for (NodeID v : status.graph[u])
 		{
-			NodeID v_subgraph = subgraph_solver->forward_map[v];
-			if (u_subgraph <= v_subgraph)
+			if (u <= v)
 				continue;
+			NodeID v_subgraph = subgraph_solver->forward_map[v];
 			if (!neighbor_set.get(v))
 				continue;
 			subgraph_solver->subgraph[u_subgraph][v_subgraph] = 1;
 			subgraph_solver->subgraph[v_subgraph][u_subgraph] = 1;
 		}
 	}
-	
+
 	tiny_solver_solve(subgraph_solver, config.subgraph_time_limit, Wl);
 }
 
-void reduce_algorithm::tiny_solver_solve_subgraph(const NodeWeight Wl, const std::vector<NodeID>& nodes, const fast_set &nodes_set)
+void reduce_algorithm::tiny_solver_solve_subgraph(const NodeWeight Wl, const std::vector<NodeID> &nodes, const fast_set &nodes_set)
 {
 	if (nodes.size() == 0)
 		return;
 	tiny_solver_clear(subgraph_solver);
-	assert(std::all_of(nodes.begin(), nodes.end(), [&](NodeID v) { return status.node_status[v] == IS_status::not_set; }) && "all nodes need to be unset");
+	assert(std::all_of(nodes.begin(), nodes.end(), [&](NodeID v)
+					   { return status.node_status[v] == IS_status::not_set; }) &&
+		   "all nodes need to be unset");
 
 	if (nodes.size() > MAX_NODES)
 	{
@@ -808,19 +811,18 @@ void reduce_algorithm::tiny_solver_solve_subgraph(const NodeWeight Wl, const std
 	for (NodeID u : nodes)
 	{
 		NodeID u_subgraph = subgraph_solver->forward_map[u];
-        subgraph_solver->subgraph[u_subgraph][u_subgraph] = 1;
+		subgraph_solver->subgraph[u_subgraph][u_subgraph] = 1;
 		for (NodeID v : status.graph[u])
 		{
-			NodeID v_subgraph = subgraph_solver->forward_map[v];
-			if (u_subgraph <= v_subgraph)
+			if (u <= v)
 				continue;
+			NodeID v_subgraph = subgraph_solver->forward_map[v];
 			if (!nodes_set.get(v))
 				continue;
 			subgraph_solver->subgraph[u_subgraph][v_subgraph] = 1;
 			subgraph_solver->subgraph[v_subgraph][u_subgraph] = 1;
 		}
 	}
-	
 	tiny_solver_solve(subgraph_solver, config.subgraph_time_limit, Wl);
 }
 void reduce_algorithm::build_global_graph_access()
@@ -830,7 +832,7 @@ void reduce_algorithm::build_global_graph_access()
 	build_graph_access(global_graph, global_mapping);
 	std::swap(status, global_status);
 }
-void reduce_algorithm::build_graph_access(graph_access &G, std::vector<NodeID> &reverse_mapping) 
+void reduce_algorithm::build_graph_access(graph_access &G, std::vector<NodeID> &reverse_mapping)
 {
 	std::vector<NodeID> mapping(status.graph.size(), UINT_MAX);
 	size_t edge_count = 0;

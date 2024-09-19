@@ -1,15 +1,17 @@
 #include "generalized_fold_reduction.h"
 #include "reduce_algorithm.h"
-#include "tiny_solver.h" 
+#include "tiny_solver.h"
 
 typedef reduce_algorithm::IS_status IS_status;
 
-bool generalized_fold_reduction::reduce(reduce_algorithm* br_alg) {
+bool generalized_fold_reduction::reduce(reduce_algorithm *br_alg)
+{
     // if (br_alg->config.disable_generalized_fold) return false;
-    if (br_alg->heuristically_reducing) return false;
-    #ifdef REDUCTION_INFO
-        br_alg->reduction_timer.restart();
-    #endif
+    if (br_alg->heuristically_reducing)
+        return false;
+#ifdef REDUCTION_INFO
+    br_alg->reduction_timer.restart();
+#endif
 
     auto &status = br_alg->status;
     size_t oldn = status.remaining_nodes;
@@ -20,13 +22,13 @@ bool generalized_fold_reduction::reduce(reduce_algorithm* br_alg) {
         if(try_neighborhood_reduction(v, br_alg, neighbors_weight)) return;
         reduce_vertex(br_alg, v); });
 
-    #ifdef REDUCTION_INFO
-        reduced_nodes += (oldn - status.remaining_nodes);
-        reduction_time += br_alg->reduction_timer.elapsed();
-    #endif
+#ifdef REDUCTION_INFO
+    reduced_nodes += (oldn - status.remaining_nodes);
+    reduction_time += br_alg->reduction_timer.elapsed();
+#endif
     // has_run = false; // check marker with gnn in next round again
     // has_filtered_marker = true;
-	return oldn != status.remaining_nodes;
+    return oldn != status.remaining_nodes;
 }
 inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
 {
@@ -73,7 +75,7 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
     MWIS_set.clear();
     for (NodeID node = 0; node < neighbors.size(); node++)
     {
-        if (solver->independent_set[node])
+        if (solver->independent_set[node] == 1)
         {
             const NodeID global_n = solver->reverse_map[node];
             MWIS_set.add(global_n);
@@ -152,8 +154,10 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
             neighbors.pop_back();
             neighbors_set.remove(node);
 
-            for (const NodeID neighbor : status.graph[node]) {
-                if (neighborhood_intersection_set.get(neighbor)) {
+            for (const NodeID neighbor : status.graph[node])
+            {
+                if (neighborhood_intersection_set.get(neighbor))
+                {
                     auto iter = std::find(neighbors.begin(), neighbors.end(), neighbor);
                     assert(iter != neighbors.end());
                     std::swap(*iter, neighbors.back());
@@ -325,7 +329,7 @@ void generalized_fold_reduction::apply(reduce_algorithm *br_alg)
         status.is_weight += status.weights[nodes.main];
     }
 }
-inline int generalized_fold_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+inline int generalized_fold_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label)
 {
     if (br_alg->deg(v) <= 1)
         return 0;
@@ -370,7 +374,7 @@ inline int generalized_fold_reduction::generate_data(reduce_algorithm *br_alg, N
 
     for (NodeID node = 0; node < neighbors.size(); node++)
     {
-        if (solver->independent_set[node])
+        if (solver->independent_set[node] == 1)
         {
             const NodeID global_n = solver->reverse_map[node];
             MWIS_set.add(global_n);
