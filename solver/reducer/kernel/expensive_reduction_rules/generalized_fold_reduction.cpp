@@ -55,20 +55,11 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
     NodeWeight min_MWIS_neighbor_weight = std::numeric_limits<NodeWeight>::max();
     bool solved_exact = solve_induced_subgraph_from_set(min_MWIS_neighbor_weight, MWIS_weight, br_alg, neighbors, neighbors_set);
     if (!solved_exact)
-    {
-#ifdef REDUCTION_INFO
-        reduction_time += br_alg->reduction_timer.elapsed();
-#endif
         return false;
-    }
 
     if (status.weights[v] >= MWIS_weight)
     {
-        // same as in generalized_neighborhood_reduction
         br_alg->set(v, IS_status::included);
-#ifdef REDUCTION_INFO
-        reduction_time += br_alg->reduction_timer.elapsed();
-#endif
         return oldn != status.remaining_nodes;
     }
 
@@ -204,7 +195,7 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
             neighbors.push_back(node);
             neighbors_set.add(node);
         }
-    } while (remove_node);
+    } while (remove_node && neighbors.size() > 1);
 
     return oldn != status.remaining_nodes;
 }
