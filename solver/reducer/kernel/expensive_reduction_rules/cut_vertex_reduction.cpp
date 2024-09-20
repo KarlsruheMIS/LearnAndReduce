@@ -32,10 +32,12 @@ bool cut_vertex_reduction::reduce(reduce_algorithm *br_alg)
     std::vector<NodeID> articulation_points;
     get_mappings_to_remaining_graph(br_alg, map, reverse_map);
     get_articulation_points(br_alg, articulation_points, reverse_map, map);
+    // sort articulation points by degree 
+    std::sort(articulation_points.begin(), articulation_points.end(), [&](NodeID a, NodeID b) { return status.graph[a].size() > status.graph[b].size(); });
 
     for (NodeID cut_v : articulation_points)
     {
-        if (status.node_status[cut_v] != IS_status::not_set)
+        if (status.node_status[cut_v] != IS_status::not_set || br_alg->deg(cut_v) < 3)
             continue;
         if (!check_components(br_alg, cut_v, cut_component))
             continue;
@@ -49,17 +51,17 @@ bool cut_vertex_reduction::reduce(reduce_algorithm *br_alg)
             cut_component_set.add(n);
 
         // check if  v actual cut vertex (i.e. has neighbors outside the component)
-        bool real_cut_v = false;
+        bool real_cut = false;
         for (NodeID neighbor : status.graph[cut_v])
         {
             if (!cut_component_set.get(neighbor))
             {
-                real_cut_v = true;
+                real_cut = true;
                 break;
             }
         }
 
-        if (!real_cut_v)
+        if (!real_cut)
         { // directly solve the component without fold
             cut_component.push_back(cut_v);
             cut_component_set.add(cut_v);
@@ -368,10 +370,12 @@ void cut_vertex_reduction::get_articulation_points(reduce_algorithm *br_alg, std
     auto &visited = br_alg->bool_buffer;
     auto &low = br_alg->buffers[0];
     auto &disc = br_alg->buffers[1];
+    auto &articulation_point_set = br_alg->set_1;
     std::vector<NodeID> parent(status.n, status.n+1);
     low.assign(status.n, status.n);
     disc.assign(status.n, status.n);
     visited.assign(status.n, false);
+    articulation_point_set.clear();
     std::stack<std::pair<NodeID, NodeID>> dfsStack; // Stack to simulate recursion (pair of node and child index)
 
     int time = 0;         // To track discovery times
@@ -425,9 +429,10 @@ void cut_vertex_reduction::get_articulation_points(reduce_algorithm *br_alg, std
                         if (parent[parent[u]] == status.n)
                             continue;
                         // Check articulation point condition for non-root nodes
-                        if (low[u] >= disc[parent[u]])
+                        if (low[u] >= disc[parent[u]] && !articulation_point_set.get(parent[u]))
                         {
                             articulation_points.push_back(parent[u]);
+                            articulation_point_set.add(parent[u]);
                         }
                         // Update the low value of the parent
                         low[parent[u]] = std::min(low[parent[u]], low[u]);
