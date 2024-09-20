@@ -9,7 +9,7 @@ address="results/single_reductions/${instance}"
 path_to_program="../deploy/${program}"
 path_to_instance="/home/ernestineg/test_instances/"
 database="/home/ernestineg/test_instances/${instance}"
-result_file="results_single_reduction.txt"
+result_file="results_single_reduction.csv"
 error_file="error_in_single_reduction.txt"
 mkdir -p $address
 
@@ -19,9 +19,10 @@ create_run() {
     address2=${address}/${id}
     identify=${instance}/${program}/${id}
     mkdir -p ${address2}
+    first=`echo ${id} | awk -F  "/" '{print $1}'`
     
-    instruction="echo -n '${id},' >> ${result_file} && ${path_to_program} ${id_instructions}"
-    echo " ${instruction} > ${address2}/result.txt || echo '${id} ${address2}' >> ${error_file} &&  cat ${address2}/result.txt >> ${result_file}; " >> ${run_parallel}
+    instruction="echo -n '${first},' > ${address2}/result.txt && ${path_to_program} ${id_instructions}"
+    echo " ${instruction} >> ${address2}/result.txt || { echo '${id} ${address2}' >> ${error_file}; echo 'error,' >> ${result_file}; } &&  cat ${address2}/result.txt >> ${result_file}; " >> ${run_parallel}
 }
 
 # no struction since they will always be disabled
@@ -32,7 +33,7 @@ reductions=("neighborhood" "fold1" "fold2" "clique" "twin" "extended_twin" "domi
 n_reductions=${#reductions[@]}
 rm -f ${run_parallel}
 
-echo "graph,red_style,red_config,time_limit,seed,gnn_filter,n,m,kernel_n,kernel_m,offset,time" > ${result_file}
+echo "id,graph,redstyle,redconfig,timelimit,seed,gnnfilter,n,m,kn,km,offset,time" > ${result_file}
 
     t=36000
             #########################################################
