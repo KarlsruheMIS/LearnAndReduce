@@ -339,7 +339,7 @@ inline int generalized_fold_reduction::generate_data(reduce_algorithm *br_alg, N
     if (status.graph[v].size() > br_alg->config.subgraph_node_limit)
     {
         label.push_back(v);
-        return 2;
+        return 0;
     }
 
     // compute MWIS in N(v)

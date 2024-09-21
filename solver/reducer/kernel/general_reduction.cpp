@@ -115,11 +115,11 @@ bool general_reduction::solve_induced_subgraph_from_set(NodeWeight weight_bound,
     }
     auto &solver = br_alg->subgraph_solver;
     solve_induced_subgraph_from_set(weight_bound, solution, br_alg, nodes_vec, nodes_set);
-    if (solver->time_limit_exceeded || solver->node_limit_exceeded)
+    if (solver->time_limit_exceeded)
     {
         label = 2;
     } 
-    else if (solver->weight_limit_exceeded)
+    else if (solver->weight_limit_exceeded || solver->node_limit_exceeded)
     {
         label = 0;
     }
@@ -134,11 +134,11 @@ bool general_reduction::solve_induced_neighborhood_subgraph(NodeWeight weight_bo
 {
     auto &solver = br_alg->subgraph_solver;
     solve_induced_neighborhood_subgraph(weight_bound, solution, br_alg, v);
-    if (solver->time_limit_exceeded || solver->node_limit_exceeded)
+    if (solver->time_limit_exceeded)
     {
         label = 2;
     } 
-    else if (solver->weight_limit_exceeded)
+    else if (solver->weight_limit_exceeded || solver->node_limit_exceeded)
     {
         label = 0;
     }

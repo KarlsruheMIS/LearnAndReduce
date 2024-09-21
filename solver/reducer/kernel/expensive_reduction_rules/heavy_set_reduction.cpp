@@ -228,9 +228,6 @@ inline void heavy_set_reduction::generate_global_data(reduce_algorithm *br_alg, 
         if (std::all_of(status.graph[common_neighbor].begin(), status.graph[common_neighbor].end(), [&](NodeID neighbor)
                         { return br_alg->deg(neighbor) > config.subgraph_node_limit; }))
         {
-            for (NodeID node : status.graph[common_neighbor])
-                if (reduction_data[reduction_index][node] != 1)
-                    reduction_data[reduction_index][node] = 2;
             continue;
         }
         auto candidates = status.graph[common_neighbor];
@@ -240,8 +237,6 @@ inline void heavy_set_reduction::generate_global_data(reduce_algorithm *br_alg, 
             NodeID v = candidates[v_idx];
             if (br_alg->deg(v) > config.subgraph_node_limit)
             {
-                if (reduction_data[reduction_index][v] != 1)
-                    reduction_data[reduction_index][v] = 2;
                 continue; // too many neighbors
             }
             get_neighborhood_set(v, br_alg, v_neighbors_set);
@@ -255,8 +250,6 @@ inline void heavy_set_reduction::generate_global_data(reduce_algorithm *br_alg, 
                     continue; // look for non adjacent nodes
                 if (br_alg->deg(u) + br_alg->deg(v) > config.subgraph_node_limit)
                 {
-                    if (reduction_data[reduction_index][u] != 1)
-                        reduction_data[reduction_index][u] = 2;
                     continue; // subgraph too large
                 }
 
@@ -275,7 +268,7 @@ inline void heavy_set_reduction::generate_global_data(reduce_algorithm *br_alg, 
                 }
                 else
                 {
-                    if (solver->time_limit_exceeded || solver->node_limit_exceeded)
+                    if (solver->time_limit_exceeded)
                     {
                         if (reduction_data[reduction_index][u] != 1)
                             reduction_data[reduction_index][u] = 2;
