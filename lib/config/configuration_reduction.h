@@ -58,9 +58,6 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
     // Output
     config.console_log                            = false;
     config.check_sorted                           = true;
-    // ILS
-    config.ils_iterations                         = 15000;
-    // config.force_cand                             = 4;
 	config.sort_freenodes                         = true;
     // Reductions
 	config.perform_reductions                     = true;
@@ -81,7 +78,7 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
     config.reduce_and_peel                        = false;
     config.disable_generalized_fold               = false;
     config.disable_clique_neighborhood            = true;
-    config.subgraph_node_limit                    = 20;
+    config.subgraph_node_limit                    = 128;
     config.disable_blow_up                        = true;
     config.plain_struction                        = false;
     config.perform_hils                           = true;
@@ -105,7 +102,6 @@ inline void configuration_reduction::disable_new_reductions( ReductionConfig & c
     config.disable_funnel_fold                    = true;
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
-    config.disable_high_degree                    = true;
     config.disable_unconfined                     = true;
 }
 
@@ -125,7 +121,6 @@ inline void configuration_reduction::enable_new_reductions( ReductionConfig & co
     config.disable_funnel_fold                    = false;
     config.disable_heavy_set                      = false;
     config.disable_heavy_set3                     = false;
-    config.disable_high_degree                    = false;
     config.disable_unconfined                     = false;
 }
 
@@ -218,15 +213,13 @@ inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig 
 
 inline void configuration_reduction::fast_reductions_cyclicFast( ReductionConfig & config ) {
     all_reductions_cyclicFast(config);
-    config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
-    config.reduction_style_name                   = "fast";
-    enable_new_reductions(config);
-    config.disable_cut_vertex                     = true;
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
     config.disable_generalized_fold               = true;
     config.disable_critical_set                   = true;
+    config.disable_cut_vertex                     = true;
     config.disable_blow_up                        = true;
+    config.disable_extended_domination_reverse    = true;
 }
 
 inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfig & config ) {
@@ -264,15 +257,9 @@ inline void configuration_reduction::generate_training_data_initial_reductions( 
 
     config.disable_decreasing_struction           = true;
     config.disable_plateau_struction              = true;
-    // config.disable_generalized_fold               = true;
     config.disable_clique_neighborhood            = true;
-    // config.disable_clique_neighborhood_fast       = true;
-    // config.disable_cut_vertex                     = true;
-    // config.disable_heavy_set                      = true;
-    // config.disable_heavy_set3                     = true;
     config.disable_high_degree                    = true;
     config.disable_bound_reduction                = true;
-    // config.disable_critical_set                   = true;
     config.disable_heuristic_exclude              = true;
     config.disable_heuristic_include              = true;
     config.subgraph_node_limit                    = 30;
