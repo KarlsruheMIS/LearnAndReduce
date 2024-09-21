@@ -65,7 +65,6 @@ void generate_data(reduce_algorithm *reducer, graph_access &G, ReductionConfig &
 int main(int argn, char **argv)
 {
     struction_log::instance()->restart_total_timer();
-    struction_log::instance()->print_title();
     ReductionConfig config;
 
     // Parse the command line parameters;
@@ -81,7 +80,11 @@ int main(int argn, char **argv)
     config.graph_filename = graph_filepath.substr(graph_filepath.find_last_of('/') + 1);
     std::string name = config.graph_filename.substr(0, config.graph_filename.find_last_of('.'));
     struction_log::instance()->set_config(config);
-    struction_log::instance()->print_config();
+    if (config.verbose)
+    {
+        struction_log::instance()->print_data_generation_title();
+        struction_log::instance()->print_config();
+    }
 
     // Read the graph
     graph_access G;
@@ -89,7 +92,8 @@ int main(int argn, char **argv)
     graph_io::readGraphWeighted(G, graph_filepath);
     if (G.number_of_nodes() < 1000)
     {
-        std::cout << "Graph " << name << " is too small for training data generation" << std::endl;
+        if (config.verbose)
+            std::cout << "Graph " << name << " is too small for training data generation" << std::endl;
         return 0;
     }
 
@@ -97,7 +101,8 @@ int main(int argn, char **argv)
     go.writeGraphWeighted_to_csv(G, "training_data/csv/" + name + "_original_graph.csv");
 
     struction_log::instance()->set_graph(G);
-    struction_log::instance()->print_graph();
+    if (config.verbose)
+        struction_log::instance()->print_graph();
 
     reduce_algorithm reducer(G, config);
     generate_data(&reducer, G, config, name+"_original");
@@ -108,7 +113,6 @@ int main(int argn, char **argv)
     config.disable_extended_se                = true;
     config.disable_basic_se                   = true;
     config.disable_funnel                     = true;
-    config.disable_funnel_fold                = true;
     config.disable_generalized_fold           = true;
     config.disable_clique_neighborhood_fast   = true;
     config.disable_cut_vertex                 = true;
@@ -130,7 +134,6 @@ int main(int argn, char **argv)
     config.disable_extended_se                = false;
     config.disable_basic_se                   = false;
     config.disable_funnel                     = false;
-    config.disable_funnel_fold                = false;
     config.disable_generalized_fold           = false;
     config.disable_clique_neighborhood_fast   = false;
     config.disable_cut_vertex                 = false;

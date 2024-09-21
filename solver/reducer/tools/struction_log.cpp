@@ -57,13 +57,13 @@ void struction_log::write_log() {
 }
 
 
-void struction_log::print_title() {
+void struction_log::print_data_generation_title() {
     filebuffer_string << "=========================================="                           << std::endl;
-    filebuffer_string << "\t WeightedMIS Branch&Reduce"                                         << std::endl;
+    filebuffer_string << "\t Generate Reduction Data "                                          << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
 
     std::cout << "=========================================="                                   << std::endl;
-    std::cout << "\t WeightedMIS Branch&Reduce"                                                 << std::endl;
+    std::cout << "\t Generate Reduction Data"                                                   << std::endl;
     std::cout << "=========================================="                                   << std::endl;
 }
 

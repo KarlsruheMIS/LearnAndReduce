@@ -97,7 +97,8 @@ class struction_log {
         /**
          * Print a title.
          */
-        void print_title();
+        // void print_title();
+        void print_data_generation_title();
         void print_reduction_title();
         
         /**

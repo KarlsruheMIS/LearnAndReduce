@@ -255,6 +255,9 @@ inline void configuration_reduction::extended_cyclicFast( ReductionConfig & conf
 inline void configuration_reduction::generate_training_data_initial_reductions( ReductionConfig & config ) {
     all_decreasing(config);
 
+    config.disable_extended_domination_reverse    = true;
+    config.disable_extended_domination            = true;
+    config.disable_funnel_fold                    = true;
     config.disable_decreasing_struction           = true;
     config.disable_plateau_struction              = true;
     config.disable_clique_neighborhood            = true;
@@ -262,5 +265,6 @@ inline void configuration_reduction::generate_training_data_initial_reductions( 
     config.disable_bound_reduction                = true;
     config.disable_heuristic_exclude              = true;
     config.disable_heuristic_include              = true;
-    config.subgraph_node_limit                    = 30;
+    config.subgraph_node_limit                    = 128;
+    config.time_limit                             = 1000000;
 }
