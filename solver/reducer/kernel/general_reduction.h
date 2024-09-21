@@ -10,7 +10,7 @@
 
 // system includes
 #include <iostream>
-#include <iomanip>  // For std::setw
+#include <iomanip> // For std::setw
 
 // initial reductions need to be at the beginning
 enum reduction_type
@@ -54,13 +54,14 @@ struct general_reduction
     virtual general_reduction *clone() const = 0;
 
     virtual reduction_type get_reduction_type() const = 0;
-    virtual void print_reduction_type() {
-        std::cout << std::left << std::setw(24) <<get_reduction_name() << " \t" ;
+    virtual void print_reduction_type()
+    {
+        std::cout << std::left << std::setw(24) << get_reduction_name() << " \t";
     };
     virtual std::string get_reduction_name() = 0;
     virtual std::string get_model_path() { return ""; }
     virtual bool reduce(reduce_algorithm *br_alg) = 0;
-    virtual bool reduce_vertex(reduce_algorithm *br_alg, NodeID v) { return false;}
+    virtual bool reduce_vertex(reduce_algorithm *br_alg, NodeID v) { return false; }
     virtual void restore(reduce_algorithm *br_alg) {}
     virtual void apply(reduce_algorithm *br_alg) {}
     virtual void reset(reduce_algorithm *br_alg, size_t comp_size) {}
@@ -78,15 +79,13 @@ struct general_reduction
     bool try_neighborhood_reduction(NodeID v, reduce_algorithm *br_alg, NodeWeight neighborhood_weight);
     bool solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, reduce_algorithm *br_alg, std::vector<NodeID> &nodes_vec, const fast_set &nodes_set);
     bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, reduce_algorithm *br_alg, NodeID v);
-    // bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, bool apply_solution = false);
     bool is_reduced(NodeID v, reduce_algorithm *br_alg);
     virtual bool is_suited(NodeID v, reduce_algorithm *br_alg);
     // for generating training data
     bool solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, reduce_algorithm *br_alg, std::vector<NodeID> &nodes_vec, const fast_set &nodes_set, int &label);
     bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, reduce_algorithm *br_alg, NodeID v, int &label);
-    // bool solve_graph(NodeWeight &solution, graph_access &graph, ReductionConfig &config, NodeWeight weight_bound, int &label);
-    virtual int generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label) { return 0;}
-    virtual bool generate_global_data(reduce_algorithm *br_alg, std::vector<NodeID> &label) { return false;}
+    virtual int generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label) { return 0; }
+    virtual void generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index) { return; }
 
     template <typename F>
     inline void for_each_changed_vertex(reduce_algorithm *br_alg, F f)

@@ -337,79 +337,103 @@ bool heavy_set3_reduction::check_w_combination(std::vector<NodeWeight> &MWIS_wei
                        { return weight >= best_weight_excluding; });
 }
 
-inline int heavy_set3_reduction::generate_data(reduce_algorithm *br_alg, NodeID common_neighbor, std::vector<NodeID> &label)
+inline void heavy_set3_reduction::generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index)
 {
     auto &config = br_alg->config;
-    if (br_alg->deg(common_neighbor) < 3)
-        return 0; // no heavy_set of 3 vertives possible
-
     auto &status = br_alg->status;
     auto &weights = status.weights;
-    auto solver = br_alg->subgraph_solver;
-    assert(status.node_status[common_neighbor] == IS_status::not_set && "ERROR: heavy_set3_reduction::reduce_vertex: node must be unset");
-    // check if common neighbor is suitable
-    if (std::all_of(status.graph[common_neighbor].begin(), status.graph[common_neighbor].end(), [&](NodeID neighbor)
-                    { return br_alg->deg(neighbor) > config.subgraph_node_limit; }))
-        return 2;
-
-    size_t oldn = status.remaining_nodes;
     auto &v_neighbors_set = br_alg->set_1;
     auto &u_neighbors_set = br_alg->set_2;
-    auto &candidates = status.graph[common_neighbor];
-    // print all neighbors of common neighbor
-    for (size_t v_idx = 0; v_idx < candidates.size() - 2; v_idx++)
+    auto solver = br_alg->subgraph_solver;
+    for (NodeID common_neighbor = 0; common_neighbor < status.n; common_neighbor++)
     {
-        NodeID v = candidates[v_idx];
-        if (br_alg->deg(v) > config.subgraph_node_limit)
-            continue; // too many neighbors
-        if (br_alg->deg(v) < 3)
-            continue; // use other reduction
-        NodeID deg_v = br_alg->deg(v);
-        get_neighborhood_set(v, br_alg, v_neighbors_set);
-
-        // find second heavy vertex u (not adjacent to v)
-        for (size_t u_idx = v_idx + 1; u_idx < candidates.size() - 1; u_idx++)
+        if (br_alg->deg(common_neighbor) < 2)
+            continue; // no heavy_set of 3 vertives possible
+        // check if common neighbor is suitable
+        auto candidates = status.graph[common_neighbor];
+        if (std::all_of(candidates.begin(), candidates.end(), [&](NodeID neighbor)
+                        { return br_alg->deg(neighbor) > config.subgraph_node_limit; }))
         {
-            NodeID u = candidates[u_idx];
-            assert(u != v);
-            if (v_neighbors_set.get(u))
-                continue; // look for non adjacent nodes
-            if (br_alg->deg(u) + deg_v > config.subgraph_node_limit)
-                continue; // subgraph too large
-            if (br_alg->deg(u) < 3)
-                continue; // use other reduction
-            get_neighborhood_set(u, br_alg, u_neighbors_set);
+            for (NodeID node : candidates)
+                if (reduction_data[reduction_index][node] != 1)
+                    reduction_data[reduction_index][node] = 2;
+            continue;
+        }
 
-            // find third heavy vertex (not adjacent to  u and v)
-            int l = 0;
-            for (size_t w_idx = u_idx + 1; w_idx < candidates.size(); w_idx++)
+        tiny_solver_clear(solver);
+        // print all neighbors of common neighbor
+        for (size_t v_idx = 0; v_idx < candidates.size() - 2; v_idx++)
+        {
+            NodeID v = candidates[v_idx];
+            if (br_alg->deg(v) > config.subgraph_node_limit)
             {
-                NodeID w = candidates[w_idx];
-                assert(u != w);
-                assert(v != w);
-                if (v_neighbors_set.get(w))
-                    continue; // look for non adjacent nodes
-                if (u_neighbors_set.get(w))
-                    continue; // look for non adjacent nodes
-                if (is_reduced(w, br_alg))
-                    continue;
-                if (br_alg->deg(w) + deg_v + br_alg->deg(u) > config.subgraph_node_limit)
-                    continue; // subgraph too large
-                if (br_alg->deg(w) < 3)
-                    continue; // use other reduction
-                if (weights[w] + weights[u] + weights[v] < weights[common_neighbor])
-                    continue;
+                if (reduction_data[reduction_index][v] != 1)
+                    reduction_data[reduction_index][v] = 2;
+                continue; // too many neighbors
+            }
+            get_neighborhood_set(v, br_alg, v_neighbors_set);
 
-                if (is_heavy_set(v, v_neighbors_set, u, u_neighbors_set, w, br_alg))
+            // find second heavy vertex u (not adjacent to v)
+            for (size_t u_idx = v_idx + 1; u_idx < candidates.size() - 1; u_idx++)
+            {
+                NodeID u = candidates[u_idx];
+                assert(u != v);
+                if (v_neighbors_set.get(u))
+                    continue; // look for non adjacent nodes
+                if (br_alg->deg(u) + br_alg->deg(v) > config.subgraph_node_limit)
                 {
-                    return 1;
+                    if (reduction_data[reduction_index][u] != 1)
+                        reduction_data[reduction_index][u] = 2;
+                    continue; // subgraph too large
+                }
+                get_neighborhood_set(u, br_alg, u_neighbors_set);
+
+                // find third heavy vertex (not adjacent to  u and v)
+                for (size_t w_idx = u_idx + 1; w_idx < candidates.size(); w_idx++)
+                {
+                    NodeID w = candidates[w_idx];
+                    assert(u != w);
+                    assert(v != w);
+                    if (v_neighbors_set.get(w) || u_neighbors_set.get(w))
+                        continue; // look for non adjacent nodes
+                    if (br_alg->deg(w) + br_alg->deg(v) + br_alg->deg(u) > config.subgraph_node_limit)
+                    {
+                        if (reduction_data[reduction_index][w] != 1)
+                            reduction_data[reduction_index][w] = 2;
+                        continue; // subgraph too large
+                    }
+                    if (weights[w] + weights[u] + weights[v] < weights[common_neighbor])
+                        continue;
+
+                    if (is_heavy_set(v, v_neighbors_set, u, u_neighbors_set, w, br_alg))
+                    {
+                        if (is_reduced(v, br_alg))
+                            reduction_data[reduction_index][v] = 1;
+                        if (is_reduced(u, br_alg))
+                            reduction_data[reduction_index][u] = 1;
+                        if (is_reduced(w, br_alg))
+                            reduction_data[reduction_index][w] = 1;
+                        while (status.modified_stack.size() > 0)
+                        {
+                            NodeID node = status.modified_stack.back();
+                            status.modified_stack.pop_back();
+                            br_alg->unset(node);
+                        }
+                    }
+                    else
+                    {
+                        if (solver->time_limit_exceeded || solver->node_limit_exceeded)
+                        {
+                            if (reduction_data[reduction_index][v] != 1)
+                                reduction_data[reduction_index][v] = 2;
+                            if (reduction_data[reduction_index][u] != 1)
+                                reduction_data[reduction_index][u] = 2;
+                            if (reduction_data[reduction_index][w] != 1)
+                                reduction_data[reduction_index][w] = 2;
+                        }
+                    }
                 }
             }
         }
     }
-
-    if (solver->time_limit_exceeded || solver->node_limit_exceeded)
-        return 2;
-    else
-        return 0;
 }

@@ -34,7 +34,7 @@ struct critical_set_reduction : public general_reduction
     virtual reduction_type get_reduction_type() const final { return reduction_type::critical_set; }
     virtual std::string get_reduction_name() final { return "critical_set"; }
     virtual bool reduce(reduce_algorithm *br_alg) final;
-    bool generate_global_data(reduce_algorithm *br_alg, std::vector<NodeID> &label);
+    void generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index);
 };
 
 #endif // CRITICAL_SET_H

@@ -458,12 +458,14 @@ void cut_vertex_reduction::get_articulation_points(reduce_algorithm *br_alg, std
                                                           { return status.node_status[v] == IS_status::not_set; }) &&
                                                   "ERROR: cut_vertex_reduction::get_articulation_points: articulation point already set");
 }
-bool cut_vertex_reduction::generate_global_data(reduce_algorithm *br_alg, std::vector<NodeID> &articulation_points)
+void cut_vertex_reduction::generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index)
 {
     auto &status = br_alg->status;
     auto &map = br_alg->buffers[2];
     auto &reverse_map = br_alg->buffers[3];
+    std::vector<NodeID> articulation_points;
     get_mappings_to_remaining_graph(br_alg, map, reverse_map);
     get_articulation_points(br_alg, articulation_points, reverse_map, map);
-    return articulation_points.size();
+    for (NodeID node : articulation_points)
+        reduction_data[reduction_index][node] = 1;
 }

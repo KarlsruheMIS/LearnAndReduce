@@ -17,7 +17,6 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
-
 #include "critical_set_reduction.h"
 
 #include "reduce_algorithm.h"
@@ -123,14 +122,14 @@ bool critical_set_reduction::reduce(reduce_algorithm *br_alg)
         }
     }
 
-    #ifdef REDUCTION_INFO
-        reduced_nodes += (oldn - status.remaining_nodes);
-        reduction_time += br_alg->reduction_timer.elapsed();
-    #endif
-	// if (oldn != status.remaining_nodes) std::cout << "critical redu -> " << (oldn - status.remaining_nodes) << std::endl;
+#ifdef REDUCTION_INFO
+    reduced_nodes += (oldn - status.remaining_nodes);
+    reduction_time += br_alg->reduction_timer.elapsed();
+#endif
+    // if (oldn != status.remaining_nodes) std::cout << "critical redu -> " << (oldn - status.remaining_nodes) << std::endl;
     return oldn != status.remaining_nodes;
 }
-bool critical_set_reduction::generate_global_data(reduce_algorithm *br_alg, std::vector<NodeID> &label)
+void critical_set_reduction::generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index)
 {
     auto &status = br_alg->status;
     size_t oldn = status.remaining_nodes;
@@ -193,8 +192,8 @@ bool critical_set_reduction::generate_global_data(reduce_algorithm *br_alg, std:
     }
     endfor
 
-    // isolated nodes in the maximum critical set form the maximum independent critical set
-    for (NodeID id = 0; id < n; id++)
+        // isolated nodes in the maximum critical set form the maximum independent critical set
+        for (NodeID id = 0; id < n; id++)
     {
         NodeID node = inverse_mapping[id];
         if (max_cs_set.get(node))
@@ -212,10 +211,8 @@ bool critical_set_reduction::generate_global_data(reduce_algorithm *br_alg, std:
 
             if (isolated)
             {
-                label.push_back(node);
+                reduction_data[reduction_index][node] = 1;
             }
         }
     }
-
-    return label.size() > 0;
 }

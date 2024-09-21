@@ -1,5 +1,5 @@
-#ifndef HEAVY_SET_3_H 
-#define HEAVY_SET_3_H 
+#ifndef HEAVY_SET_3_H
+#define HEAVY_SET_3_H
 
 // local includes
 #include "definitions.h"
@@ -25,9 +25,6 @@ struct heavy_set3_reduction : public general_reduction
     virtual std::string get_model_path() final { return "models/heavy_set3.gnn"; }
     virtual bool reduce(reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(reduce_algorithm *br_alg, NodeID v) final;
-    int generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label);
-
-    bool is_heavy_set(NodeID v, fast_set &v_neighbors_set, NodeID u, fast_set &u_neighbors_set, NodeID w, reduce_algorithm *br_alg, int &l);
 
 private:
     enum v_combination
@@ -48,5 +45,7 @@ private:
     bool check_w_combination(std::vector<NodeWeight> &MWIS_weights);
     void unset_weights(tiny_solver *solver, std::vector<NodeID> &nodes);
     void set_weights(tiny_solver *solver, std::vector<NodeID> &nodes, std::vector<NodeWeight> &weights);
+
+    void generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index);
 };
 #endif // HEAVY_SET_3_H

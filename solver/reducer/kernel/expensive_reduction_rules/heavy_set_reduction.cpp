@@ -18,10 +18,10 @@ bool heavy_set_reduction::reduce(reduce_algorithm *br_alg)
     auto &status = br_alg->status;
     size_t oldn = status.remaining_nodes;
 
-    for_each_changed_vertex(br_alg, [&](NodeID v) {
+    for_each_changed_vertex(br_alg, [&](NodeID v)
+                            {
         if (br_alg->t.elapsed() > br_alg->config.time_limit) return;
-        reduce_vertex(br_alg, v);
-    });
+        reduce_vertex(br_alg, v); });
 
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);
@@ -39,7 +39,7 @@ inline bool heavy_set_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID 
     if (br_alg->deg(common_neighbor) < 3)
         return false; // use other reduction
 
-	auto& status = br_alg->status;
+    auto &status = br_alg->status;
     assert(status.node_status[common_neighbor] == IS_status::not_set && "ERROR: heavy_set_reduction::reduce_vertex: node must be unset");
     // check if common neighbor is suitable
     if (std::all_of(status.graph[common_neighbor].begin(), status.graph[common_neighbor].end(), [&](NodeID neighbor)
@@ -102,6 +102,7 @@ bool heavy_set_reduction::is_heavy_set(NodeID v, fast_set &v_neighbors_set, Node
     get_neighborhood_vector(v, br_alg, v_neighbors_vec);
     get_neighborhood_vector(u, br_alg, u_neighbors_vec);
 
+    assert(u != v && "ERROR: heavy_set_reduction::is_heavy_set: u and v must be different");
     assert(!status.graph.adjacent(v, u) && "ERROR: heavy_set_reduction::is_heavy_set: v and u must be not adjacent");
     assert(!is_reduced(v, br_alg) && "ERROR: heavy_set_reduction::is_heavy_set: v must not be reduced");
     assert(!is_reduced(u, br_alg) && "ERROR: heavy_set_reduction::is_heavy_set: u must not be reduced");
@@ -120,7 +121,7 @@ bool heavy_set_reduction::is_heavy_set(NodeID v, fast_set &v_neighbors_set, Node
     }
 
     std::vector<NodeWeight> MWIS_weights(4, 0);
-    assert(graph_nodes.size() > 2 && "ERROR: heavy_set_reduction::is_heavy_set: graph_nodes must have at least 3 nodes");
+    // assert(graph_nodes.size() > 2 && "ERROR: heavy_set_reduction::is_heavy_set: graph_nodes must have at least 3 nodes");
     MWIS_weights[v_combination::uv] = weights[u] + weights[v];
     // compute MWIS in N(v) + N(u) + N(w):
     if (!solve_induced_subgraph_from_set(MWIS_weights[v_combination::uv], MWIS_weights[v_combination::oo], br_alg, graph_nodes, graph_nodes_set))
@@ -199,67 +200,90 @@ bool heavy_set_reduction::is_heavy_set(NodeID v, fast_set &v_neighbors_set, Node
 
     return oldn != status.remaining_nodes;
 }
-void heavy_set_reduction::unset_weights(tiny_solver* solver, std::vector<NodeID>& nodes) {
-    for (NodeID n : nodes) {
+void heavy_set_reduction::unset_weights(tiny_solver *solver, std::vector<NodeID> &nodes)
+{
+    for (NodeID n : nodes)
+    {
         solver->subgraph_W[solver->forward_map[n]] = 0;
     }
 }
-void heavy_set_reduction::set_weights(tiny_solver* solver, std::vector<NodeID>& nodes, std::vector<NodeWeight>& weights) {
-    for (NodeID n : nodes) {
+void heavy_set_reduction::set_weights(tiny_solver *solver, std::vector<NodeID> &nodes, std::vector<NodeWeight> &weights)
+{
+    for (NodeID n : nodes)
+    {
         solver->subgraph_W[solver->forward_map[n]] = weights[n];
     }
 }
-inline int heavy_set_reduction::generate_data(reduce_algorithm *br_alg, NodeID common_neighbor, std::vector<NodeID>& label)
+inline void heavy_set_reduction::generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index)
 {
+    auto &status = br_alg->status;
     auto &config = br_alg->config;
-    if (br_alg->deg(common_neighbor) < 2)
-        return 0; 
-
-	auto& status = br_alg->status;
-    // check if common neighbor is suitable
-    if (std::all_of(status.graph[common_neighbor].begin(), status.graph[common_neighbor].end(), [&](NodeID neighbor)
-                    { return br_alg->deg(neighbor) > config.subgraph_node_limit; }))
-        return 0;
-    size_t oldn = status.remaining_nodes;
     auto solver = br_alg->subgraph_solver;
     auto &v_neighbors_set = br_alg->set_1;
-    auto &candidates = status.graph[common_neighbor];
-    int l = 0;
-    for (size_t v_idx = 0; v_idx < candidates.size() - 1; v_idx++)
+    for (NodeID common_neighbor = 0; common_neighbor < status.n; common_neighbor++)
     {
-        NodeID v = candidates[v_idx];
-        if (is_reduced(v, br_alg))
+        if (br_alg->deg(common_neighbor) < 2)
             continue;
-        if (br_alg->deg(v) > config.subgraph_node_limit)
-            continue; // too many neighbors
-        if (br_alg->deg(v) < 3)
-            continue; // use other reduction
-        NodeID deg_v = br_alg->deg(v);
-        get_neighborhood_set(v, br_alg, v_neighbors_set);
-
-        // find second heavy vertex u (not adjacent to v)
-        for (size_t u_idx = v_idx + 1; u_idx < candidates.size(); u_idx++)
+        // check if common neighbor is suitable
+        if (std::all_of(status.graph[common_neighbor].begin(), status.graph[common_neighbor].end(), [&](NodeID neighbor)
+                        { return br_alg->deg(neighbor) > config.subgraph_node_limit; }))
         {
-            NodeID u = candidates[u_idx];
-            if (v_neighbors_set.get(u))
-                continue; // look for non adjacent nodes
-            if (is_reduced(u, br_alg))
-                continue;
-            if (br_alg->deg(u) + deg_v > config.subgraph_node_limit)
-                continue; // subgraph too large
-            if (br_alg->deg(u) < 3)
-                continue; // use other reduction
+            for (NodeID node : status.graph[common_neighbor])
+                if (reduction_data[reduction_index][node] != 1)
+                    reduction_data[reduction_index][node] = 2;
+            continue;
+        }
+        auto candidates = status.graph[common_neighbor];
 
-            if (is_heavy_set(v, v_neighbors_set, u, br_alg))
+        for (size_t v_idx = 0; v_idx < candidates.size() - 1; v_idx++)
+        {
+            NodeID v = candidates[v_idx];
+            if (br_alg->deg(v) > config.subgraph_node_limit)
             {
-                return 1;
+                if (reduction_data[reduction_index][v] != 1)
+                    reduction_data[reduction_index][v] = 2;
+                continue; // too many neighbors
             }
-            else{
-                if (solver->time_limit_exceeded || solver->node_limit_exceeded)
-                    l = 2;
+            get_neighborhood_set(v, br_alg, v_neighbors_set);
+
+            // find second heavy vertex u (not adjacent to v)
+            for (size_t u_idx = v_idx + 1; u_idx < candidates.size(); u_idx++)
+            {
+                NodeID u = candidates[u_idx];
+                assert(u != v);
+                if (v_neighbors_set.get(u))
+                    continue; // look for non adjacent nodes
+                if (br_alg->deg(u) + br_alg->deg(v) > config.subgraph_node_limit)
+                {
+                    if (reduction_data[reduction_index][u] != 1)
+                        reduction_data[reduction_index][u] = 2;
+                    continue; // subgraph too large
+                }
+
+                if (is_heavy_set(v, v_neighbors_set, u, br_alg))
+                {
+                    if (is_reduced(v, br_alg))
+                        reduction_data[reduction_index][v] = 1;
+                    if (is_reduced(u, br_alg))
+                        reduction_data[reduction_index][u] = 1;
+                    while (status.modified_stack.size() > 0)
+                    {
+                        NodeID node = status.modified_stack.back();
+                        status.modified_stack.pop_back();
+                        br_alg->unset(node);
+                    }
+                }
+                else
+                {
+                    if (solver->time_limit_exceeded || solver->node_limit_exceeded)
+                    {
+                        if (reduction_data[reduction_index][u] != 1)
+                            reduction_data[reduction_index][u] = 2;
+                        if (reduction_data[reduction_index][v] != 1)
+                            reduction_data[reduction_index][v] = 2;
+                    }
+                }
             }
         }
     }
-
-    return l;
 }

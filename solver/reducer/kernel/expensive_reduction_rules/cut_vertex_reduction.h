@@ -25,7 +25,7 @@ struct cut_vertex_reduction : public general_reduction
     void get_mappings_to_remaining_graph(reduce_algorithm *br_alg, std::vector<NodeID> &map, std::vector<NodeID> &reverse_map);
     bool get_fold_data(reduce_algorithm *br_alg, NodeID cut_v, std::vector<NodeID> &cut_v_included_i, std::vector<NodeID> &cut_v_included_e, std::vector<NodeID> &cut_v_excluded_i, std::vector<NodeID> &cut_v_excluded_e, NodeWeight &large_cutMWIS_weight, NodeWeight &small_cutMWIS_weight);
     void get_articulation_points(reduce_algorithm *br_alg, std::vector<NodeID> &articulation_points, std::vector<NodeID> &reverse_map, std::vector<NodeID> &map);
-    bool generate_global_data(reduce_algorithm *br_alg, std::vector<NodeID> &label);
+    void generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index);
 
 private:
     struct fold_data

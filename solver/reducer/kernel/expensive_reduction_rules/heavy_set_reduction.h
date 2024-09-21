@@ -32,9 +32,8 @@ private:
         uv
     }; // uo = u fixed as included and v is excluded (start with no increasing to all vertices)
     bool is_heavy_set(NodeID v, fast_set &v_neighbors_set, NodeID u, reduce_algorithm *br_alg);
-    // int heavy_set_label(NodeID v, fast_set &v_neighbors_set, NodeID u, reduce_algorithm *br_alg);
-    int generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label);
     void set_weights(tiny_solver *solver, std::vector<NodeID> &nodes, std::vector<NodeWeight> &weights);
+    void generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index);
     void unset_weights(tiny_solver *solver, std::vector<NodeID> &nodes);
 };
 #endif // HEAVY_SET_H

@@ -955,12 +955,7 @@ void reduce_algorithm::generate_initial_reduce_data(graph_access &G, std::vector
 				label.push_back(node);
 			for (NodeID node : label)
 				reduction_data[i][node] = l;
-			while (status.modified_stack.size() > 0)
-			{
-				NodeID node = status.modified_stack.back();
-				status.modified_stack.pop_back();
-				unset(node);
-			}
+			assert(status.modified_stack.size() == 0 && "stack not empty");
 			assert(status.remaining_nodes == status.n && "graph should be original size");
 		}
 	}
