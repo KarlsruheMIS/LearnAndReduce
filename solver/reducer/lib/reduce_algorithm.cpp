@@ -236,6 +236,8 @@ void reduce_algorithm::pop_nodes(size_t nodes)
 }
 void reduce_algorithm::resize(size_t size)
 {
+	tiny_solver_free(subgraph_solver);
+	subgraph_solver = tiny_solver_init(size);
 	set_1.resize(size);
 	set_2.resize(size);
 	double_set.resize(2 * size);
@@ -923,7 +925,7 @@ void reduce_algorithm::generate_initial_reduce_data(graph_access &G, std::vector
 {
 	std::swap(global_transformation_map, local_transformation_map);
 	status = std::move(global_status);
-	std::vector<reduction_type> global = {critical_set, struction_plateau, struction_blow, unconfined_csr, cut_vertex};
+	std::vector<reduction_type> global = {critical_set, struction_plateau, struction_blow, unconfined_csr, cut_vertex, heavy_set, heavy_set3};
 	std::vector<NodeID> label;
 	label.reserve(status.n);
 
@@ -935,10 +937,7 @@ void reduce_algorithm::generate_initial_reduce_data(graph_access &G, std::vector
 			auto &&reduction = status.transformations[i];
 			if (status.transformations[i]->get_reduction_type() == unconfined_csr)
 				reduction->marker.fill_current_ascending(status.n);
-			label.clear();
-			int l = (int)reduction->generate_global_data(this, label);
-			for (NodeID node : label)
-				reduction_data[i][node] = l;
+			reduction->generate_global_data(this, reduction_data, i);
 		}
 	}
 

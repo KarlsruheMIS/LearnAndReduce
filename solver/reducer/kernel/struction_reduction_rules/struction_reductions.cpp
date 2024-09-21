@@ -49,7 +49,7 @@ template class iterative_struction<original_struction<true>, reduction_type::str
 template class iterative_struction<original_struction<true>, reduction_type::struction_plateau, 0>;
 
 template <typename key_function, typename struction_type, reduction_type type>
-bool blow_up_struction<key_function, struction_type, type>::reduce(reduce_algorithm *r_algalg)
+bool blow_up_struction<key_function, struction_type, type>::reduce(reduce_algorithm *r_alg)
 {
     this->r_alg = r_alg;
     auto &status = r_alg->status;
@@ -136,14 +136,14 @@ bool blow_up_struction<key_function, struction_type, type>::is_done()
 }
 
 template <typename key_function, typename struction_type, reduction_type type>
-void blow_up_struction<key_function, struction_type, type>::restore(reduce_algorithm *r_algalg)
+void blow_up_struction<key_function, struction_type, type>::restore(reduce_algorithm *r_alg)
 {
     s.restore(r_alg);
     restored = true;
 }
 
 template <typename key_function, typename struction_type, reduction_type type>
-void blow_up_struction<key_function, struction_type, type>::reset(reduce_algorithm *r_algalg, size_t comp_size)
+void blow_up_struction<key_function, struction_type, type>::reset(reduce_algorithm *r_alg, size_t comp_size)
 {
     restored = false;
     queue.clear();
