@@ -39,9 +39,8 @@ inline bool extended_domination_reverse_reduction::reduce_vertex(reduce_algorith
     get_neighborhood_vector(v, br_alg, neighbors);
     get_neighborhood_set(v, br_alg, neighbors_set);
 
-std:
-    sort(neighbors.begin(), neighbors.end(), [&](NodeID a, NodeID b)
-         { return br_alg->deg(a) < br_alg->deg(b); });
+    std::sort(neighbors.begin(), neighbors.end(), [&](NodeID a, NodeID b)
+              { return br_alg->deg(a) < br_alg->deg(b); });
 
     for (NodeID cand : status.graph[neighbors[0]])
     {
@@ -74,7 +73,7 @@ std:
             }
         }
     }
-
+    br_alg->config.disable_extended_domination_reverse = true;
     return false;
 }
 void extended_domination_reverse_reduction::fold(reduce_algorithm *br_alg, NodeID v, NodeID cand)
