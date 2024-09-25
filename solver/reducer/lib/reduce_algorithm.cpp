@@ -429,8 +429,10 @@ void reduce_algorithm::initial_reduce()
 
 		if (status.remaining_nodes == 0)
 		{
+			#ifdef REDUCTION_INFO
 			if (config.print_reduction_info)
 				print_reduction_info();
+			#endif
 			break;
 		}
 
@@ -442,8 +444,10 @@ void reduce_algorithm::initial_reduce()
 			heuristically_reducing = false;
 			further_impovement = true;
 		}
+		#ifdef REDUCTION_INFO
 		if (config.print_reduction_info)
 			print_reduction_info();
+		#endif
 	}
 	status.modified_stack.push_back(BRANCHING_TOKEN);
 

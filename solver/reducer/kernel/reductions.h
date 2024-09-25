@@ -2,7 +2,7 @@
 #ifndef _REDUCTIONS_H
 #define _REDUCTIONS_H
 
-#define REDUCTION_INFO
+// #define REDUCTION_INFO
 
 // local includes
 #include "definitions.h"
