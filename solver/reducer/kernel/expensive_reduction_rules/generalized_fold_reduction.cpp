@@ -36,24 +36,20 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
     if (br_alg->deg(v) <= 1)
         return false;
     auto &status = br_alg->status;
-    auto &neighbors = br_alg->buffers[0];
-    auto &neighbors_set = br_alg->set_1;
+    auto &config = br_alg->config;
+    auto &neighbors = br_alg->set_1; // will be set by solve_induced_neighborhood_subgraph
     auto &MWIS_set = br_alg->set_2;
     auto solver = br_alg->subgraph_solver;
     size_t oldn = status.remaining_nodes;
 
-    get_neighborhood_set(v, br_alg, neighbors_set);
-    get_neighborhood_vector(v, br_alg, neighbors);
-
-    if (status.graph[v].size() > br_alg->config.subgraph_node_limit)
-    {
+    if (status.graph[v].size() > config.subgraph_node_limit)
         return false;
-    }
 
     // compute MWIS in N(v)
     NodeWeight MWIS_weight = 0;
     NodeWeight min_MWIS_neighbor_weight = std::numeric_limits<NodeWeight>::max();
-    bool solved_exact = solve_induced_subgraph_from_set(min_MWIS_neighbor_weight, MWIS_weight, br_alg, neighbors, neighbors_set);
+    bool solved_exact = solve_induced_neighborhood_subgraph(min_MWIS_neighbor_weight, MWIS_weight, br_alg, v);
+    assert(solver->weight_limit_exceeded == false);
     if (!solved_exact)
         return false;
 
@@ -64,7 +60,7 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
     }
 
     MWIS_set.clear();
-    for (NodeID node = 0; node < neighbors.size(); node++)
+    for (NodeID node = 0; node < solver->subgraph_N; node++)
     {
         if (solver->independent_set[node] == 1)
         {
@@ -90,25 +86,17 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
         if (!MWIS_set.get(neighbor))
             continue;
 
-        auto iter = std::find(neighbors.begin(), neighbors.end(), neighbor);
-        assert(iter != neighbors.end());
-        std::swap(*iter, neighbors.back());
-        neighbors.pop_back();
-        neighbors_set.remove(neighbor);
+        // exclude neighbor from N(v)
+        solver->subgraph_W[solver->forward_map[neighbor]] = 0;
 
-        NodeWeight MWIS_weight = 0;
-        bool solved_exact = solve_induced_subgraph_from_set(status.weights[v], MWIS_weight, br_alg, neighbors, neighbors_set);
-        if (!solved_exact)
-        {
+        tiny_solver_clear_solution(solver);
+        tiny_solver_solve(solver, config.subgraph_time_limit, status.weights[v]);
+        NodeWeight MWIS_weight = solver->independent_set_weight;
+        if (solver->time_limit_exceeded || solver->node_limit_exceeded || MWIS_weight >= status.weights[v])
             check_failed = true;
-        }
-        else if (MWIS_weight >= status.weights[v])
-        {
-            check_failed = true;
-        }
 
-        neighbors.push_back(neighbor);
-        neighbors_set.add(neighbor);
+        // reset neighbor weight
+        solver->subgraph_W[solver->forward_map[neighbor]] = status.weights[neighbor];
 
         if (check_failed)
             break;
@@ -120,70 +108,44 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
         return oldn != status.remaining_nodes;
     }
 
-    auto &neighborhood_intersection_set = MWIS_set;
     bool remove_node;
 
-    // we can't fold but we can possibly remove some neighbors of v
-    do
+    // we can't fold but we can possibly remove some neighbors of v do
     {
         for (const NodeID node : status.graph[v])
         {
-            neighborhood_intersection_set.clear();
-
-            for (const NodeID neighbor : status.graph[node])
-            {
-                if (neighbors_set.get(neighbor))
-                {
-                    neighborhood_intersection_set.add(neighbor);
-                }
-            }
-
-            // "force" node into an IS (= remove node and its neighbors from N(v) and compute MWIS in remaining N(v))
-            auto iter = std::find(neighbors.begin(), neighbors.end(), node);
-            assert(iter != neighbors.end());
-            std::swap(*iter, neighbors.back());
-            neighbors.pop_back();
-            neighbors_set.remove(node);
-
-            for (const NodeID neighbor : status.graph[node])
-            {
-                if (neighborhood_intersection_set.get(neighbor))
-                {
-                    auto iter = std::find(neighbors.begin(), neighbors.end(), neighbor);
-                    assert(iter != neighbors.end());
-                    std::swap(*iter, neighbors.back());
-                    neighbors.pop_back();
-                    neighbors_set.remove(neighbor);
-                }
-            }
+            assert(status.node_status[node] == IS_status::not_set);
 
             if (status.weights[v] < status.weights[node])
+            {
+                remove_node = false;
+                continue;
+            }
+
+            // "force" node into an IS (= set weight of its neighbors to 0)
+            for (const NodeID neighbor : status.graph[node])
+            {
+                if (neighbors.get(neighbor))
+                    solver->subgraph_W[solver->forward_map[neighbor]] = 0;
+            }
+
+            tiny_solver_clear_solution(solver);
+            tiny_solver_solve(solver, config.subgraph_time_limit, status.weights[v]);
+            NodeWeight MWIS_weight = solver->independent_set_weight;
+            if (solver->time_limit_exceeded || solver->node_limit_exceeded || MWIS_weight >= status.weights[v])
             {
                 remove_node = false;
             }
             else
             {
-                NodeWeight MWIS_weight = 0;
-                NodeWeight bound = status.weights[v] - status.weights[node];
-                bool solved_exact = solve_induced_subgraph_from_set(bound, MWIS_weight, br_alg, neighbors, neighbors_set);
-                if (!solved_exact)
-                {
-                    remove_node = false;
-                }
-                else
-                {
-                    // if the weight of every MWIS in N(v) which contains "node" is smaller than w(v) then we can remove "node"
-                    remove_node = MWIS_weight <= bound;
-                }
+                // if the weight of every MWIS in N(v) which contains "node" is smaller than w(v) then we can remove "node"
+                remove_node = MWIS_weight <= bound;
             }
 
             for (const NodeID neighbor : status.graph[node])
             {
-                if (neighborhood_intersection_set.get(neighbor))
-                {
-                    neighbors.push_back(neighbor);
-                    neighbors_set.add(neighbor);
-                }
+                if (neighbors.get(neighbor))
+                    solver->subgraph_W[solver->forward_map[neighbor]] = status.weights[neighbor];
             }
 
             if (remove_node)
@@ -191,11 +153,9 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
                 br_alg->set(node, IS_status::excluded);
                 break; // break and restart loop because set(..) modifies the range which we currently iterate
             }
-
-            neighbors.push_back(node);
-            neighbors_set.add(node);
         }
-    } while (remove_node && neighbors.size() > 1);
+    }
+    while (remove_node)
 
     return oldn != status.remaining_nodes;
 }
