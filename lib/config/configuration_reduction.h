@@ -208,6 +208,7 @@ inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig 
     config.reduction_style                        = ReductionConfig::Reduction_Style::EARLY_STRUCTION;
     config.reduction_style_name                   = "early_struction";
     config.disable_generalized_fold               = false;
+    config.disable_clique_neighborhood_fast       = false;
     enable_new_reductions(config);
 }
 
@@ -226,6 +227,7 @@ inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfi
     original_cyclicStrong(config);
     config.reduction_style                        = ReductionConfig::Reduction_Style::FULL;
     config.disable_generalized_fold               = false;
+    config.disable_clique_neighborhood_fast       = false;
     enable_new_reductions(config);
 }
 
@@ -268,6 +270,7 @@ inline void configuration_reduction::generate_training_data_initial_reductions( 
     config.disable_decreasing_struction           = true;
     config.disable_plateau_struction              = true;
     config.disable_clique_neighborhood            = true;
+    config.disable_clique_neighborhood_fast       = true;
     config.disable_high_degree                    = true;
     config.disable_bound_reduction                = true;
     config.disable_heuristic_exclude              = true;

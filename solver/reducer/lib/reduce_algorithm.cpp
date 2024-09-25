@@ -133,10 +133,6 @@ reduce_algorithm::reduce_algorithm(graph_access &G, const ReductionConfig &confi
 		}
 		else
 		{ // FULL and tests
-			if (!config.disable_clique_neighborhood_fast)
-				global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
-			if (!config.disable_clique_neighborhood)
-				global_status.transformations.emplace_back(new clique_neighborhood_reduction(global_status.n));
 			if (!config.disable_decreasing_struction)
 				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 			if (!config.disable_plateau_struction)
