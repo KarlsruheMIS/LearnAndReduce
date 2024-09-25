@@ -77,11 +77,6 @@ bool general_reduction::solve_induced_subgraph_from_set(NodeWeight weight_bound,
         solution = 0;
         return true;
     }
-    if (nodes_vec.size() == 1)
-    {
-        solution = br_alg->status.weights[nodes_vec[0]];
-        return true;
-    }
     br_alg->tiny_solver_solve_subgraph(weight_bound, nodes_vec, nodes_set);
     solution = solver->independent_set_weight;
     return !(solver->time_limit_exceeded || solver->node_limit_exceeded || solver->weight_limit_exceeded);

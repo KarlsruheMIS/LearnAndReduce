@@ -746,7 +746,7 @@ void reduce_algorithm::tiny_solver_solve_neighbourhood(const NodeWeight Wl, cons
 {
 	tiny_solver_clear(subgraph_solver);
 	auto &neighbor_set = set_1;
-	set_1.clear();
+	neighbor_set.clear();
 	if (deg(v) > MAX_NODES)
 	{
 		subgraph_solver->node_limit_exceeded = 1;
@@ -770,15 +770,13 @@ void reduce_algorithm::tiny_solver_solve_neighbourhood(const NodeWeight Wl, cons
 	{
 		NodeID u_subgraph = subgraph_solver->forward_map[u];
 		subgraph_solver->subgraph[u_subgraph][u_subgraph] = 1;
-		for (NodeID v : status.graph[u])
+		for (NodeID w : status.graph[u])
 		{
-			if (u <= v)
+			if (u <= w || !neighbor_set.get(w))
 				continue;
-			NodeID v_subgraph = subgraph_solver->forward_map[v];
-			if (!neighbor_set.get(v))
-				continue;
-			subgraph_solver->subgraph[u_subgraph][v_subgraph] = 1;
-			subgraph_solver->subgraph[v_subgraph][u_subgraph] = 1;
+			NodeID w_subgraph = subgraph_solver->forward_map[w];
+			subgraph_solver->subgraph[u_subgraph][w_subgraph] = 1;
+			subgraph_solver->subgraph[w_subgraph][u_subgraph] = 1;
 		}
 	}
 
