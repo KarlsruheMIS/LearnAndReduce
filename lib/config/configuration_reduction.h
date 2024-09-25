@@ -255,6 +255,13 @@ inline void configuration_reduction::extended_cyclicFast( ReductionConfig & conf
 inline void configuration_reduction::generate_training_data_initial_reductions( ReductionConfig & config ) {
     all_decreasing(config);
 
+    // not used for data generation on original instance
+    config.disable_cut_vertex                 = true;
+    config.disable_generalized_fold           = true;
+    config.disable_heavy_set                  = true;
+    config.disable_heavy_set3                 = true;
+
+    // in general not used for data generation
     config.disable_extended_domination_reverse    = true;
     config.disable_extended_domination            = true;
     config.disable_funnel_fold                    = true;

@@ -436,10 +436,10 @@ void cut_vertex_reduction::get_articulation_points(reduce_algorithm *br_alg, std
                         if (parent[parent[u]] == status.n)
                             continue;
                         // Check articulation point condition for non-root nodes
-                        if (low[u] >= disc[parent[u]] && !articulation_point_set.get(parent[u]))
+                        if (low[u] >= disc[parent[u]] && !articulation_point_set.get(reverse_map[parent[u]]))
                         {
-                            articulation_points.push_back(parent[u]);
-                            articulation_point_set.add(parent[u]);
+                            articulation_points.push_back(reverse_map[parent[u]]);
+                            articulation_point_set.add(reverse_map[parent[u]]);
                         }
                         // Update the low value of the parent
                         low[parent[u]] = std::min(low[parent[u]], low[u]);

@@ -256,26 +256,20 @@ inline int funnel_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, s
 {
     if (br_alg->deg(v) <= 2) return false; // fold1 or 2
 	auto& weights = br_alg->status.weights;
-	auto& remaining_n = br_alg->status.remaining_nodes;
 	auto& funnel_set = br_alg->set_1;
 	auto& neighbors = br_alg->buffers[0];
-	size_t oldn = remaining_n;
     NodeID funnel_neighbor = br_alg->status.n;
 
     get_neighborhood_vector(v, br_alg, neighbors);
     funnel_set.clear();
     // need one vertex of weight >= v
-    if (std::any_of(neighbors.begin(), neighbors.end(), [&](NodeID neighbor)
-                    { return weights[neighbor] >= weights[v]; }))
-    {
-        get_neighborhood_set(v, br_alg, funnel_set);
-        funnel_set.add(v);
+    get_neighborhood_set(v, br_alg, funnel_set);
+    funnel_set.add(v);
 
-        if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, neighbors))
-        {
-            label.push_back(v);
-            return true;
-        }
+    if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, neighbors))
+    {
+        label.push_back(v);
+        return true;
     }
 
     return false;

@@ -155,7 +155,6 @@ bool heavy_set3_reduction::is_heavy_set(NodeID v, fast_set &v_neighbors_set, Nod
         graph_nodes_set.add(n);
     }
 
-    // assert(graph_nodes.size() > 2 && "ERROR: heavy_set_reduction::is_heavy_set: graph_nodes must have at least 3 nodes");
 
     std::vector<NodeWeight> MWIS_weights(8, 0);
     NodeWeight no_limit = std::numeric_limits<NodeWeight>::max();

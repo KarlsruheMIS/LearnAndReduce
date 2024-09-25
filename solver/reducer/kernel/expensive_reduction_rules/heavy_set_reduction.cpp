@@ -172,7 +172,7 @@ bool heavy_set_reduction::is_heavy_set(NodeID v, fast_set &v_neighbors_set, Node
         // get max weights by weight and if equal by participating vertices in the permutation
         v_combination max_weight_combination = static_cast<v_combination>(std::max_element(MWIS_weights.begin(), MWIS_weights.end()) - MWIS_weights.begin());
         NodeWeight best_weight_excluding = 0;
-        std::vector<NodeWeight> weights_including(2, 0);
+        NodeWeight worst_weight_including = 0;
         switch (max_weight_combination)
         {
         case v_combination::uv:
@@ -181,16 +181,14 @@ bool heavy_set_reduction::is_heavy_set(NodeID v, fast_set &v_neighbors_set, Node
             break;
         case v_combination::uo:
             best_weight_excluding = std::max({MWIS_weights[v_combination::ov], MWIS_weights[v_combination::oo]});
-            weights_including = {MWIS_weights[v_combination::uv], MWIS_weights[v_combination::uo]};
-            if (std::all_of(weights_including.begin(), weights_including.end(), [&](NodeWeight weight)
-                            { return weight >= best_weight_excluding; }))
+            worst_weight_including = std::min({MWIS_weights[v_combination::uv], MWIS_weights[v_combination::uo]});
+            if (worst_weight_including >= best_weight_excluding)
                 br_alg->set(u, IS_status::included);
             break;
         case v_combination::ov:
             best_weight_excluding = std::max({MWIS_weights[v_combination::uo], MWIS_weights[v_combination::oo]});
-            weights_including = {MWIS_weights[v_combination::uv], MWIS_weights[v_combination::ov]};
-            if (std::all_of(weights_including.begin(), weights_including.end(), [&](NodeWeight weight)
-                            { return weight >= best_weight_excluding; }))
+            worst_weight_including = std::min({MWIS_weights[v_combination::uv], MWIS_weights[v_combination::ov]});
+            if (worst_weight_including >= best_weight_excluding)
                 br_alg->set(v, IS_status::included);
             break;
         default:
