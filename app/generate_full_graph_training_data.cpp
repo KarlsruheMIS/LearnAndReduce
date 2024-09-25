@@ -113,15 +113,8 @@ int main(int argn, char **argv)
     config.disable_extended_se                = true;
     config.disable_basic_se                   = true;
     config.disable_funnel                     = true;
-    config.disable_generalized_fold           = true;
     config.disable_clique_neighborhood_fast   = true;
-    config.disable_cut_vertex                 = true;
-    config.disable_heavy_set                  = true;
-    config.disable_heavy_set3                 = true;
     config.disable_critical_set               = true;
-    config.disable_plateau_struction          = true;
-    config.disable_decreasing_struction       = true;
-
 
 
     reduce_algorithm r(G, config);
