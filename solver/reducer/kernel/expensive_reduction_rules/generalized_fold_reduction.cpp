@@ -111,7 +111,7 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
     bool remove_node;
 
     // we can't fold but we can possibly remove some neighbors of v do
-    {
+    do {
         for (const NodeID node : status.graph[v])
         {
             assert(status.node_status[node] == IS_status::not_set);
@@ -125,7 +125,7 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
             // "force" node into an IS (= set weight of its neighbors to 0)
             for (const NodeID neighbor : status.graph[node])
             {
-                if (neighbors.get(neighbor))
+                if (neighbors.get(neighbor) || status.node_status[neighbor] == IS_status::excluded)
                     solver->subgraph_W[solver->forward_map[neighbor]] = 0;
             }
 
@@ -154,8 +154,7 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
                 break; // break and restart loop because set(..) modifies the range which we currently iterate
             }
         }
-    }
-    while (remove_node)
+    } while (remove_node);
 
     return oldn != status.remaining_nodes;
 }
