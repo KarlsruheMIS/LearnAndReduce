@@ -123,7 +123,7 @@ void funnel_fold_reduction::fold(const fold_data &data, fast_set &funnel_set, re
     std::vector<NodeID> outside_funnel_neighbors;
     outside_funnel_neighbors.reserve(status.graph[funnel_neighbor].size());
     std::vector<NodeID> remaining_neighbors;
-    remaining_neighbors.resize(graph[node].size());
+    remaining_neighbors.reserve(graph[node].size());
 
     // collect neighbors of funnel neighbor and those outside the funnel set
     for (auto neighbor : graph[funnel_neighbor])
@@ -159,7 +159,6 @@ void funnel_fold_reduction::fold(const fold_data &data, fast_set &funnel_set, re
         br_alg->set(node, IS_status::included);
         return;
     }
-    return;
     status.folded_stack.push_back(get_reduction_type());
     status.reduction_offset += weights[node];
 
@@ -167,16 +166,22 @@ void funnel_fold_reduction::fold(const fold_data &data, fast_set &funnel_set, re
     restore_vec.push_back({data.node, data.funnel_neighbor, remaining_neighbors, {}});
     for (size_t idx = 0; idx < remaining_neighbors.size(); idx++)
     {
-        restore_vec.back().node_vecs.push_back({});
         NodeID neighbor = remaining_neighbors[idx];
+        if (weights[neighbor] + weights[funnel_neighbor] <= weights[node])
+        {
+            br_alg->set(neighbor, IS_status::excluded);
+            continue;
+        }
+        std::vector<NodeID> outside_funnel_neighbors;
         for (auto neighbor_2nd : outside_funnel_neighbors)
         {
             if (!graph.adjacent(neighbor, neighbor_2nd))
             {
                 graph.add_edge_undirected(neighbor, neighbor_2nd);
-                restore_vec.back().node_vecs[idx].push_back(neighbor_2nd);
+                outside_funnel_neighbors.push_back(neighbor_2nd);
             }
         }
+        restore_vec.back().node_vecs.push_back(outside_funnel_neighbors);
         weights[neighbor] += weights[funnel_neighbor];
         weights[neighbor] -= weights[node];
         br_alg->add_next_level_node(neighbor);
