@@ -36,7 +36,7 @@ echo "id,graph,redstyle,redconfig,timelimit,seed,gnnfilter,n,m,kn,km,offset,time
 for seed in 0; do # seeds
     for graph in `ls ${database} | grep "graph" | awk -F"." '{print $1}'`; do
         for config in  all_decreasing; do
-            overall=" --print_reduction_info --kernel=${kernel_path}/${graph} --verbose --disable_generalized_fold --disable_unconfined --disable_funnel --disable_funnel_fold --reduction_config=${config} --disable_blow_up --disable_plateau_struction --disable_decreasing_struction --disable_cut_vertex --disable_heavy_set --disable_heavy_set3 --disable_extended_twin --disable_extended_domination --disable_extended_domination_reverse --disable_critical_set --time_limit=${t} --seed=${seed} ${database}/${graph}.graph"
+            overall=" --kernel=${kernel_path}/${graph} --disable_generalized_fold --disable_unconfined --disable_funnel --disable_funnel_fold --reduction_config=${config} --disable_blow_up --disable_plateau_struction --disable_decreasing_struction --disable_cut_vertex --disable_heavy_set --disable_heavy_set3 --disable_extended_twin --disable_extended_domination --disable_extended_domination_reverse --disable_critical_set --time_limit=${t} --seed=${seed} ${database}/${graph}.graph"
 
             id="simple/${graph}"
             create_run "$id" "${overall}"
