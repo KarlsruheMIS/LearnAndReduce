@@ -75,10 +75,10 @@ class LRConv(MessagePassing):
         self.lin.reset_parameters()
 
     def forward(self, x, edge_index, edge_attr):
-        out = self.propagate(edge_index, x=x, edge_attr=edge_attr)
+        out = self.propagate(edge_index, x=x)
         return out
 
-    def message(self, x_i, x_j, edge_attr):
+    def message(self, x_i, x_j):
         x = torch.cat([x_i, x_j], dim=-1)
         x = self.lin(x)
         return x
@@ -141,7 +141,6 @@ def train():
 
         out = model(data.x, data.edge_index)
         loss = F.binary_cross_entropy_with_logits(out[data.train_mask], data.y[data.train_mask], pos_weight=torch.tensor([10.0]))
-        # loss = F.binary_cross_entropy(out[data.train_mask], data.y[data.train_mask])
 
         loss.backward()
         optimizer.step()
