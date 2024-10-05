@@ -11,6 +11,7 @@ dataset = []
 path = 'csv/'
 
 reduction = int(sys.argv[1])
+features = 4
 
 train = val = test = 0
 train_p = val_p = test_p = 0
@@ -36,7 +37,25 @@ with open('instances.txt', newline='') as instancefile:
 
         edge_index = torch.tensor(edge_list, dtype=torch.long)
         x = torch.tensor([[row[1]] for row in fields], dtype=torch.float)
-        x = x / torch.max(x)
+
+        degree = [0 for _ in range(len(fields))]
+        for u, v in edge_list:
+            degree[int(u)] += 1
+
+        neighborhood_degree = [0 for _ in range(len(fields))]
+        neighborhood_weight = [0 for _ in range(len(fields))]
+
+        for u, v in edge_list:
+            neighborhood_degree[int(u)] += degree[int(v)]
+            neighborhood_weight[int(u)] += x[int(v)][0].item()
+
+        x1 = torch.tensor(neighborhood_weight, dtype=torch.float).unsqueeze(1)
+        x2 = torch.tensor(degree, dtype=torch.float).unsqueeze(1)
+        x3 = torch.tensor(neighborhood_degree, dtype=torch.float).unsqueeze(1)
+
+        x = torch.cat([x, x1, x2, x3], 1)
+        x = x / torch.max(x, 0)[0]
+        
         y = torch.tensor([[row[reduction]] for row in fields], dtype=torch.float)
 
         data_split = [10 if int(row[reduction]) == 2 else random.randint(0, 9) for row in fields]
@@ -67,7 +86,7 @@ from torch_geometric.nn import MessagePassing, GCNConv, SAGEConv, GENConv, GINEC
 
 class LRConv(MessagePassing):
     def __init__(self, in_channels, out_channels):
-        super().__init__(flow='target_to_source', aggr='sum')
+        super().__init__(flow='target_to_source', aggr='max')
         self.lin = torch.nn.Linear(2 * in_channels, out_channels)
         self.reset_parameters()
 
@@ -88,15 +107,17 @@ class LR_GCN(torch.nn.Module):
         super().__init__()
         self.conv1 = LRConv(in_channels, hidden_channels)
         self.conv2 = LRConv(hidden_channels, hidden_channels)
-        self.lin = torch.nn.Linear(2 * hidden_channels, out_channels)
+        self.lin1 = torch.nn.Linear(2 * hidden_channels + in_channels, hidden_channels)
+        self.lin2 = torch.nn.Linear(hidden_channels, out_channels)
 
     def forward(self, x, edge_index, edge_weight=None):
         x1 = F.relu(self.conv1(x, edge_index, edge_weight))
         x1 = F.dropout(x1, p=0.2, training=self.training)
         x2 = F.relu(self.conv2(x1, edge_index, edge_weight))
         x2 = F.dropout(x2, p=0.2, training=self.training)
-        x = torch.cat([x1, x2], dim=-1)
-        x = F.sigmoid(self.lin(x))
+        x = torch.cat([x, x1, x2], dim=-1)
+        x = F.relu(self.lin1(x))
+        x = F.sigmoid(self.lin2(x))
         return x
 
 class GCN(torch.nn.Module):
@@ -104,15 +125,17 @@ class GCN(torch.nn.Module):
         super().__init__()
         self.conv1 = GCNConv(in_channels, hidden_channels)
         self.conv2 = GCNConv(hidden_channels, hidden_channels)
-        self.lin = torch.nn.Linear(2 * hidden_channels, out_channels)
+        self.lin1 = torch.nn.Linear(2 * hidden_channels + in_channels, hidden_channels)
+        self.lin2 = torch.nn.Linear(hidden_channels, out_channels)
 
     def forward(self, x, edge_index, edge_weight=None):
         x1 = F.relu(self.conv1(x, edge_index))
         x1 = F.dropout(x1, p=0.2, training=self.training)
         x2 = F.relu(self.conv2(x1, edge_index))
         x2 = F.dropout(x2, p=0.2, training=self.training)
-        x = torch.cat([x1, x2], dim=-1)
-        x = F.sigmoid(self.lin(x))
+        x = torch.cat([x, x1, x2], dim=-1)
+        x = F.relu(self.lin1(x))
+        x = F.sigmoid(self.lin2(x))
         return x
 
 class SAGE(torch.nn.Module):
@@ -120,17 +143,19 @@ class SAGE(torch.nn.Module):
         super().__init__()
         self.conv1 = SAGEConv(in_channels, hidden_channels)
         self.conv2 = SAGEConv(hidden_channels, hidden_channels)
-        self.lin = torch.nn.Linear(2 * hidden_channels, out_channels)
+        self.lin1 = torch.nn.Linear(2 * hidden_channels + in_channels, hidden_channels)
+        self.lin2 = torch.nn.Linear(hidden_channels, out_channels)
 
     def forward(self, x, edge_index, edge_weight=None):
         x1 = F.relu(self.conv1(x, edge_index))
         x1 = F.dropout(x1, p=0.2, training=self.training)
         x2 = F.relu(self.conv2(x1, edge_index))
         x2 = F.dropout(x2, p=0.2, training=self.training)
-        x = torch.cat([x1, x2], dim=-1)
-        x = F.sigmoid(self.lin(x))
+        x = torch.cat([x, x1, x2], dim=-1)
+        x = F.relu(self.lin1(x))
+        x = F.sigmoid(self.lin2(x))
         return x
-        
+
 def train():
     model.train()
 
@@ -140,7 +165,7 @@ def train():
         optimizer.zero_grad()
 
         out = model(data.x, data.edge_index)
-        loss = F.binary_cross_entropy_with_logits(out[data.train_mask], data.y[data.train_mask], pos_weight=torch.tensor([10.0]))
+        loss = F.binary_cross_entropy_with_logits(out[data.train_mask], data.y[data.train_mask], pos_weight=torch.tensor([20.0]))
 
         loss.backward()
         optimizer.step()
@@ -184,22 +209,22 @@ def train_model(model, it):
         for p in range(12):
             print(f';{accs[p].item():d}', end='')
         print()
-        
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 print('Training GCN')
-model = GCN(1, 16, 1).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-train_model(model, 100)
+model = GCN(features, 16, 1).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+train_model(model, 2000)
 
 print('Training SAGE')
-model = SAGE(1, 16, 1).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-train_model(model, 100)
+model = SAGE(features, 16, 1).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+train_model(model, 2000)
 
 print('Training LR_CONV')
-model = LR_GCN(1, 16, 1).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-train_model(model, 100)
+model = LR_GCN(features, 16, 1).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+train_model(model, 2000)
 
 store_model(model,  field_names[reduction] + '.lr_gcn')
