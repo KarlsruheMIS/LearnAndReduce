@@ -8,10 +8,7 @@ typedef reduce_algorithm::IS_status IS_status;
 
 bool heavy_set3_reduction::reduce(reduce_algorithm *br_alg)
 {
-    // if (br_alg->config.disable_heavy_set) return false;
-    if (br_alg->heuristically_reducing)
-        return false;
-    if (br_alg->t.elapsed() > br_alg->config.time_limit)
+    if (br_alg->config.disable_heavy_set3 || br_alg->blowing_up || br_alg->t.elapsed() > br_alg->config.time_limit)
         return false;
 
     auto &status = br_alg->status;
@@ -22,8 +19,11 @@ bool heavy_set3_reduction::reduce(reduce_algorithm *br_alg)
 
     for_each_changed_vertex(br_alg, [&](NodeID v)
                             {
-        if (br_alg->t.elapsed() > br_alg->config.time_limit) return;
-        reduce_vertex(br_alg, v); });
+        if (br_alg->t.elapsed() > br_alg->config.time_limit) 
+            return;
+        // jump back to simple rules if progress and reduction not disabled
+        if (reduce_vertex(br_alg, v) && !br_alg->config.disable_heavy_set3) 
+            return; });
 
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);
@@ -34,10 +34,6 @@ bool heavy_set3_reduction::reduce(reduce_algorithm *br_alg)
 inline bool heavy_set3_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID common_neighbor)
 {
     auto &config = br_alg->config;
-    if (config.disable_heavy_set)
-        return false;
-    if (br_alg->blowing_up)
-        return false;
     if (br_alg->deg(common_neighbor) < 3)
         return false; // no heavy_set of 3 vertives possible
 
@@ -154,7 +150,6 @@ bool heavy_set3_reduction::is_heavy_set(NodeID v, fast_set &v_neighbors_set, Nod
         graph_nodes.push_back(n);
         graph_nodes_set.add(n);
     }
-
 
     std::vector<NodeWeight> MWIS_weights(8, 0);
     NodeWeight no_limit = std::numeric_limits<NodeWeight>::max();

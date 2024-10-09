@@ -8,8 +8,7 @@ typedef reduce_algorithm::IS_status IS_status;
 
 bool heavy_set_reduction::reduce(reduce_algorithm *br_alg)
 {
-    // if (br_alg->config.disable_heavy_set) return false;
-    if (br_alg->heuristically_reducing)
+    if (br_alg->config.disable_heavy_set || br_alg->blowing_up)
         return false;
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
@@ -21,7 +20,9 @@ bool heavy_set_reduction::reduce(reduce_algorithm *br_alg)
     for_each_changed_vertex(br_alg, [&](NodeID v)
                             {
         if (br_alg->t.elapsed() > br_alg->config.time_limit) return;
-        reduce_vertex(br_alg, v); });
+        // jump back to simple rules if progress and reduction not disabled
+        if (reduce_vertex(br_alg, v) && !br_alg->config.disable_heavy_set) 
+            return; });
 
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);
@@ -32,10 +33,6 @@ bool heavy_set_reduction::reduce(reduce_algorithm *br_alg)
 inline bool heavy_set_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID common_neighbor)
 {
     auto &config = br_alg->config;
-    if (config.disable_heavy_set)
-        return false;
-    if (br_alg->blowing_up)
-        return false;
     if (br_alg->deg(common_neighbor) < 3)
         return false; // use other reduction
 
