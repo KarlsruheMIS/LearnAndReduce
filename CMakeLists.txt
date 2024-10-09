@@ -160,7 +160,6 @@ set(GENERAL
     ${BSOLVER}/kernel/simple_reduction_rules/fold2_reduction.cpp
     ${BSOLVER}/kernel/simple_reduction_rules/neighborhood_reduction.cpp
     ${BSOLVER}/kernel/simple_reduction_rules/clique_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/clique_neighborhood_reduction.cpp
     ${BSOLVER}/kernel/simple_reduction_rules/clique_neighborhood_fast_reduction.cpp
     ${BSOLVER}/kernel/simple_reduction_rules/twin_reduction.cpp
     ${BSOLVER}/kernel/simple_reduction_rules/domination_reduction.cpp
@@ -176,6 +175,7 @@ set(GENERAL
     ${BSOLVER}/kernel/struction_reduction_rules/extended_struction.cpp
     ${BSOLVER}/kernel/struction_reduction_rules/key_functions.cpp
     ${BSOLVER}/kernel/struction_reduction_rules/struction_reductions.cpp
+    ${BSOLVER}/kernel/expensive_reduction_rules/clique_neighborhood_reduction.cpp
     ${BSOLVER}/kernel/expensive_reduction_rules/critical_set_reduction.cpp
     ${BSOLVER}/kernel/expensive_reduction_rules/cut_vertex_reduction.cpp
     ${BSOLVER}/kernel/expensive_reduction_rules/heavy_set_reduction.cpp

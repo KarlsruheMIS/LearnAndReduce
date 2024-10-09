@@ -11,11 +11,9 @@ typedef reduce_algorithm::IS_status IS_status;
 
 bool cut_vertex_reduction::reduce(reduce_algorithm *br_alg)
 {
-    if (br_alg->blowing_up)
+    if (br_alg->blowing_up ||  br_alg->config.disable_cut_vertex)
         return false;
-    if (br_alg->heuristically_reducing)
-        return false;
-// if (br_alg->config.disable_cut_vertex) return false;
+
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
 #endif

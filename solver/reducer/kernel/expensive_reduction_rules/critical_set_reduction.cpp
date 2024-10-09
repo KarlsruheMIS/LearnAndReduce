@@ -27,11 +27,8 @@ typedef reduce_algorithm::IS_status IS_status;
 
 bool critical_set_reduction::reduce(reduce_algorithm *br_alg)
 {
-    if (br_alg->blowing_up)
+    if (br_alg->blowing_up || br_alg->config.disable_critical_set) 
         return false;
-    if (br_alg->heuristically_reducing)
-        return false;
-// if (br_alg->config.disable_critical_set) return false;
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
 #endif
