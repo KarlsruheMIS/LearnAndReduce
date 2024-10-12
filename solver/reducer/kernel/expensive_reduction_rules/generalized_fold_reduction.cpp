@@ -6,7 +6,8 @@ typedef reduce_algorithm::IS_status IS_status;
 
 bool generalized_fold_reduction::reduce(reduce_algorithm *br_alg)
 {
-    // if (br_alg->config.disable_generalized_fold) return false;
+    if (br_alg->config.disable_generalized_fold)
+        return false;
     if (br_alg->heuristically_reducing)
         return false;
 #ifdef REDUCTION_INFO
@@ -19,8 +20,11 @@ bool generalized_fold_reduction::reduce(reduce_algorithm *br_alg)
     for_each_changed_vertex(br_alg, [&](NodeID v)
                             {
         NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
-        if(try_neighborhood_reduction(v, br_alg, neighbors_weight)) return;
-        reduce_vertex(br_alg, v); });
+        if(try_neighborhood_reduction(v, br_alg, neighbors_weight)) 
+            return;
+        // jump back to simple rules if progress and reduction not disabled
+        if (reduce_vertex(br_alg, v) && !br_alg->config.disable_generalized_fold) 
+            return; });
 
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);
@@ -32,7 +36,6 @@ bool generalized_fold_reduction::reduce(reduce_algorithm *br_alg)
 }
 inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
 {
-    // if (br_alg->config.disable_generalized_fold) return false;
     if (br_alg->deg(v) <= 1)
         return false;
     auto &status = br_alg->status;
@@ -110,8 +113,9 @@ inline bool generalized_fold_reduction::reduce_vertex(reduce_algorithm *br_alg, 
 
     bool remove_node;
 
-    // we can't fold but we can possibly remove some neighbors of v do
-    do {
+    // we can't fold but we can possibly remove some neighbors of v
+    do
+    {
         for (const NodeID node : status.graph[v])
         {
             assert(status.node_status[node] == IS_status::not_set);
