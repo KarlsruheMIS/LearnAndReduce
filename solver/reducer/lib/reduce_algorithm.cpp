@@ -307,7 +307,7 @@ void reduce_algorithm::init_transformation_step(reduction_ptr &reduction)
 	if (!reduction->has_run && reduction->has_filtered_marker)
 	{
 		reduction->marker.current.clear();
-		if (reduction->get_model_path() != "" && status.remaining_nodes > 1 && config.gnn_filter)
+		if (reduction->get_model_path() != "" && status.remaining_nodes > 1 && config.gnn_filter != ReductionConfig::GNN_Filter_Type::NEVER)
 		{
 
 			timer t;

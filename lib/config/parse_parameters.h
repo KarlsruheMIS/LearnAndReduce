@@ -87,7 +87,7 @@ public:
         disable_reduction = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
         print_reduction_info = arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
         disable_early_termination = arg_lit0(NULL, "disable_early_termination", "Disable early termination of solving subgraphs in reductions.");
-        gnn_filter = arg_lit0(NULL, "gnn_filter", "Use GNNs for initial filter on vertices to apply reductions on.");
+        gnn_filter = arg_str0(NULL, "gnn_filter", NULL, "Choose gnn filter strategy. Can be either: never (default), initial, initial_tight, always");
 
         // single reduction parameters
         disable_neighborhood = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -146,7 +146,7 @@ protected:
     struct arg_str *reduction_style;
     struct arg_dbl *reduction_time_limit;
     struct arg_lit *disable_early_termination;
-    struct arg_lit *gnn_filter;
+    struct arg_str *gnn_filter;
     struct arg_str *reduction_config;
     // struct arg_str * heuristic_style;
     struct arg_str *kernel_filename;
@@ -478,11 +478,7 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
     }
     if (gnn_filter->count > 0)
     {
-        config.gnn_filter = true;
-    }
-    else
-    {
-        config.gnn_filter = false;
+        config.setGNNFilterStyle(gnn_filter->sval[0]);
     }
     if (print_reduction_info->count > 0)
     {

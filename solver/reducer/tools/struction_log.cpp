@@ -133,7 +133,7 @@ void struction_log::print_one_line_kernel_data(ReductionConfig & mis_config, dou
     filebuffer_string << "Reduction Style:\t\t"      << log_config.reduction_style_name         << std::endl; 
     filebuffer_string << "Heuristic Style:\t\t"      << log_config.heuristic_style_name         << std::endl; 
     filebuffer_string << "Reduction Config: \t\t"    << log_config.reduction_config_name        << std::endl;
-    filebuffer_string << "Use GNN:\t\t\t"            << log_config.gnn_filter                   << std::endl;
+    filebuffer_string << "GNN Filter:\t\t\t"         << log_config.gnn_filter_name              << std::endl;
     filebuffer_string                                                                           << std::endl;
     
     std::cout << "\t\tConfiguration"                                                            << std::endl;
@@ -143,7 +143,7 @@ void struction_log::print_one_line_kernel_data(ReductionConfig & mis_config, dou
     std::cout << "Reduction Style:\t\t"      << log_config.reduction_style_name                 << std::endl;
     std::cout << "Heuristic Style:\t\t"      << log_config.heuristic_style_name                 << std::endl;
     std::cout << "Reduction Config: \t\t"    << log_config.reduction_config_name                << std::endl;
-    std::cout << "Use GNN:\t\t\t"            << log_config.gnn_filter                           << std::endl;
+    std::cout << "GNN Filter:\t\t\t"         << log_config.gnn_filter_name                      << std::endl;
     std::cout                                                                                   << std::endl;
 } 
 

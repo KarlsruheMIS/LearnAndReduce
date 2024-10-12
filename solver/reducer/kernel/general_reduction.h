@@ -84,6 +84,7 @@ struct general_reduction
     // for generating training data
     bool solve_induced_subgraph_from_set(NodeWeight weight_bound, NodeWeight &solution, reduce_algorithm *br_alg, std::vector<NodeID> &nodes_vec, const fast_set &nodes_set, int &label);
     bool solve_induced_neighborhood_subgraph(NodeWeight weight_bound, NodeWeight &solution, reduce_algorithm *br_alg, NodeID v, int &label);
+    void gnn_filter_marker(ReductionConfig &config, NodeID v);
     virtual int generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label) { return 0; }
     virtual void generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index) { return; }
 

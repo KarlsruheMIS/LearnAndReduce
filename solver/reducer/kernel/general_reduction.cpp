@@ -6,6 +6,7 @@
 #include "bounds.h"
 
 typedef reduce_algorithm::IS_status IS_status;
+typedef ReductionConfig::GNN_Filter_Type GNN_Filter_Type;
 
 bool general_reduction::is_suited(NodeID v, reduce_algorithm *br_alg)
 {
@@ -143,4 +144,24 @@ bool general_reduction::solve_induced_neighborhood_subgraph(NodeWeight weight_bo
         return true; 
     }
     return false;
+}
+
+void general_reduction::gnn_filter_marker(ReductionConfig &config, NodeID v){
+    switch (config.gnn_filter)
+    {
+    case GNN_Filter_Type::INITIAL_TIGHT:
+        has_filtered_marker = false;
+        marker.apply_filter_initial_tight(v);
+        break;
+    case GNN_Filter_Type::ALWAYS:
+        has_filtered_marker = true;
+        has_run = false;
+        break;
+    case GNN_Filter_Type::INITIAL:
+        has_filtered_marker = false;
+        marker.apply_filter_initial(v);
+        break;
+    default:
+        break;
+    }
 }

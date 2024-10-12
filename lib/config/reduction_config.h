@@ -17,6 +17,7 @@ struct ReductionConfig : public Config {
     // enum Reduction_Style {initial, time_ordering, weight_ordering, time_and_weight_ordering};
     enum Struction_Type {ORIGINAL, MODIFIED, EXTENDED, EXTENDED_REDUCED, NONE};
     enum Backtrack_Type {IMMEDIATE_TIE_BREAKING, IMMEDIATE_EXCLUDE, END_MIN_KERNEL, NO_BACKTRACK};
+    enum GNN_Filter_Type {NEVER, ALWAYS, INITIAL, INITIAL_TIGHT};
     // enum Reduction_Style {NORMAL, DENSE, FULL, test1, test2, test3, EARLY_BLOW_UP};
     enum Reduction_Style {NORMAL, DENSE, FULL, EARLY_STRUCTION, EARLY_CS};
     enum Heuristic_Style {single, multiple_safe, multiple_very_safe, all, none, hils_intersect};
@@ -81,8 +82,9 @@ struct ReductionConfig : public Config {
     // early terminate solving subgraphs is best weight found is already to large for reduction to be applied
     bool disable_early_termination;
 
-    // filter reductions before adding to marker
-    bool gnn_filter;
+    // Type of filter reductions before adding to marker
+    GNN_Filter_Type gnn_filter = GNN_Filter_Type::NEVER;
+    std::string gnn_filter_name = "never";
 
     bool perform_hils;
 
@@ -130,6 +132,18 @@ struct ReductionConfig : public Config {
         }
     }
 
+    void setGNNFilterStyle(const std::string & filter) {
+        if (strCompare(filter, "never")) {
+            gnn_filter = GNN_Filter_Type::NEVER;
+        } else if (strCompare(filter, "always")) {
+            gnn_filter = GNN_Filter_Type::ALWAYS;
+        } else if (strCompare(filter, "initial")) {
+            gnn_filter = GNN_Filter_Type::INITIAL;
+        } else if (strCompare(filter, "initial_tight")) {
+            gnn_filter = GNN_Filter_Type::INITIAL_TIGHT;
+        }
+        gnn_filter_name = filter;
+    }
 
     void setBacktrackType(const std::string & back_type) {
         if (strCompare(back_type, "immediate_tie_breaking")) {
