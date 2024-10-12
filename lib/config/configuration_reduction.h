@@ -84,6 +84,7 @@ inline void configuration_reduction::standard( ReductionConfig & config ) {
     config.perform_hils                           = true;
     config.disable_heuristic_exclude              = true;
     config.disable_heuristic_include              = true;
+    config.gnn_filter                             = ReductionConfig::GNN_Filter_Type::NEVER;
 }
 
 inline void configuration_reduction::disable_new_reductions( ReductionConfig & config ) {

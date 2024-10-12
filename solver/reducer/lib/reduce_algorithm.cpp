@@ -22,6 +22,7 @@
 #include "solution_check.h"
 #include "struction_log.h"
 #include "LRConv.h"
+#include "lr_gcn.h"
 #include "struction_reductions.h"
 
 #include "tiny_solver.h"
@@ -304,77 +305,111 @@ void reduce_algorithm::unset(NodeID node, bool restore)
 
 void reduce_algorithm::init_transformation_step(reduction_ptr &reduction)
 {
-	if (!reduction->has_run && reduction->has_filtered_marker)
+	if (!reduction->has_run && reduction->has_filtered_marker && reduction->get_model_path() != "" && status.remaining_nodes > 1 && config.gnn_filter != ReductionConfig::GNN_Filter_Type::NEVER)
 	{
 		reduction->marker.current.clear();
-		if (reduction->get_model_path() != "" && status.remaining_nodes > 1 && config.gnn_filter)
+
+		graph_access g;
+		std::vector<NodeID> rm(status.n);
+		build_graph_access(g, rm);
+
+		float *pred = lr_gcn_predict(g, reduction->get_model_path());
+
+		for (NodeID u = 0; u < this->status.graph.size(); u++)
 		{
+			if (status.node_status[u] != IS_status::not_set)
+				continue;
 
-			timer t;
-			gnn.change_parameters(reduction->get_model_path());
-			double t_parse = t.elapsed();
-
-			t.restart();
-			const float *y = gnn.predict(this);
-
-			reduction->marker.current.clear();
-			if (reduction->get_reduction_type() == heuristic_exclude || reduction->get_reduction_type() == heuristic_include)
-			{
-				for (NodeID u = 0; u < this->status.graph.size(); u++)
-				{
-					if (status.node_status[u] != IS_status::not_set)
-						continue;
-
-					if (y[u] > 0.0f)
-						reduction->marker.current.push_back(u);
-				}
-				if (config.verbose)
-					printf("%s added %ld vertices from %ld\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
-			}
-			else
-			{
-				int c = 0;
-				for (NodeID u = 0; u < this->status.graph.size(); u++)
-				{
-					if (status.node_status[u] != IS_status::not_set)
-						continue;
-					c++;
-					if (y[u] > 0.0f)
-						reduction->marker.current.push_back(u);
-				}
-
-				if (config.verbose)
-					printf("%s %lf parse, added %ld/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, reduction->marker.current.size(), c, t.elapsed());
-			}
+			if (pred[u] > 0.5f)
+				reduction->marker.current.push_back(u);
 		}
-		else
-		{
-			for (NodeID node = 0; node < status.n; node++)
-			{
-				if (status.node_status[node] != reduce_algorithm::IS_status::not_set)
-					continue;
-				if (reduction->is_suited(node, this))
-				{
-					reduction->marker.current.push_back(node);
-				}
-			}
-		}
+		if (1 || config.verbose)
+			printf("%s added %ld vertices from %ld\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
 
 		reduction->has_run = true;
-		reduction->has_filtered_marker = false;
-		reduction->marker.clear_next();
-		return;
 	}
-	if (!reduction->has_run)
+	else if (!reduction->has_run)
 	{
 		reduction->marker.fill_current_ascending(status.n);
 		reduction->marker.clear_next();
 		reduction->has_run = true;
 	}
-	else
+	else // if (!reduction->has_filtered_marker)
 	{
 		reduction->marker.get_next();
 	}
+
+	// if (!reduction->has_run && reduction->has_filtered_marker)
+	// {
+	// 	reduction->marker.current.clear();
+	// 	if (reduction->get_model_path() != "" && status.remaining_nodes > 1 && config.gnn_filter)
+	// 	{
+
+	// 		timer t;
+	// 		gnn.change_parameters(reduction->get_model_path());
+	// 		double t_parse = t.elapsed();
+
+	// 		t.restart();
+	// 		const float *y = gnn.predict(this);
+
+	// 		reduction->marker.current.clear();
+	// 		if (reduction->get_reduction_type() == heuristic_exclude || reduction->get_reduction_type() == heuristic_include)
+	// 		{
+	// 			for (NodeID u = 0; u < this->status.graph.size(); u++)
+	// 			{
+	// 				if (status.node_status[u] != IS_status::not_set)
+	// 					continue;
+
+	// 				if (y[u] > 0.0f)
+	// 					reduction->marker.current.push_back(u);
+	// 			}
+	// 			if (config.verbose)
+	// 				printf("%s added %ld vertices from %ld\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
+	// 		}
+	// 		else
+	// 		{
+	// 			int c = 0;
+	// 			for (NodeID u = 0; u < this->status.graph.size(); u++)
+	// 			{
+	// 				if (status.node_status[u] != IS_status::not_set)
+	// 					continue;
+	// 				c++;
+	// 				if (y[u] > 0.0f)
+	// 					reduction->marker.current.push_back(u);
+	// 			}
+
+	// 			if (config.verbose)
+	// 				printf("%s %lf parse, added %ld/%d in %lf seconds\n", reduction->get_model_path().c_str(), t_parse, reduction->marker.current.size(), c, t.elapsed());
+	// 		}
+	// 	}
+	// 	else
+	// 	{
+	// 		for (NodeID node = 0; node < status.n; node++)
+	// 		{
+	// 			if (status.node_status[node] != reduce_algorithm::IS_status::not_set)
+	// 				continue;
+	// 			if (reduction->is_suited(node, this))
+	// 			{
+	// 				reduction->marker.current.push_back(node);
+	// 			}
+	// 		}
+	// 	}
+
+	// 	reduction->has_run = true;
+	// 	reduction->has_filtered_marker = false;
+	// 	reduction->marker.clear_next();
+	// 	return;
+	// }
+	// if (!reduction->has_run)
+	// {
+	// 	reduction->marker.fill_current_ascending(status.n);
+	// 	reduction->marker.clear_next();
+	// 	reduction->has_run = true;
+	// }
+	// else if (!reduction->has_filtered_marker)
+	// {
+	// 	reduction->marker.get_next();
+	// }
 }
 
 void reduce_algorithm::add_next_level_node(NodeID node)
@@ -429,10 +464,10 @@ void reduce_algorithm::initial_reduce()
 
 		if (status.remaining_nodes == 0)
 		{
-			#ifdef REDUCTION_INFO
+#ifdef REDUCTION_INFO
 			if (config.print_reduction_info)
 				print_reduction_info();
-			#endif
+#endif
 			break;
 		}
 
@@ -444,10 +479,10 @@ void reduce_algorithm::initial_reduce()
 			heuristically_reducing = false;
 			further_impovement = true;
 		}
-		#ifdef REDUCTION_INFO
+#ifdef REDUCTION_INFO
 		if (config.print_reduction_info)
 			print_reduction_info();
-		#endif
+#endif
 	}
 	status.modified_stack.push_back(BRANCHING_TOKEN);
 

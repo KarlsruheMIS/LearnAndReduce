@@ -115,7 +115,7 @@ from torch_geometric.nn import MessagePassing, GCNConv, SAGEConv, GENConv, GINEC
 
 class LRConv(MessagePassing):
     def __init__(self, in_channels, out_channels):
-        super().__init__(flow='target_to_source', aggr='max')
+        super().__init__(flow='target_to_source', aggr='mean')
         self.lin = torch.nn.Linear(2 * in_channels, out_channels)
         self.reset_parameters()
 
@@ -244,16 +244,16 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Training GCN')
 model = GCN(features, 16, 1).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-train_model(model, 600)
+train_model(model, 400)
 
 print('Training SAGE')
 model = SAGE(features, 16, 1).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-train_model(model, 600)
+train_model(model, 400)
 
 print('Training LR_CONV')
 model = LR_GCN(features, 16, 1).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-train_model(model, 600)
+train_model(model, 400)
 
 store_model(model,  field_names[reduction] + '.lr_gcn')

@@ -52,5 +52,6 @@ private:
     void fold(reduce_algorithm *br_alg, fold_data &data, std::vector<NodeID> &cut_v_included_i, std::vector<NodeID> &cut_v_included_e, std::vector<NodeID> &cut_v_excluded_i, std::vector<NodeID> &cut_v_excluded_e);
 
     std::vector<restore_data> restore_vec;
+    std::vector<NodeID> articulation_points;
 };
 #endif // CUT_VERTEX_REDUCTION_H

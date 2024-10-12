@@ -186,6 +186,7 @@ set(GENERAL
     ${BSOLVER}/kernel/csr_reductions/src/reductions.c
     ${BSOLVER}/kernel/csr_reductions/unconfined_csr_reduction.cpp
     ${BSOLVER}/kernel/LRConv.cpp
+    ${BSOLVER}/kernel/lr_gcn.cpp
     ${BSOLVER}/lib/bounds.cpp
 )
 add_library(lib OBJECT ${GENERAL})

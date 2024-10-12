@@ -39,6 +39,42 @@ public:
 		}
 	}
 
+	void apply_filter_initial_tight(NodeID vertex) {
+		NodeID vertex_id = 0;
+		// remove tested vertices
+		for (size_t i = 0; current[i] != vertex; i++) {
+			vertex_id++;
+		}
+
+		// get untested vertices for next round
+		next.clear();
+		for (size_t i = vertex_id + 1; i < current.size(); i++) {
+			next.push_back(current[i]);
+		}
+		disable_adding_to_next();
+	}
+
+	void apply_filter_initial(NodeID vertex) {
+		NodeID vertex_id = 0;
+		// remove tested vertices
+		for (size_t i = 0; current[i] != vertex; i++) {
+			added_vertices.remove(current[i]);
+			vertex_id++;
+		}
+
+		// add untested vertices for next round
+		for (size_t i = vertex_id + 1; i < current.size(); i++) {
+			next.push_back(current[i]);
+			added_vertices.add(current[i]);
+		}
+	}
+
+	void disable_adding_to_next() {
+		for (size_t i = 0; i < added_vertices.size(); i++) {
+			added_vertices.add(i);
+		}
+	}
+
 	void get_next() {
 			current.swap(next);
 			clear_next();

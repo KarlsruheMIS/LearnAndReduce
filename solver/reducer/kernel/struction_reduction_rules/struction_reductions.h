@@ -40,7 +40,7 @@ struct iterative_struction : public general_reduction
     virtual std::string get_model_path() final
     {
         if (type == struction_decrease)
-            return "models/decreasing_struction.gnn";
+            return ""; // "models/decreasing_struction.gnn";
         else
             return "";
     }

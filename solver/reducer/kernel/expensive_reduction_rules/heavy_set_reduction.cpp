@@ -16,14 +16,22 @@ bool heavy_set_reduction::reduce(reduce_algorithm *br_alg)
 
     auto &status = br_alg->status;
     size_t oldn = status.remaining_nodes;
+    if (marker.current_size() == 0 )
+    {
+        has_filtered_marker = false;
+        br_alg->config.disable_heavy_set = true;
+    }
 
     for_each_changed_vertex(br_alg, [&](NodeID v)
                             {
         if (br_alg->t.elapsed() > br_alg->config.time_limit) return;
         // jump back to simple rules if progress and reduction not disabled
         if (reduce_vertex(br_alg, v) && !br_alg->config.disable_heavy_set) 
-            return; });
-
+        {
+            gnn_filter_marker(br_alg->config, v);
+            return;
+        } });
+    
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();

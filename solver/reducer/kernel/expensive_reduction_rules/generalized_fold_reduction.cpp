@@ -16,6 +16,12 @@ bool generalized_fold_reduction::reduce(reduce_algorithm *br_alg)
 
     auto &status = br_alg->status;
     size_t oldn = status.remaining_nodes;
+    if (marker.current_size() == 0 )
+    {
+        has_filtered_marker = false;
+        br_alg->config.disable_generalized_fold = true;
+    }
+
 
     for_each_changed_vertex(br_alg, [&](NodeID v)
                             {
@@ -24,7 +30,10 @@ bool generalized_fold_reduction::reduce(reduce_algorithm *br_alg)
             return;
         // jump back to simple rules if progress and reduction not disabled
         if (reduce_vertex(br_alg, v) && !br_alg->config.disable_generalized_fold) 
-            return; });
+        {
+            gnn_filter_marker(br_alg->config, v);
+            return;
+        } });
 
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);
