@@ -22,8 +22,11 @@ bool heavy_set_reduction::reduce(reduce_algorithm *br_alg)
         if (br_alg->t.elapsed() > br_alg->config.time_limit) return;
         // jump back to simple rules if progress and reduction not disabled
         if (reduce_vertex(br_alg, v) && !br_alg->config.disable_heavy_set) 
-            return; });
-
+        {
+            marker.fill_next_with_remaining_only(v);
+            return;
+        } });
+    
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();

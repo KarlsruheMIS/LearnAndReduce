@@ -27,15 +27,19 @@ bool cut_vertex_reduction::reduce(reduce_algorithm *br_alg)
     auto &map = br_alg->buffers[2];
     auto &reverse_map = br_alg->buffers[3];
     auto solver = br_alg->subgraph_solver;
-    std::vector<NodeID> articulation_points;
     get_mappings_to_remaining_graph(br_alg, map, reverse_map);
-    get_articulation_points(br_alg, articulation_points, reverse_map, map);
-    std::sort(articulation_points.begin(), articulation_points.end(), [&](NodeID a, NodeID b)
-              { return status.graph[a].size() > status.graph[b].size(); });
-
-    int articulation_points_checked = 0;
-    for (NodeID cut_v : articulation_points)
+    if (articulation_points.size() == 0)
     {
+        get_articulation_points(br_alg, articulation_points, reverse_map, map);
+        std::sort(articulation_points.begin(), articulation_points.end(), [&](NodeID a, NodeID b)
+              { return status.graph[a].size() < status.graph[b].size(); });
+    }
+
+    bool progress = false;
+    while (articulation_points.size() > 0 && !progress)
+    {
+        NodeID cut_v = articulation_points.back();
+        articulation_points.pop_back();
         if (status.node_status[cut_v] != IS_status::not_set)
             continue;
         if (br_alg->deg(cut_v) < 3)
@@ -93,14 +97,17 @@ bool cut_vertex_reduction::reduce(reduce_algorithm *br_alg)
                 fold_data data = {cut_v, status.weights[cut_v], large_cutMWIS_weight, small_cutMWIS_weight, cut_component};
                 fold(br_alg, data, cut_v_included_i, cut_v_included_e, cut_v_excluded_i, cut_v_excluded_e);
             }
+            progress = true;
         }
     }
+
+    if (articulation_points.size() == 0)
+        br_alg->config.disable_cut_vertex = true;
 
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
 #endif
-    br_alg->config.disable_cut_vertex = true; // only test whole graph once
     return oldn != status.remaining_nodes;
 }
 

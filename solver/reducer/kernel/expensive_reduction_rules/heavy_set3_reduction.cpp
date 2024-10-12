@@ -23,7 +23,10 @@ bool heavy_set3_reduction::reduce(reduce_algorithm *br_alg)
             return;
         // jump back to simple rules if progress and reduction not disabled
         if (reduce_vertex(br_alg, v) && !br_alg->config.disable_heavy_set3) 
-            return; });
+        {
+            marker.fill_next_with_remaining_only(v);
+            return;
+        } });
 
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);
