@@ -18,6 +18,7 @@ struct cut_vertex_reduction : public general_reduction
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::cut_vertex; }
     virtual std::string get_reduction_name() final { return "cut_vertex"; }
+    virtual std::string get_model_path() final { return "models/cut_vertex.lr_gcn"; }
     virtual bool reduce(reduce_algorithm *br_alg) final;
     virtual void restore(reduce_algorithm *br_alg) final;
     virtual void apply(reduce_algorithm *br_alg) final;
