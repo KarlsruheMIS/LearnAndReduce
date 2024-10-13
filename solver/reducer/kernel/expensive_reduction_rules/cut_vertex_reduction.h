@@ -12,12 +12,13 @@ class reduce_algorithm;
 
 struct cut_vertex_reduction : public general_reduction
 {
-    cut_vertex_reduction(size_t n) : general_reduction(n) {}
+    cut_vertex_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
     ~cut_vertex_reduction() {}
     virtual cut_vertex_reduction *clone() const final { return new cut_vertex_reduction(*this); }
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::cut_vertex; }
     virtual std::string get_reduction_name() final { return "cut_vertex"; }
+    virtual std::string get_model_path() final { return "models/cut_vertex.lr_gcn"; }
     virtual bool reduce(reduce_algorithm *br_alg) final;
     virtual void restore(reduce_algorithm *br_alg) final;
     virtual void apply(reduce_algorithm *br_alg) final;

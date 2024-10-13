@@ -17,7 +17,7 @@ struct generalized_fold_reduction : public general_reduction
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::generalized_fold; }
     virtual std::string get_reduction_name() final { return "generalized_fold"; }
-    virtual std::string get_model_path() final { return ""; }
+    virtual std::string get_model_path() final { return "models/generalized_fold.lr_gcn"; }
     virtual bool reduce(reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(reduce_algorithm *br_alg, NodeID v) final;
     virtual void restore(reduce_algorithm *br_alg) final;

@@ -22,7 +22,7 @@ struct heavy_set3_reduction : public general_reduction
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::heavy_set3; }
     virtual std::string get_reduction_name() final { return "heavy_set3"; }
-    virtual std::string get_model_path() final { return ""; }
+    virtual std::string get_model_path() final { return "models/heavy_set3.lr_gcn"; }
     virtual bool reduce(reduce_algorithm *br_alg) final;
     virtual bool reduce_vertex(reduce_algorithm *br_alg, NodeID v) final;
 
@@ -47,5 +47,6 @@ private:
     void set_weights(tiny_solver *solver, std::vector<NodeID> &nodes, std::vector<NodeWeight> &weights);
 
     void generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index);
+    bool compute_common_vertices = true;
 };
 #endif // HEAVY_SET_3_H
