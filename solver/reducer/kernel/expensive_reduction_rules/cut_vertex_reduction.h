@@ -12,7 +12,7 @@ class reduce_algorithm;
 
 struct cut_vertex_reduction : public general_reduction
 {
-    cut_vertex_reduction(size_t n) : general_reduction(n) {}
+    cut_vertex_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true; }
     ~cut_vertex_reduction() {}
     virtual cut_vertex_reduction *clone() const final { return new cut_vertex_reduction(*this); }
 

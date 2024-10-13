@@ -21,7 +21,28 @@ bool heavy_set3_reduction::reduce(reduce_algorithm *br_alg)
     {
         has_filtered_marker = false;
         br_alg->config.disable_heavy_set3 = true;
+        return false;
     }
+
+    if (compute_common_vertices && has_filtered_marker)
+    {
+        if (br_alg->config.gnn_filter != ReductionConfig::GNN_Filter_Type::ALWAYS)
+            compute_common_vertices = false;
+        auto &vertices = br_alg->buffers[0];
+        vertices.clear();
+        vertices.assign(status.n, 0);
+        for (NodeID v : marker.current)
+            for (NodeID n : status.graph[v])
+                vertices[n]++;
+        marker.clear_next();
+        for (NodeID v = 0 ; !is_reduced(v, br_alg) && v < vertices.size(); v++)
+        {
+            if (vertices[v] > 2)
+                marker.add(v);
+        }
+        marker.get_next();
+    }
+    bool progress = false;
 
     for_each_changed_vertex(br_alg, [&](NodeID v)
                             {
@@ -31,8 +52,11 @@ bool heavy_set3_reduction::reduce(reduce_algorithm *br_alg)
         if (reduce_vertex(br_alg, v) && !br_alg->config.disable_heavy_set3) 
         {
             gnn_filter_marker(br_alg->config, v);
+            progress = true;
             return;
         } });
+    if (!progress)
+        gnn_filter_marker(br_alg->config, marker.current.back());
 
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - status.remaining_nodes);

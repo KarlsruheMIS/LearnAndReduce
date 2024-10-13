@@ -27,7 +27,7 @@
 
 struct critical_set_reduction : public general_reduction
 {
-    critical_set_reduction(size_t n) : general_reduction(n) {}
+    critical_set_reduction(size_t n) : general_reduction(n) { has_filtered_marker = true;}
     ~critical_set_reduction() {}
     virtual critical_set_reduction *clone() const final { return new critical_set_reduction(*this); }
 

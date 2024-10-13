@@ -17,6 +17,19 @@ bool cut_vertex_reduction::reduce(reduce_algorithm *br_alg)
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
 #endif
+    if (marker.current_size() == 0 )
+    {
+        if (br_alg->config.gnn_filter == ReductionConfig::GNN_Filter_Type::ALWAYS)
+        {
+            has_filtered_marker = true;
+            has_run = false;
+        }
+        else if (br_alg->config.gnn_filter == ReductionConfig::GNN_Filter_Type::INITIAL_TIGHT)
+        {
+            br_alg->config.disable_critical_set = true;
+        }
+        return false;
+    }
     auto &status = br_alg->status;
     auto &cut_component = br_alg->buffers[0];
     auto &cut_component_set = br_alg->set_1;

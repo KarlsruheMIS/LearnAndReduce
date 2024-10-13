@@ -220,6 +220,7 @@ inline void configuration_reduction::fast_reductions_cyclicFast( ReductionConfig
     config.disable_generalized_fold               = true;
     config.disable_critical_set                   = true;
     config.disable_cut_vertex                     = true;
+    config.disable_unconfined                     = true;
     config.disable_blow_up                        = true;
     config.disable_extended_domination_reverse    = true;
 }

@@ -47,5 +47,6 @@ private:
     void set_weights(tiny_solver *solver, std::vector<NodeID> &nodes, std::vector<NodeWeight> &weights);
 
     void generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index);
+    bool compute_common_vertices = true;
 };
 #endif // HEAVY_SET_3_H
