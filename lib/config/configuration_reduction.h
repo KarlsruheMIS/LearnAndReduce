@@ -34,8 +34,10 @@ class configuration_reduction {
         void original_kamis( ReductionConfig & config );
         void mmwis( ReductionConfig & config );
         void all_reductions_cyclicFast( ReductionConfig & config );
-        void fast_reductions_cyclicFast( ReductionConfig & config );
+        void no_gnn_reductions_cyclicFast( ReductionConfig & config );
         void all_reductions_cyclicStrong( ReductionConfig & config );
+        void no_gnn_reductions_cyclicStrong( ReductionConfig & config );
+        void disable_gnn_filter_reductions( ReductionConfig & config );
         void all_decreasing( ReductionConfig & config );
 
         void fast( ReductionConfig & config );
@@ -213,16 +215,23 @@ inline void configuration_reduction::all_reductions_cyclicFast( ReductionConfig 
     enable_new_reductions(config);
 }
 
-inline void configuration_reduction::fast_reductions_cyclicFast( ReductionConfig & config ) {
+inline void configuration_reduction::no_gnn_reductions_cyclicFast( ReductionConfig & config ) {
     all_reductions_cyclicFast(config);
+    disable_gnn_filter_reductions(config);
+}
+
+inline void configuration_reduction::no_gnn_reductions_cyclicStrong( ReductionConfig & config ) {
+    all_reductions_cyclicStrong(config);
+    disable_gnn_filter_reductions(config);
+}
+
+inline void configuration_reduction::disable_gnn_filter_reductions( ReductionConfig & config ) {
     config.disable_heavy_set                      = true;
     config.disable_heavy_set3                     = true;
     config.disable_generalized_fold               = true;
     config.disable_critical_set                   = true;
     config.disable_cut_vertex                     = true;
     config.disable_unconfined                     = true;
-    config.disable_blow_up                        = true;
-    config.disable_extended_domination_reverse    = true;
 }
 
 inline void configuration_reduction::all_reductions_cyclicStrong( ReductionConfig & config ) {
