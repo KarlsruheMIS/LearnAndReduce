@@ -36,10 +36,10 @@ inline bool funnel_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
 
     get_neighborhood_vector(v, br_alg, neighbors);
     funnel_set.clear();
-    // need one vertex of weight >= v
-    if (std::any_of(neighbors.begin(), neighbors.end(), [&](NodeID neighbor)
-                    { return weights[neighbor] >= weights[v]; }))
-    {
+    // need one vertex of weight >= v (or non)
+    // if (std::any_of(neighbors.begin(), neighbors.end(), [&](NodeID neighbor)
+    //                 { return weights[neighbor] >= weights[v]; }))
+    // {
         get_neighborhood_set(v, br_alg, funnel_set);
         funnel_set.add(v);
 
@@ -47,7 +47,7 @@ inline bool funnel_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
         {
             fold({v, funnel_neighbor}, funnel_set, br_alg);
         }
-    }
+    // }
 
     return oldn != remaining_n;
 }
@@ -178,12 +178,11 @@ void funnel_reduction::fold(const fold_data &data, fast_set &funnel_set, reduce_
         return;
     }
 
-    // remaining_neighbors.resize(remaining_neighbors.size());
     status.folded_stack.push_back(get_reduction_type());
     status.reduction_offset += weights[node];
 
     // add additional edges connecting the remaining neighbors with funnel neighors outside the funnel set
-    restore_vec.push_back({data.node, data.funnel_neighbor, remaining_neighbors, {}});
+    restore_vec.push_back({data.node, data.funnel_neighbor, remaining_neighbors, {}, weights[node] > weights[funnel_neighbor]});
     for (size_t idx = 0; idx < remaining_neighbors.size(); idx++)
     {
         restore_vec.back().node_vecs.push_back({});
@@ -202,7 +201,22 @@ void funnel_reduction::fold(const fold_data &data, fast_set &funnel_set, reduce_
         assert(weights[neighbor] + weights[funnel_neighbor] >= weights[node] && "ERROR: funnel_reduction::fold: weight must be larger than node weight");
         br_alg->add_next_level_node(neighbor);
     }
-    weights[funnel_neighbor] -= weights[node];
+
+    if (weights[funnel_neighbor] > weights[node])
+    {
+        weights[funnel_neighbor] -= weights[node];
+    }
+    else
+    {
+        br_alg->set(funnel_neighbor, IS_status::folded);
+        for (NodeID n : remaining_neighbors)
+        {
+            assert(weights[n] >= weights[node] - weights[funnel_neighbor] && "ERROR: funnel_reduction::fold: weight must be larger than funnel weight");
+            weights[n] += weights[funnel_neighbor];
+            weights[n] -= weights[node];
+        }
+    }
+
     br_alg->set(node, IS_status::folded, true);
     br_alg->add_next_level_neighborhood(node);
 }
@@ -210,9 +224,22 @@ void funnel_reduction::restore(reduce_algorithm *br_alg)
 {
     auto &status = br_alg->status;
     auto &data = restore_vec.back();
+    auto &weights = status.weights;
 
     br_alg->unset(data.node);
-    status.weights[data.funnel_neighbor] += status.weights[data.node];
+    if (data.node_is_max_weight)
+    {
+        br_alg->unset(data.funnel_neighbor);
+        for (NodeID neighbor : data.remaining_neighbors)
+        {
+            weights[neighbor] += weights[data.node];
+            weights[neighbor] -= weights[data.funnel_neighbor];
+        }
+    }
+    else
+    { 
+        status.weights[data.funnel_neighbor] += status.weights[data.node];
+    }
 
     // remove added edges:
     for (size_t idx = 0; idx < data.remaining_neighbors.size(); idx++)

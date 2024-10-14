@@ -38,6 +38,7 @@ private:
         NodeID funnel_neighbor;
         std::vector<NodeID> remaining_neighbors;
         std::vector<std::vector<NodeID>> node_vecs;
+        bool node_is_max_weight;
     };
 
     bool is_funnel(NodeID v, NodeID &funnel_neighbor, reduce_algorithm *br_alg, fast_set &funnel_set, std::vector<NodeID> &funnel_nodes);
