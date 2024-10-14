@@ -30,24 +30,34 @@ inline bool funnel_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
 	auto& weights = br_alg->status.weights;
 	auto& remaining_n = br_alg->status.remaining_nodes;
 	auto& funnel_set = br_alg->set_1;
-	auto& neighbors = br_alg->buffers[0];
+	auto& funnel_neighbor_candidates = br_alg->buffers[0];
 	size_t oldn = remaining_n;
     NodeID funnel_neighbor = br_alg->status.n;
 
-    get_neighborhood_vector(v, br_alg, neighbors);
-    funnel_set.clear();
-    // need one vertex of weight >= v (or non)
-    // if (std::any_of(neighbors.begin(), neighbors.end(), [&](NodeID neighbor)
-    //                 { return weights[neighbor] >= weights[v]; }))
-    // {
-        get_neighborhood_set(v, br_alg, funnel_set);
-        funnel_set.add(v);
-
-        if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, neighbors))
+    int higher_weight_neighbor_count = 0;
+    for (NodeID neighbor : br_alg->status.graph[v])
+    {
+        if (weights[neighbor] >= weights[v])
         {
-            fold({v, funnel_neighbor}, funnel_set, br_alg);
+            if (higher_weight_neighbor_count > 0)
+                return false;
+            higher_weight_neighbor_count++;
+            funnel_neighbor = neighbor;
         }
-    // }
+    }
+
+    get_neighborhood_vector(v, br_alg, funnel_neighbor_candidates);
+
+    funnel_set.clear();
+    get_neighborhood_set(v, br_alg, funnel_set);
+    funnel_set.add(v);
+
+    // need one vertex of weight >= v (or non)
+    if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, funnel_neighbor_candidates))
+    {
+        fold({v, funnel_neighbor}, funnel_set, br_alg);
+    }
+    
 
     return oldn != remaining_n;
 }
