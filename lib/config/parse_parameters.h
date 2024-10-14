@@ -82,7 +82,8 @@ public:
         reduction_style = arg_str0(NULL, "reduction_style", NULL, "Choose the type of reductions appropriate for the input graph. Can be either: full, normal, dense, test1, test2.");
         // heuristic_style             = arg_str0(NULL, "heuristic_style", NULL, "Configuration to use in the heuristic reductions. ([single, multiple_very_safe, multiple_safe, all (if no gnn_filter this is the same as multiple_safe)]). Default: multiple_safe.");
         reduction_time_limit = arg_dbl0(NULL, "reduction_time_limit", NULL, "Time limit for reduction in s. Default equal to overall time limit.");
-        reduction_config = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, extended_cyclicFast, all_decreasing, fast, very_fast]). Default: decreasing (not using increasing reductions).");
+        // reduction_config = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([cyclicFast, cyclicStrong, kamis, mmwis, all_reductions_cyclicFast, all_reductions_CyclicStrong, extended_cyclicFast, all_decreasing, fast, very_fast]). Default: decreasing (not using increasing reductions).");
+        reduction_config = arg_str0(NULL, "reduction_config", NULL, "Configuration to use. ([no_gnn_reductions_cyclicFast, no_gnn_reductions_cyclicStrong, all_reductions_cyclicFast, all_reductions_CyclicStrong, ]). Default: decreasing (not using increasing reductions).");
         kernel_filename = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
         disable_reduction = arg_lit0(NULL, "disable_reduction", "Don't perforn any reductions.");
         print_reduction_info = arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
@@ -390,10 +391,15 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
             cfg.very_fast(config);
             config.reduction_config_name = "very_fast";
         }
-        else if (!strcmp(reduction_config->sval[0], "fast_reductions_cyclicFast"))
+        else if (!strcmp(reduction_config->sval[0], "no_gnn_reductions_cyclicStrong"))
         {
-            cfg.fast_reductions_cyclicFast(config);
-            config.reduction_config_name = "fast_reductions_cyclicFast";
+            cfg.no_gnn_reductions_cyclicStrong(config);
+            config.reduction_config_name = "no_gnn_reductions_cyclicStrong";
+        }
+        else if (!strcmp(reduction_config->sval[0], "no_gnn_reductions_cyclicFast"))
+        {
+            cfg.no_gnn_reductions_cyclicFast(config);
+            config.reduction_config_name = "no_gnn_reductions_cyclicFast";
         }
         else if (!strcmp(reduction_config->sval[0], "all_reductions_cyclicFast"))
         {
