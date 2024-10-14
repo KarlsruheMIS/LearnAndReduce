@@ -37,11 +37,9 @@ bool unconfined_csr_reduction::reduce(reduce_algorithm *r_alg)
         A[i] = 1;
 
     for_each_changed_vertex(r_alg, [&](NodeID v)
-                            { if(reduce_vertex(r_alg, v, g, A, R) && !r_alg->config.disable_unconfined) 
-        {
-            gnn_filter_marker(r_alg->config, v);
-        } });
+                            { reduce_vertex(r_alg, v, g, A, R); });
 
+    gnn_filter_marker(r_alg->config, marker.current.back());
     free(A);
     reduction_free(R);
 #ifdef REDUCTION_INFO
