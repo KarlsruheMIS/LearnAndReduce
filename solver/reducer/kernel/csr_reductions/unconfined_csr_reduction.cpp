@@ -18,9 +18,7 @@ typedef reduce_algorithm::IS_status IS_status;
 
 bool unconfined_csr_reduction::reduce(reduce_algorithm *r_alg)
 {
-    if (r_alg->config.disable_unconfined)
-        return false;
-    if (r_alg->blowing_up)
+    if (r_alg->config.disable_unconfined || marker.current_size() == 0 || r_alg->blowing_up)
         return false;
     auto &status = r_alg->status;
 #ifdef REDUCTION_INFO
