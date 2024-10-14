@@ -41,6 +41,8 @@ bool heavy_set3_reduction::reduce(reduce_algorithm *br_alg)
                 marker.add(v);
         }
         marker.get_next();
+        if (marker.current_size() == 0 )
+            return false;
     }
     bool progress = false;
 

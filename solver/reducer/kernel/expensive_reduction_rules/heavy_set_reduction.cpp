@@ -39,6 +39,8 @@ bool heavy_set_reduction::reduce(reduce_algorithm *br_alg)
                 marker.add(v);
         }
         marker.get_next();
+        if (marker.current_size() == 0 )
+            return false;
     }
     size_t oldn = status.remaining_nodes;
     bool progress = false;
