@@ -75,8 +75,8 @@ reduce_algorithm::reduce_algorithm(graph_access &G, const ReductionConfig &confi
 	{
 		if (!config.disable_funnel)
 			global_status.transformations.emplace_back(new funnel_reduction(global_status.n));
-		if (!config.disable_funnel_fold)
-			global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
+		// if (!config.disable_funnel_fold)
+		// 	global_status.transformations.emplace_back(new funnel_fold_reduction(global_status.n));
 		if (!config.disable_clique_neighborhood_fast)
 			global_status.transformations.emplace_back(new clique_neighborhood_reduction_fast(global_status.n));
 		if (!config.disable_extended_domination)
@@ -315,9 +315,10 @@ void reduce_algorithm::init_transformation_step(reduction_ptr &reduction)
 
 		float *pred = lr_gcn_predict(g, reduction->get_model_path());
 
-		for (NodeID u = 0; u < this->status.graph.size(); u++)
+		// for (NodeID u = 0; u < this->status.graph.size(); u++)
+		for (NodeID u = 0; u < g.number_of_nodes(); u++)
 		{
-			if (status.node_status[u] != IS_status::not_set)
+			if (status.node_status[rm[u]] != IS_status::not_set)
 				continue;
 
 			if (pred[u] > 0.5f)
