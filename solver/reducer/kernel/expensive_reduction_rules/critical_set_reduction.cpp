@@ -32,7 +32,7 @@ bool critical_set_reduction::reduce(reduce_algorithm *br_alg)
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
 #endif
-    if (marker.current_size() == 0 )
+    if (marker.current_size() < 10 || marker.current_size() < 0.01 * br_alg->status.remaining_nodes )
     {
         if (br_alg->config.gnn_filter == ReductionConfig::GNN_Filter_Type::ALWAYS)
         {

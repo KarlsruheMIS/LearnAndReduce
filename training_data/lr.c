@@ -69,6 +69,87 @@ graph *graph_parse(FILE *f)
     return g;
 }
 
+graph *graph_parse_csv(FILE *fg, FILE *fr)
+{
+    int rc = fscanf(fg, "source;target\n");
+
+    int allocated = 64;
+    int *X = malloc(sizeof(int) * allocated);
+    int *Y = malloc(sizeof(int) * allocated);
+
+    int u, v;
+
+    int M = 0, N = 0;
+    while (1)
+    {
+        rc = fscanf(fg, "%d;%d\n", &u, &v);
+        if (rc != 2)
+            break;
+
+        X[M] = u;
+        Y[M] = v;
+
+        if (u + 1 > N)
+            N = u + 1;
+        if (v + 1 > N)
+            N = v + 1;
+
+        M++;
+
+        if (M >= allocated)
+        {
+            allocated *= 2;
+            X = realloc(X, sizeof(int) * allocated);
+            Y = realloc(Y, sizeof(int) * allocated);
+        }
+    }
+
+    int *V = malloc(sizeof(int) * (N + 1));
+    int *E = malloc(sizeof(int) * M);
+
+    for (int i = 0; i <= N; i++)
+        V[i] = 0;
+
+    for (int i = 0; i < M; i++)
+    {
+        E[i] = Y[i];
+        V[X[i] + 1]++;
+    }
+
+    for (int i = 1; i <= N; i++)
+        V[i] += V[i - 1];
+
+    rc = fscanf(fr, "id;w;neighborhood;degree_1;degree_2;simplicial_vertex;domination;single_edge;extended_single_edge;twin;extended_twin;funnel;unconfined_csr;critical_set;generalized_fold;heavy_set;heavy_set3;cut_vertex\n");
+
+    long long *W = malloc(sizeof(long long) * N);
+
+    int nc = 0;
+
+    for (int i = 0; i < N; i++)
+    {
+        int id, w, nb, d1, d2, sv, dom, si, esi, tw, etw, fu, uc, cr, gf, hs, hs3, cv;
+        rc = fscanf(fr, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n",
+                    &id, &w, &nb, &d1, &d2, &sv, &dom, &si, &esi, &tw, &etw, &fu, &uc, &cr, &gf, &hs, &hs3, &cv);
+
+        nc += cr;
+
+        W[id] = w;
+    }
+
+    printf("%d;", nc);
+
+    free(X);
+    free(Y);
+
+    graph *g = malloc(sizeof(graph));
+    g->N = N;
+    g->V = V;
+    g->E = E;
+    g->W = W;
+
+    return g;
+}
+
 void graph_free(graph *g)
 {
     if (g == NULL)
@@ -282,23 +363,30 @@ float *evaluate_model(const graph *g, const float *params)
 
 int main(int argc, char **argv)
 {
-    FILE *f = fopen(argv[1], "r");
-    graph *g = graph_parse(f);
-    fclose(f);
+    FILE *fg = fopen(argv[1], "r");
+    FILE *fr = fopen(argv[2], "r");
+    graph *g = graph_parse_csv(fg, fr);
+    fclose(fg);
+    fclose(fr);
 
-    printf("%d %d\n", g->N, g->V[g->N] / 2);
+    // printf("%d %d\n", g->N, g->V[g->N] / 2);
 
     float *paramv = NULL;
 
-    f = fopen(argv[2], "r");
+    FILE *f = fopen(argv[3], "r");
     int paramc = lr_gcn_parse(f, &paramv);
     fclose(f);
 
-    printf("%d %f\n", paramc, paramv[0]);
+    // printf("%d %f\n", paramc, paramv[0]);
 
     float *y = evaluate_model(g, paramv);
 
-    printf("%f %f %f\n", y[0], y[1], y[2]);
+    int t = 0;
+    for (int i = 0; i < g->N; i++)
+        if (y[i] > 0.5f)
+            t++;
+
+    printf("%d\n", t);
 
     graph_free(g);
     free(paramv);
