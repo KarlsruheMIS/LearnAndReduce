@@ -89,10 +89,10 @@ graph *graph_parse_csv(FILE *fg, FILE *fr)
         X[M] = u;
         Y[M] = v;
 
-        if (u > N)
-            N = u;
-        if (v > N)
-            N = v;
+        if (u + 1 > N)
+            N = u + 1;
+        if (v + 1 > N)
+            N = v + 1;
 
         M++;
 
