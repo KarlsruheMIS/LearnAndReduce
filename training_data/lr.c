@@ -136,7 +136,7 @@ graph *graph_parse_csv(FILE *fg, FILE *fr)
         W[id] = w;
     }
 
-    printf("%d\n", nc);
+    printf("%d;", nc);
 
     free(X);
     free(Y);
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
     fclose(fg);
     fclose(fr);
 
-    printf("%d %d\n", g->N, g->V[g->N] / 2);
+    // printf("%d %d\n", g->N, g->V[g->N] / 2);
 
     float *paramv = NULL;
 
@@ -377,7 +377,7 @@ int main(int argc, char **argv)
     int paramc = lr_gcn_parse(f, &paramv);
     fclose(f);
 
-    printf("%d %f\n", paramc, paramv[0]);
+    // printf("%d %f\n", paramc, paramv[0]);
 
     float *y = evaluate_model(g, paramv);
 
