@@ -45,7 +45,7 @@ public:
     }
     void checkErrors(int nerrors)
     {
-        if (nerrors > 0)
+        if (nerrors > 0 && help->count == 0)
         {
             arg_print_errors(stdout, end, progname);
             printf("Try '%s --help' for more information.\n", progname);
