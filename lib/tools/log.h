@@ -1,5 +1,5 @@
 /******************************************************************************
- * struction_log.h
+ * log.h
  *
  * Copyright (C) 2015-2017 Sebastian Lamm <lamm@ira.uka.de> 
  *
@@ -25,15 +25,15 @@
 #include "reduction_config.h"
 #include "data_structure/graph_access.h"
 
-class struction_log {
+class log {
     public:
         /**
          * Get the singleton logger instance.
          * 
          * @return Instance of the logger.
          */
-        static struction_log *instance() {
-            static struction_log inst;
+        static log *instance() {
+            static log inst;
             return &inst;
         };
 
@@ -150,11 +150,11 @@ class struction_log {
         /**
          * Default Constructor.
          */
-        struction_log();
+        log();
 
         /**
          * Default Destructor.
          */
-        virtual ~struction_log();
+        virtual ~log();
 };
 

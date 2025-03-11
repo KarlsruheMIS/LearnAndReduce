@@ -1,29 +1,11 @@
-/******************************************************************************
- * struction_log.cpp
- *
- * Copyright (C) 2015-2017 Sebastian Lamm <lamm@ira.uka.de> 
- *
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program.  If not, see <http://www.gnu.org/licenses/>.
- *****************************************************************************/
 
-#include "struction_log.h"
+#include "log.h"
 
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
 
-struction_log::struction_log() {
+log::log() {
     number_of_nodes = 0;
     number_of_edges = 0;
     avg_degree = 0.0;
@@ -34,20 +16,20 @@ struction_log::struction_log() {
     optimum_size = 0;
 }
 
-struction_log::~struction_log() { }
+log::~log() { }
 
-void struction_log::set_config(ReductionConfig & config) {
+void log::set_config(ReductionConfig & config) {
     log_config = config; 
 }
 
-void struction_log::set_graph(graph_access & G) {
+void log::set_graph(graph_access & G) {
     number_of_nodes = G.number_of_nodes();
     number_of_edges = G.number_of_edges();
     avg_degree = (double) number_of_edges / number_of_nodes;
     density = (double) (2 * number_of_edges) / (number_of_nodes * (number_of_nodes - 1));
 }
 
-void struction_log::write_log() {
+void log::write_log() {
     std::stringstream filename_stream;
     filename_stream << "./logs/log_"<<  log_config.graph_filename <<   
                        "_seed_" <<  log_config.seed;
@@ -57,7 +39,7 @@ void struction_log::write_log() {
 }
 
 
-void struction_log::print_data_generation_title() {
+void log::print_data_generation_title() {
     filebuffer_string << "=========================================="                           << std::endl;
     filebuffer_string << "\t Generate Reduction Data "                                          << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
@@ -67,7 +49,7 @@ void struction_log::print_data_generation_title() {
     std::cout << "=========================================="                                   << std::endl;
 }
 
-void struction_log::print_reduction_title() {
+void log::print_reduction_title() {
     filebuffer_string << "=========================================="                           << std::endl;
     filebuffer_string << "\t WeightedMIS Reductions"                                            << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
@@ -77,7 +59,7 @@ void struction_log::print_reduction_title() {
     std::cout << "=========================================="                                   << std::endl;
 }
 
-void struction_log::print_graph() {
+void log::print_graph() {
     filebuffer_string << "\t\tGraph"                                                            << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
     filebuffer_string << "IO time:\t\t\t\t"         << total_timer.elapsed()                    << std::endl;
@@ -95,9 +77,9 @@ void struction_log::print_graph() {
     std::cout << std::endl;
 }
 
-void struction_log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m) {
+void log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m) {
     filebuffer_string << log_config.graph_filename << ","
-                      << log_config.reduction_style_name << ","
+                    //   << log_config.reduction_style_name << ","
                       << log_config.reduction_config_name << ","
                       << log_config.time_limit << ","
                       << log_config.seed << ","
@@ -111,7 +93,7 @@ void struction_log::print_one_line_kernel_data(ReductionConfig & mis_config, dou
                       << std::endl;
 
     std::cout         << log_config.graph_filename << ","
-                      << log_config.reduction_style_name << ","
+                    //   << log_config.reduction_style_name << ","
                       << log_config.reduction_config_name << ","
                       << log_config.time_limit << ","
                       << log_config.seed << ","
@@ -125,13 +107,13 @@ void struction_log::print_one_line_kernel_data(ReductionConfig & mis_config, dou
                       << std::endl;
 }
 
- void struction_log::print_config() {
+ void log::print_config() {
     filebuffer_string << "\t\tConfiguration"                                                    << std::endl;
     filebuffer_string << "========================================="                            << std::endl;
     filebuffer_string << "Time limit:\t\t\t"         << log_config.time_limit                   << std::endl; 
     filebuffer_string << "Seed:\t\t\t\t"             << log_config.seed                         << std::endl; 
-    filebuffer_string << "Reduction Style:\t\t"      << log_config.reduction_style_name         << std::endl; 
-    filebuffer_string << "Heuristic Style:\t\t"      << log_config.heuristic_style_name         << std::endl; 
+    // filebuffer_string << "Reduction Style:\t\t"      << log_config.reduction_style_name         << std::endl; 
+    // filebuffer_string << "Heuristic Style:\t\t"      << log_config.heuristic_style_name         << std::endl; 
     filebuffer_string << "Reduction Config: \t\t"    << log_config.reduction_config_name        << std::endl;
     filebuffer_string << "GNN Filter:\t\t\t"         << log_config.gnn_filter_name              << std::endl;
     filebuffer_string                                                                           << std::endl;
@@ -140,14 +122,14 @@ void struction_log::print_one_line_kernel_data(ReductionConfig & mis_config, dou
     std::cout << "=========================================="                                   << std::endl;
     std::cout << "Time limit:\t\t\t"         << log_config.time_limit                           << std::endl; 
     std::cout << "Seed:\t\t\t\t"             << log_config.seed                                 << std::endl; 
-    std::cout << "Reduction Style:\t\t"      << log_config.reduction_style_name                 << std::endl;
-    std::cout << "Heuristic Style:\t\t"      << log_config.heuristic_style_name                 << std::endl;
+    // std::cout << "Reduction Style:\t\t"      << log_config.reduction_style_name                 << std::endl;
+    // std::cout << "Heuristic Style:\t\t"      << log_config.heuristic_style_name                 << std::endl;
     std::cout << "Reduction Config: \t\t"    << log_config.reduction_config_name                << std::endl;
     std::cout << "GNN Filter:\t\t\t"         << log_config.gnn_filter_name                      << std::endl;
     std::cout                                                                                   << std::endl;
 } 
 
-void struction_log::print_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, size_t max_component) {
+void log::print_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, size_t max_component) {
     filebuffer_string << "\t\tReduction"                                                        << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
     filebuffer_string << "Offset:\t\t\t\t"       << offset                                      << std::endl;
@@ -165,8 +147,8 @@ void struction_log::print_reduction(ReductionConfig & mis_config, double time, N
 }
 
 
-// void struction_log::print_full_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m, size_t component_count, size_t max_component) {
-void struction_log::print_full_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m) {
+// void log::print_full_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m, size_t component_count, size_t max_component) {
+void log::print_full_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m) {
     filebuffer_string << "\t\tReduction"                                                        << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
     filebuffer_string << "Offset:\t\t\t\t"       << offset                                      << std::endl;
@@ -187,7 +169,7 @@ void struction_log::print_full_reduction(ReductionConfig & mis_config, double ti
     // std::cout << "MaxComponent:\t\t\t"       << max_component <<  "\n"                      << std::endl;
 }
 
-void struction_log::print_results(bool optimal) {
+void log::print_results(bool optimal) {
     filebuffer_string                                                                           << std::endl;
     filebuffer_string << "\t\tStatistics"                                                       << std::endl;
     filebuffer_string << "=========================================="                           << std::endl;
@@ -205,24 +187,24 @@ void struction_log::print_results(bool optimal) {
     std::cout                                                                                   << std::endl;
 }
 
-void struction_log::restart_total_timer() {
+void log::restart_total_timer() {
     total_timer.restart();
 }
 
-void struction_log::reset_best_size() {
+void log::reset_best_size() {
     optimum_size = 0;
 }
 
-void struction_log::set_best_size(unsigned int size) {
+void log::set_best_size(unsigned int size) {
     if (size > optimum_size) {
         optimum_size = size;
     }
 }
-void struction_log::set_best_time(double time) {
+void log::set_best_time(double time) {
         time_taken_best = time;
 }
 
-void struction_log::set_best(unsigned int size, double time) {
+void log::set_best(unsigned int size, double time) {
     if (size > optimum_size) {
         optimum_size = size;
         time_taken_best = time;

@@ -19,8 +19,9 @@ struct ReductionConfig : public Config {
     enum Backtrack_Type {IMMEDIATE_TIE_BREAKING, IMMEDIATE_EXCLUDE, END_MIN_KERNEL, NO_BACKTRACK};
     enum GNN_Filter_Type {NEVER, ALWAYS, INITIAL, INITIAL_TIGHT};
     // enum Reduction_Style {NORMAL, DENSE, FULL, test1, test2, test3, EARLY_BLOW_UP};
-    enum Reduction_Style {NORMAL, DENSE, FULL, EARLY_STRUCTION, EARLY_CS};
-    enum Heuristic_Style {single, multiple_safe, multiple_very_safe, all, none, hils_intersect};
+    // enum Reduction_Style {NORMAL, DENSE, FULL, EARLY_STRUCTION, EARLY_CS};
+    // enum Reduction_Style {EARLY_CS};
+    // enum Heuristic_Style {single, multiple_safe, multiple_very_safe, all, none, hils_intersect};
     enum Key_Type {RANDOM, DEGREE, INCREASE, APPROXIMATE_INCREASE};
 
     // Name of the kernel file.
@@ -71,20 +72,20 @@ struct ReductionConfig : public Config {
 	// Perform reduction
 	bool perform_reductions;
     // Choose reduction order and amount for given graph type
-    Reduction_Style reduction_style = ReductionConfig::Reduction_Style::FULL;
-    Heuristic_Style heuristic_style = Heuristic_Style::none;
-    std::string reduction_config_name = "all_decreasing";
-    std::string heuristic_style_name = "none";
-    std::string reduction_style_name = "full";
+    // Reduction_Style reduction_style = ReductionConfig::Reduction_Style::FULL;
+    // Heuristic_Style heuristic_style = Heuristic_Style::none;
+    std::string reduction_config_name = "full_cyclicFast (default)";
+    // std::string heuristic_style_name = "none";
+    // std::string reduction_style_name = "full";
     double reduction_time_limit;
     double subgraph_time_limit=1;
 
     // early terminate solving subgraphs is best weight found is already to large for reduction to be applied
-    bool disable_early_termination;
+    bool disable_early_termination = false;
 
     // Type of filter reductions before adding to marker
-    GNN_Filter_Type gnn_filter = GNN_Filter_Type::NEVER;
-    std::string gnn_filter_name = "never";
+    GNN_Filter_Type gnn_filter = GNN_Filter_Type::INITIAL_TIGHT;
+    std::string gnn_filter_name = "initial tight (default)";
 
     bool perform_hils;
 
@@ -103,22 +104,6 @@ struct ReductionConfig : public Config {
     bool reduce_and_peel;
     bool plain_struction;
     bool disable_blow_up;
-
-    void setReductionStyle(const std::string & style) {
-        if (strCompare(style, "dense")) {
-            reduction_style = Reduction_Style::DENSE;
-            reduction_style_name = "dense";
-        } else if (strCompare(style, "early_struction")) {
-            reduction_style_name = "early_struction";
-            reduction_style = Reduction_Style::EARLY_STRUCTION;
-        } else if (strCompare(style, "early_CS")) {
-            reduction_style_name = "early_CS";
-            reduction_style = Reduction_Style::EARLY_CS;
-        } else {
-            reduction_style = Reduction_Style::FULL;
-            reduction_style_name = "full";
-        }
-    }
     
     void setKeyType(const std::string & k_type) {
         if (strCompare(k_type, "random")) {
@@ -135,12 +120,21 @@ struct ReductionConfig : public Config {
     void setGNNFilterStyle(const std::string & filter) {
         if (strCompare(filter, "never")) {
             gnn_filter = GNN_Filter_Type::NEVER;
+            std::string gnn_filter_name = "never";
         } else if (strCompare(filter, "always")) {
             gnn_filter = GNN_Filter_Type::ALWAYS;
+            std::string gnn_filter_name = "always";
         } else if (strCompare(filter, "initial")) {
             gnn_filter = GNN_Filter_Type::INITIAL;
+            std::string gnn_filter_name = "initial";
         } else if (strCompare(filter, "initial_tight")) {
             gnn_filter = GNN_Filter_Type::INITIAL_TIGHT;
+            std::string gnn_filter_name = "initial tight";
+        }
+        else
+        {
+            gnn_filter = GNN_Filter_Type::INITIAL_TIGHT;
+            std::string gnn_filter_name = "initial tight (default)";
         }
         gnn_filter_name = filter;
     }

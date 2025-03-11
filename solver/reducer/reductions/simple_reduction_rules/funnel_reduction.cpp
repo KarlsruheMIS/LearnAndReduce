@@ -52,7 +52,7 @@ inline bool funnel_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
     get_neighborhood_set(v, br_alg, funnel_set);
     funnel_set.add(v);
 
-    // need one vertex of weight >= v (or non)
+    // need one vertex of weight >= weight[v] (or non)
     if (is_funnel(v, funnel_neighbor, br_alg, funnel_set, funnel_neighbor_candidates))
     {
         fold({v, funnel_neighbor}, funnel_set, br_alg);

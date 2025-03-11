@@ -372,26 +372,11 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
 
     // Choose standard configuration
     configuration_reduction cfg;
-    cfg.all_decreasing(config);
+    cfg.standard(config);
     // Parse the arguments
     if (reduction_config->count > 0)
     {
-        if (!strcmp(reduction_config->sval[0], "cyclicFast"))
-        {
-            cfg.original_cyclicFast(config);
-            config.reduction_config_name = "cyclicFast";
-        }
-        else if (!strcmp(reduction_config->sval[0], "fast"))
-        {
-            cfg.fast(config);
-            config.reduction_config_name = "fast";
-        }
-        else if (!strcmp(reduction_config->sval[0], "very_fast"))
-        {
-            cfg.very_fast(config);
-            config.reduction_config_name = "very_fast";
-        }
-        else if (!strcmp(reduction_config->sval[0], "no_gnn_reductions_cyclicStrong"))
+        if (!strcmp(reduction_config->sval[0], "no_gnn_reductions_cyclicStrong"))
         {
             cfg.no_gnn_reductions_cyclicStrong(config);
             config.reduction_config_name = "no_gnn_reductions_cyclicStrong";
@@ -401,71 +386,25 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
             cfg.no_gnn_reductions_cyclicFast(config);
             config.reduction_config_name = "no_gnn_reductions_cyclicFast";
         }
-        else if (!strcmp(reduction_config->sval[0], "all_reductions_cyclicFast"))
+        else if (!strcmp(reduction_config->sval[0], "full_cyclicFast"))
         {
             cfg.all_reductions_cyclicFast(config);
-            config.reduction_config_name = "all_reductions_cyclicFast";
+            config.reduction_config_name = "full_cyclicFast";
         }
-        else if (!strcmp(reduction_config->sval[0], "extended_cyclicFast"))
-        {
-            cfg.extended_cyclicFast(config);
-            config.reduction_config_name = "extended_cyclicFast";
-        }
-        else if (!strcmp(reduction_config->sval[0], "cyclicStrong"))
-        {
-            cfg.original_cyclicStrong(config);
-            config.reduction_config_name = "cyclicStrong";
-        }
-        else if (!strcmp(reduction_config->sval[0], "all_reductions_cyclicStrong"))
+        else if (!strcmp(reduction_config->sval[0], "full_cyclicStrong"))
         {
             cfg.all_reductions_cyclicStrong(config);
-            config.reduction_config_name = "all_reductions_cyclicStrong";
-        }
-        else if (!strcmp(reduction_config->sval[0], "kamis"))
-        {
-            cfg.original_kamis(config);
-            config.reduction_config_name = "kamis";
-        }
-        else if (!strcmp(reduction_config->sval[0], "mmwis"))
-        {
-            cfg.mmwis(config);
-            config.reduction_config_name = "mmwis";
+            config.reduction_config_name = "full_cyclicStrong";
         }
         else
         {
-            cfg.all_decreasing(config);
-            config.reduction_config_name = "all_decreasing";
+            cfg.all_reductions_cyclicFast(config);
+            config.reduction_config_name = "full_cyclicFast (default)";
         }
     }
 
-    // if (heuristic_style->count > 0) {
-    //     if (!strcmp(heuristic_style->sval[0], "single"))
-    //     {
-    //         config.heuristic_style_name = "single";
-    //         config.heuristic_style      = ReductionConfig::Heuristic_Style::single;
-    //     }
-    //     else if (!strcmp(heuristic_style->sval[0], "all"))
-    //     {
-    //         config.heuristic_style_name = "all";
-    //         config.heuristic_style      = ReductionConfig::Heuristic_Style::all;
-    //     }
-    //     else if (!strcmp(heuristic_style->sval[0], "multiple_very_safe"))
-    //     {
-    //         config.heuristic_style_name = "multiple_very_safe";
-    //         config.heuristic_style      = ReductionConfig::Heuristic_Style::multiple_very_safe;
-    //     }
-    //     else { // default
-    //         config.heuristic_style_name = "multiple_safe";
-    //         config.heuristic_style      = ReductionConfig::Heuristic_Style::multiple_safe;
-    //     }
-    // }
-
     BaseArguments::parseParameters(config);
 
-    if (reduction_style->count > 0)
-    {
-        config.setReductionStyle(reduction_style->sval[0]);
-    }
     if (reduction_time_limit->count > 0)
     {
         config.reduction_time_limit = reduction_time_limit->dval[0];

@@ -12,7 +12,7 @@
 
 #include "timer.h"
 #include "cout_handler.h"
-#include "struction_log.h"
+#include "log.h"
 #include "graph_access.h"
 #include "graph_io.h"
 #include "reduction_config.h"
@@ -64,7 +64,7 @@ void generate_data(reduce_algorithm *reducer, graph_access &G, ReductionConfig &
 
 int main(int argn, char **argv)
 {
-    struction_log::instance()->restart_total_timer();
+    log::instance()->restart_total_timer();
     ReductionConfig config;
 
     // Parse the command line parameters;
@@ -79,11 +79,11 @@ int main(int argn, char **argv)
     std::string graph_filepath = config.graph_filename;
     config.graph_filename = graph_filepath.substr(graph_filepath.find_last_of('/') + 1);
     std::string name = config.graph_filename.substr(0, config.graph_filename.find_last_of('.'));
-    struction_log::instance()->set_config(config);
+    log::instance()->set_config(config);
     if (config.verbose)
     {
-        struction_log::instance()->print_data_generation_title();
-        struction_log::instance()->print_config();
+        log::instance()->print_data_generation_title();
+        log::instance()->print_config();
     }
 
     // Read the graph
@@ -100,9 +100,9 @@ int main(int argn, char **argv)
     go.assign_weights(G, config);
     go.writeGraphWeighted_to_csv(G, "training_data/csv/" + name + "_original_graph.csv");
 
-    struction_log::instance()->set_graph(G);
+    log::instance()->set_graph(G);
     if (config.verbose)
-        struction_log::instance()->print_graph();
+        log::instance()->print_graph();
 
     reduce_algorithm reducer(G, config);
     generate_data(&reducer, G, config, name+"_original");

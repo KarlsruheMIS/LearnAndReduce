@@ -1,22 +1,3 @@
-/******************************************************************************
- * reduce_algorithm.h
- *
- * Copyright (C) 2015-2017 Darren Strash <strash@kit.edu>
- *
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program.  If not, see <http://www.gnu.org/licenses/>.
- *****************************************************************************/
-
 #pragma once
 
 // system includes
@@ -61,7 +42,7 @@ extern "C" {
 #include "extended_domination_reduction.h"
 #include "extended_domination_reverse_reduction.h"
 #include "funnel_reduction.h"
-#include "funnel_fold_reduction.h"
+// #include "funnel_fold_reduction.h"
 #include "single_edge_reduction.h"
 #include "extended_single_edge_reduction.h"
 #include "clique_neighborhood_reduction.h"
@@ -71,11 +52,9 @@ extern "C" {
 #include "cut_vertex_reduction.h"
 #include "heavy_set3_reduction.h"
 #include "heavy_set_reduction.h"
-// #include "high_degree_reduction.h"
-// #include "bound_reduction.h"
 #include "struction_reductions.h"
-#include "heuristic_exclude_reduction.h"
-#include "heuristic_include_reduction.h"
+// #include "heuristic_exclude_reduction.h"
+// #include "heuristic_include_reduction.h"
 #include "unconfined_csr_reduction.h"
 #include "reductions.h"
 
@@ -113,7 +92,7 @@ private:
 	friend heavy_set3_reduction;
 	friend clique_reduction;
 	friend funnel_reduction;
-	friend funnel_fold_reduction;
+	// friend funnel_fold_reduction;
 	friend single_edge_reduction;
 	friend extended_single_edge_reduction;
 	friend domination_reduction;
@@ -121,12 +100,10 @@ private:
 	friend extended_domination_reverse_reduction;
 	friend twin_reduction;
 	friend extended_twin_reduction;
-	// friend high_degree_reduction;
-	// friend bound_reduction;
 	friend generalized_fold_reduction;
 	friend cut_vertex_reduction;
-	friend heuristic_include_reduction;
-	friend heuristic_exclude_reduction;
+	// friend heuristic_include_reduction;
+	// friend heuristic_exclude_reduction;
 	friend unconfined_csr_reduction;
 
 	// friend path_reduction;
@@ -253,7 +230,6 @@ private:
 	graph_status global_status;
 	std::vector<NodeID> global_mapping;
 	std::vector<size_t> global_transformation_map;
-	// std::vector<reduction_type> global_transformations;
 	std::vector<reduction_type> expensive_transformations;
 
 	size_t total_ils_node_count;
@@ -288,49 +264,25 @@ private:
 	void set(NodeID node, IS_status status, bool push_modified = true);
 	void unset(NodeID node, bool restore = true);
 
-	// void fill_global_greedy();
-	// void compute_ils_pruning_bound();
-	// NodeWeight compute_cover_pruning_bound(int &n_cliques);
-	// NodeWeight compute_partition_pruning_bound(int k);
-
 	void init_transformation_step(reduction_ptr &reduction);
-	// void init_global_transformation_step(reduction_ptr &reduction);
 	void add_next_level_node(NodeID node);
 	void add_next_level_neighborhood(NodeID node);
 	void add_next_level_neighborhood(const std::vector<NodeID> &nodes);
 
-	// void initial_filter_vertices_for_reduction();
-
 	void reduce_graph_internal_before_blow_up();
 	void reduce_graph_internal_after_blow_up();
-	// void reduce_graph_by_vertex_internal(bool full);
 	bool blow_up_graph_internal();
 	void cyclic_blow_up();
-	// bool branch_reduce_recursive();
-	// void branch_reduce_single_component();
 	void initial_reduce();
 
-	// void update_best_solution();
-	// void update_best_global_solution();
 	void undo_blow_up();
-	// void reverse_branching();
 	void restore_best_local_solution();
 	void restore_best_global_solution();
 
-	// void apply_local_reduction(size_t type);
-	// void restore_local_reduction(size_t type);
-	// void restore_reduction(size_t type);
-	// void apply_reduction(size_t type);
-
-    // map and reverse map are stored in 
-    // reverse_map = buffers[0];  map = buffers[1]; 
     csr_graph build_global_graph_csr();
-
 
     void build_graph_access(graph_access & G, std::vector<NodeID> & reverse_mapping);
     void build_global_graph_access();
-    // void build_induced_neighborhood_subgraph(graph_access &G, NodeID source_node);
-	// void build_induced_subgraph(graph_access &G, const std::vector<NodeID> &nodes, const fast_set &nodes_set, std::vector<NodeID> &reverse_mapping);
 
     void tiny_solver_solve_neighbourhood(const NodeWeight Wl, const NodeID v);
     void tiny_solver_solve_subgraph(const NodeWeight Wl, const std::vector<NodeID> &nodes, const fast_set &nodes_set);

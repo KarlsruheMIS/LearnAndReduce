@@ -24,7 +24,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-#probably set by Release, but doing anyway.
+# probably set by Release, but doing anyway.
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_definitions(-DNDEBUG)
     add_compile_options(-O3)
@@ -124,20 +124,19 @@ include_directories(
     ${BSOLVER}/app 
     ${BSOLVER}/lib
     ${BSOLVER}/lib/bounds
-    ${BSOLVER}/tools
-    ${BSOLVER}/kernel
-    ${BSOLVER}/kernel/simple_reduction_rules
-    ${BSOLVER}/kernel/expensive_reduction_rules
-    ${BSOLVER}/kernel/struction_reduction_rules
-    ${BSOLVER}/kernel/heuristic_reduction_rules
-    ${BSOLVER}/kernel/csr_reductions
+    ${BSOLVER}/reductions
+    ${BSOLVER}/reductions/simple_reduction_rules
+    ${BSOLVER}/reductions/expensive_reduction_rules
+    ${BSOLVER}/reductions/struction_reduction_rules
+    ${BSOLVER}/reductions/heuristic_reduction_rules
+    ${BSOLVER}/reductions/csr_reductions
 )
 
 
 set_source_files_properties(
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/data_structure/csr_graph.c
     ${TSOLVER}/tiny_solver.c
-    ${BSOLVER}/kernel/csr_reductions/src/reductions.c
+    ${BSOLVER}/reductions/csr_reductions/src/reductions.c
     PROPERTIES LANGUAGE C
 )
 
@@ -148,45 +147,43 @@ set(GENERAL
     lib/data_structure/priority_queues/bucket_array.cpp
     lib/data_structure/csr_graph.c
     lib/tools/random_functions.cpp
-    lib/config/mis_log.cpp
-    lib/config/reduction_log.cpp
+    lib/tools/log.cpp
+    # lib/config/mis_log.cpp
+    # lib/config/reduction_log.cpp
     lib/basics/cout_handler.cpp
     extern/argtable3-3.2.2/argtable3.c
     ${TSOLVER}/tiny_solver.c
-    ${BSOLVER}/tools/struction_log.cpp
     ${BSOLVER}/lib/reduce_algorithm.cpp
-    ${BSOLVER}/kernel/general_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/fold1_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/fold2_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/neighborhood_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/clique_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/clique_neighborhood_fast_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/twin_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/domination_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/extended_domination_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/extended_domination_reverse_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/extended_twin_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/single_edge_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/extended_single_edge_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/funnel_reduction.cpp
-    ${BSOLVER}/kernel/simple_reduction_rules/funnel_fold_reduction.cpp
-    ${BSOLVER}/kernel/struction_reduction_rules/mwis_finder.cpp
-    ${BSOLVER}/kernel/struction_reduction_rules/original_struction.cpp
-    ${BSOLVER}/kernel/struction_reduction_rules/extended_struction.cpp
-    ${BSOLVER}/kernel/struction_reduction_rules/key_functions.cpp
-    ${BSOLVER}/kernel/struction_reduction_rules/struction_reductions.cpp
-    ${BSOLVER}/kernel/expensive_reduction_rules/clique_neighborhood_reduction.cpp
-    ${BSOLVER}/kernel/expensive_reduction_rules/critical_set_reduction.cpp
-    ${BSOLVER}/kernel/expensive_reduction_rules/cut_vertex_reduction.cpp
-    ${BSOLVER}/kernel/expensive_reduction_rules/heavy_set_reduction.cpp
-    ${BSOLVER}/kernel/expensive_reduction_rules/heavy_set3_reduction.cpp
-    ${BSOLVER}/kernel/expensive_reduction_rules/generalized_fold_reduction.cpp
-    ${BSOLVER}/kernel/heuristic_reduction_rules/heuristic_include_reduction.cpp
-    ${BSOLVER}/kernel/heuristic_reduction_rules/heuristic_exclude_reduction.cpp
-    ${BSOLVER}/kernel/csr_reductions/src/reductions.c
-    ${BSOLVER}/kernel/csr_reductions/unconfined_csr_reduction.cpp
-    ${BSOLVER}/kernel/LRConv.cpp
-    ${BSOLVER}/kernel/lr_gcn.cpp
+    ${BSOLVER}/reductions/general_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/fold1_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/fold2_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/neighborhood_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/clique_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/clique_neighborhood_fast_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/twin_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/domination_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/extended_domination_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/extended_domination_reverse_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/extended_twin_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/single_edge_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/extended_single_edge_reduction.cpp
+    ${BSOLVER}/reductions/simple_reduction_rules/funnel_reduction.cpp
+    # ${BSOLVER}/reductions/simple_reduction_rules/funnel_fold_reduction.cpp
+    ${BSOLVER}/reductions/struction_reduction_rules/mwis_finder.cpp
+    ${BSOLVER}/reductions/struction_reduction_rules/original_struction.cpp
+    ${BSOLVER}/reductions/struction_reduction_rules/extended_struction.cpp
+    ${BSOLVER}/reductions/struction_reduction_rules/key_functions.cpp
+    ${BSOLVER}/reductions/struction_reduction_rules/struction_reductions.cpp
+    ${BSOLVER}/reductions/expensive_reduction_rules/clique_neighborhood_reduction.cpp
+    ${BSOLVER}/reductions/expensive_reduction_rules/critical_set_reduction.cpp
+    ${BSOLVER}/reductions/expensive_reduction_rules/cut_vertex_reduction.cpp
+    ${BSOLVER}/reductions/expensive_reduction_rules/heavy_set_reduction.cpp
+    ${BSOLVER}/reductions/expensive_reduction_rules/heavy_set3_reduction.cpp
+    ${BSOLVER}/reductions/expensive_reduction_rules/generalized_fold_reduction.cpp
+    ${BSOLVER}/reductions/csr_reductions/src/reductions.c
+    ${BSOLVER}/reductions/csr_reductions/unconfined_csr_reduction.cpp
+    ${BSOLVER}/reductions/LRConv.cpp
+    ${BSOLVER}/reductions/lr_gcn.cpp
     ${BSOLVER}/lib/bounds.cpp
 )
 add_library(lib OBJECT ${GENERAL})
@@ -195,11 +192,11 @@ target_link_libraries(lib PRIVATE OpenMP::OpenMP_C)
 add_executable(graphchecker app/graphchecker.cpp)
 target_link_libraries(graphchecker ${OpenMP_CXX_LIBRARIES})
 
-add_executable(metis_to_cosmo "app/metis_to_cosmo.cpp")
-target_link_libraries(metis_to_cosmo PRIVATE lib)
+# add_executable(metis_to_cosmo "app/metis_to_cosmo.cpp")
+# target_link_libraries(metis_to_cosmo PRIVATE lib)
 
 add_executable(generate_full_graph_training_data "app/generate_full_graph_training_data.cpp")
 target_link_libraries(generate_full_graph_training_data PRIVATE lib)
 
-add_executable(kernelization "app/kernelization.cpp")
-target_link_libraries(kernelization PRIVATE lib)
+add_executable(reduce "app/reduce.cpp")
+target_link_libraries(reduce PRIVATE lib)
