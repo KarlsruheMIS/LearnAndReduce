@@ -37,7 +37,7 @@ inline bool funnel_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
     int higher_weight_neighbor_count = 0;
     for (NodeID neighbor : br_alg->status.graph[v])
     {
-        if (weights[neighbor] >= weights[v])
+        if (weights[neighbor] > weights[v])
         {
             if (higher_weight_neighbor_count > 0)
                 return false;
