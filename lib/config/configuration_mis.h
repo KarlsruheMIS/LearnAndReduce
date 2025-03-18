@@ -50,10 +50,7 @@ inline void configuration_mis::standard( Config & mis_config ) {
 
     // ILS
     mis_config.ils_iterations                         = 15000;
-    /* mis_config.ils_time_limit                         = 15000; */
     mis_config.local_search_threshold                 = mis_config.ils_iterations;
-    // mis_config.force_k                                = 1;
-    // mis_config.force_cand                             = 4;
     mis_config.sort_freenodes                         = true;
     // Initial solution
     mis_config.start_greedy_adaptive                  = false;

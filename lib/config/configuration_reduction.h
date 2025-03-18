@@ -35,10 +35,8 @@ public:
     void cyclicFast(ReductionConfig &config);
     void cyclicStrong(ReductionConfig &config);
 
-    void all_reductions_cyclicFast(ReductionConfig &config);
-    void all_reductions_cyclicStrong(ReductionConfig &config);
-    void no_gnn_reductions_cyclicFast(ReductionConfig &config);
-    void no_gnn_reductions_cyclicStrong(ReductionConfig &config);
+    void all_reductions(ReductionConfig &config);
+    void no_gnn_reductions(ReductionConfig &config);
 
     void generate_training_data_initial_reductions(ReductionConfig &config);
     void generate_training_data_expensive_reductions(ReductionConfig &config);
@@ -48,7 +46,6 @@ inline void configuration_reduction::standard(ReductionConfig &config)
 {
     // Basic
     config.time_limit = 1000.0;
-    config.reduction_time_limit = 1000.0;
     // Randomization
     config.seed = 0;
     // Output
@@ -78,6 +75,10 @@ inline void configuration_reduction::standard(ReductionConfig &config)
     config.plain_struction = false;
     config.perform_hils = true;
     config.gnn_filter = ReductionConfig::GNN_Filter_Type::INITIAL_TIGHT;
+
+    // struction
+    cyclicFast(config);
+    config.struction_config_name = "cyclicFast"; ; 
 }
 
 inline void configuration_reduction::disable_new_reductions(ReductionConfig &config)
@@ -87,8 +88,8 @@ inline void configuration_reduction::disable_new_reductions(ReductionConfig &con
     config.disable_v_shape_mid = true;
     config.disable_triangle_mid = true;
     config.disable_triangle_min = true;
-    config.disable_basic_se = true;
-    config.disable_extended_se = true;
+    config.disable_single_edge = true;
+    config.disable_extended_single_edge = true;
     config.disable_extended_domination = true;
     config.disable_extended_domination_reverse = true;
     config.disable_extended_twin = true;
@@ -107,8 +108,8 @@ inline void configuration_reduction::enable_new_reductions(ReductionConfig &conf
     config.disable_v_shape_mid = false;
     config.disable_triangle_mid = false;
     config.disable_triangle_min = false;
-    config.disable_basic_se = false;
-    config.disable_extended_se = false;
+    config.disable_single_edge = false;
+    config.disable_extended_single_edge = false;
     config.disable_extended_domination = false;
     config.disable_extended_domination_reverse = false;
     config.disable_extended_twin = false;
@@ -163,36 +164,18 @@ inline void configuration_reduction::cyclicStrong(ReductionConfig &config)
     config.set_limit = 2048;
 }
 
-inline void configuration_reduction::all_reductions_cyclicFast(ReductionConfig &config)
+inline void configuration_reduction::all_reductions(ReductionConfig &config)
 {
     standard(config);
-    enable_new_reductions(config);
-    cyclicFast(config);
     config.disable_generalized_fold = false;
     config.disable_clique_neighborhood_fast = false;
     enable_new_reductions(config);
 }
 
-inline void configuration_reduction::no_gnn_reductions_cyclicFast(ReductionConfig &config)
+inline void configuration_reduction::no_gnn_reductions(ReductionConfig &config)
 {
-    all_reductions_cyclicFast(config);
+    all_reductions(config);
     disable_gnn_filter_reductions(config);
-}
-
-inline void configuration_reduction::no_gnn_reductions_cyclicStrong(ReductionConfig &config)
-{
-    all_reductions_cyclicStrong(config);
-    disable_gnn_filter_reductions(config);
-}
-
-inline void configuration_reduction::all_reductions_cyclicStrong(ReductionConfig &config)
-{
-    standard(config);
-    enable_new_reductions(config);
-    cyclicStrong(config);
-    config.disable_generalized_fold = false;
-    config.disable_clique_neighborhood_fast = false;
-    enable_new_reductions(config);
 }
 
 inline void configuration_reduction::generate_training_data_initial_reductions(ReductionConfig &config)
@@ -211,8 +194,8 @@ inline void configuration_reduction::generate_training_data_initial_reductions(R
     config.disable_extended_domination_reverse = true;
     config.disable_extended_domination = true;
     config.disable_funnel_fold = true;
-    config.disable_decreasing_struction = true;
-    config.disable_plateau_struction = true;
+    config.disable_struction_decrease = true;
+    config.disable_struction_plateau = true;
     config.disable_clique_neighborhood = true;
     config.disable_clique_neighborhood_fast = true;
     config.disable_high_degree = true;

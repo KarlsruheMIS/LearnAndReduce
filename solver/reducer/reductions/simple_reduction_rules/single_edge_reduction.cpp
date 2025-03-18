@@ -6,7 +6,7 @@
 typedef reduce_algorithm::IS_status IS_status;
 bool single_edge_reduction::reduce(reduce_algorithm *br_alg)
 {
-// if (br_alg->config.disable_basic_se) return false;
+// if (br_alg->config.disable_single_edge) return false;
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
 #endif
@@ -25,7 +25,7 @@ bool single_edge_reduction::reduce(reduce_algorithm *br_alg)
 }
 inline bool single_edge_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
 {
-    // if (br_alg->config.disable_basic_se) return false;
+    // if (br_alg->config.disable_single_edge) return false;
     if (br_alg->deg(v) == 0)
     {
         br_alg->set(v, IS_status::included);

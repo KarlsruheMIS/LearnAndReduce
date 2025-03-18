@@ -79,7 +79,7 @@ void log::print_graph() {
 
 void log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m) {
     filebuffer_string << log_config.graph_filename << ","
-                    //   << log_config.reduction_style_name << ","
+                      << log_config.struction_config_name << ","
                       << log_config.reduction_config_name << ","
                       << log_config.time_limit << ","
                       << log_config.seed << ","
@@ -93,7 +93,7 @@ void log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, 
                       << std::endl;
 
     std::cout         << log_config.graph_filename << ","
-                    //   << log_config.reduction_style_name << ","
+                      << log_config.struction_config_name << ","
                       << log_config.reduction_config_name << ","
                       << log_config.time_limit << ","
                       << log_config.seed << ","
@@ -112,8 +112,7 @@ void log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, 
     filebuffer_string << "========================================="                            << std::endl;
     filebuffer_string << "Time limit:\t\t\t"         << log_config.time_limit                   << std::endl; 
     filebuffer_string << "Seed:\t\t\t\t"             << log_config.seed                         << std::endl; 
-    // filebuffer_string << "Reduction Style:\t\t"      << log_config.reduction_style_name         << std::endl; 
-    // filebuffer_string << "Heuristic Style:\t\t"      << log_config.heuristic_style_name         << std::endl; 
+    filebuffer_string << "Struction Config:\t\t"      << log_config.struction_config_name       << std::endl; 
     filebuffer_string << "Reduction Config: \t\t"    << log_config.reduction_config_name        << std::endl;
     filebuffer_string << "GNN Filter:\t\t\t"         << log_config.gnn_filter_name              << std::endl;
     filebuffer_string                                                                           << std::endl;
@@ -122,8 +121,7 @@ void log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, 
     std::cout << "=========================================="                                   << std::endl;
     std::cout << "Time limit:\t\t\t"         << log_config.time_limit                           << std::endl; 
     std::cout << "Seed:\t\t\t\t"             << log_config.seed                                 << std::endl; 
-    // std::cout << "Reduction Style:\t\t"      << log_config.reduction_style_name                 << std::endl;
-    // std::cout << "Heuristic Style:\t\t"      << log_config.heuristic_style_name                 << std::endl;
+    std::cout << "Struction Config:\t\t"     << log_config.struction_config_name                << std::endl;
     std::cout << "Reduction Config: \t\t"    << log_config.reduction_config_name                << std::endl;
     std::cout << "GNN Filter:\t\t\t"         << log_config.gnn_filter_name                      << std::endl;
     std::cout                                                                                   << std::endl;

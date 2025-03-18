@@ -268,7 +268,7 @@ bool high_degree_reduction::solve_graph(NodeWeight& solution, graph_access& grap
     c.disable_heuristic_include = true;
     c.use_partition_cover = false;
     // c.time_limit = graph.number_of_nodes() / 10.0;
-    c.time_limit = config.reduction_time_limit*0.05;
+    c.time_limit = config.time_limit*0.05;
     c.max_swaps = 1000;
 
     reduce_algorithm solver(graph, c, true);

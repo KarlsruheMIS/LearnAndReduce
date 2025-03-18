@@ -6,7 +6,7 @@
 typedef reduce_algorithm::IS_status IS_status;
 bool clique_reduction::reduce(reduce_algorithm *br_alg)
 {
-// if (br_alg->config.disable_clique) return false;
+// if (br_alg->config.disable_simplicial_vertex) return false;
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
 #endif

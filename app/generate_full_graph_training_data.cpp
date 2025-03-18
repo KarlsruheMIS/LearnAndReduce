@@ -110,8 +110,8 @@ int main(int argn, char **argv)
 
     // disable reductions for kernel computation
     config.disable_unconfined                 = true;
-    config.disable_extended_se                = true;
-    config.disable_basic_se                   = true;
+    config.disable_extended_single_edge                = true;
+    config.disable_single_edge                   = true;
     config.disable_funnel                     = true;
     config.disable_critical_set               = true;
 
@@ -123,8 +123,8 @@ int main(int argn, char **argv)
 
     // enable all reductions
     config.disable_unconfined                 = false;
-    config.disable_extended_se                = false;
-    config.disable_basic_se                   = false;
+    config.disable_extended_single_edge                = false;
+    config.disable_single_edge                   = false;
     config.disable_funnel                     = false;
     config.disable_generalized_fold           = false;
     config.disable_cut_vertex                 = false;

@@ -14,14 +14,9 @@
 
 // Configuration for the calculation of the MIS
 struct ReductionConfig : public Config {
-    // enum Reduction_Style {initial, time_ordering, weight_ordering, time_and_weight_ordering};
     enum Struction_Type {ORIGINAL, MODIFIED, EXTENDED, EXTENDED_REDUCED, NONE};
     enum Backtrack_Type {IMMEDIATE_TIE_BREAKING, IMMEDIATE_EXCLUDE, END_MIN_KERNEL, NO_BACKTRACK};
     enum GNN_Filter_Type {NEVER, ALWAYS, INITIAL, INITIAL_TIGHT};
-    // enum Reduction_Style {NORMAL, DENSE, FULL, test1, test2, test3, EARLY_BLOW_UP};
-    // enum Reduction_Style {NORMAL, DENSE, FULL, EARLY_STRUCTION, EARLY_CS};
-    // enum Reduction_Style {EARLY_CS};
-    // enum Heuristic_Style {single, multiple_safe, multiple_very_safe, all, none, hils_intersect};
     enum Key_Type {RANDOM, DEGREE, INCREASE, APPROXIMATE_INCREASE};
 
     // Name of the kernel file.
@@ -35,10 +30,10 @@ struct ReductionConfig : public Config {
     bool disable_v_shape=false;
     bool disable_triangle_mid = false;
     bool disable_triangle_min = false;
-    bool disable_basic_se = false;
-    bool disable_extended_se = false;
+    bool disable_single_edge = false;
+    bool disable_extended_single_edge = false;
     bool disable_twin= false;
-    bool disable_clique = false;
+    bool disable_simplicial_vertex = false;
     bool disable_clique_neighborhood= false;
     bool disable_clique_neighborhood_fast= false;
     bool disable_generalized_fold= false;
@@ -48,8 +43,8 @@ struct ReductionConfig : public Config {
     bool disable_extended_domination = false;
     bool disable_extended_domination_reverse = false;
     bool disable_extended_twin = false;
-    bool disable_decreasing_struction= false;
-    bool disable_plateau_struction= false;
+    bool disable_struction_decrease= false;
+    bool disable_struction_plateau= false;
     bool disable_path= false;
     bool disable_cut_vertex = false;
     bool disable_high_degree = false;
@@ -72,12 +67,8 @@ struct ReductionConfig : public Config {
 	// Perform reduction
 	bool perform_reductions;
     // Choose reduction order and amount for given graph type
-    // Reduction_Style reduction_style = ReductionConfig::Reduction_Style::FULL;
-    // Heuristic_Style heuristic_style = Heuristic_Style::none;
-    std::string reduction_config_name = "full_cyclicFast (default)";
-    // std::string heuristic_style_name = "none";
-    // std::string reduction_style_name = "full";
-    double reduction_time_limit;
+    std::string reduction_config_name = "full";
+    std::string struction_config_name = "cyclicFast";
     double subgraph_time_limit=1;
 
     // early terminate solving subgraphs is best weight found is already to large for reduction to be applied
@@ -85,7 +76,7 @@ struct ReductionConfig : public Config {
 
     // Type of filter reductions before adding to marker
     GNN_Filter_Type gnn_filter = GNN_Filter_Type::INITIAL_TIGHT;
-    std::string gnn_filter_name = "initial tight (default)";
+    std::string gnn_filter_name = "initial tight";
 
     bool perform_hils;
 
@@ -134,7 +125,7 @@ struct ReductionConfig : public Config {
         else
         {
             gnn_filter = GNN_Filter_Type::INITIAL_TIGHT;
-            std::string gnn_filter_name = "initial tight (default)";
+            std::string gnn_filter_name = "initial tight";
         }
         gnn_filter_name = filter;
     }

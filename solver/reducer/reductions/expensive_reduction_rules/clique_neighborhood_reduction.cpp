@@ -54,7 +54,7 @@ bool clique_neighborhood_reduction::partition_into_cliques(NodeID v, reduce_algo
     get_neighborhood_vector(v, br_alg, neighbors_vec);
 
     // partition neigbors of v into cliques
-    while (neighbors_vec.size() >= 2 && br_alg->config.reduction_time_limit > br_alg->t.elapsed())
+    while (neighbors_vec.size() >= 2 && br_alg->config.time_limit > br_alg->t.elapsed())
     {
         NodeID max_neighbor = *std::max_element(neighbors_vec.begin(), neighbors_vec.end(), [&](NodeID a, NodeID b)
                                                 { return weights[a] < weights[b]; });

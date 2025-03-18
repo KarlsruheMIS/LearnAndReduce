@@ -160,7 +160,7 @@ bool cut_vertex_reduction::check_components(reduce_algorithm *br_alg, NodeID u, 
     {
         if (!visited_neighbors[n])
         {
-            if (br_alg->config.reduction_time_limit < br_alg->t.elapsed())
+            if (br_alg->config.time_limit < br_alg->t.elapsed())
                 return false;
             smallComponent.clear();
 
@@ -222,7 +222,7 @@ void cut_vertex_reduction::dfs_fill_visited(NodeID u, reduce_algorithm *br_alg, 
     stack.reserve(status.n);
     stack.push_back(u);
 
-    while (!stack.empty() && br_alg->config.reduction_time_limit > br_alg->t.elapsed())
+    while (!stack.empty() && br_alg->config.time_limit > br_alg->t.elapsed())
     {
         NodeID c = stack.back();
         stack.pop_back();

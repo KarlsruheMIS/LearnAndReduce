@@ -39,13 +39,13 @@ reduce_algorithm::reduce_algorithm(graph_access &G, const ReductionConfig &confi
 		global_status.transformations.emplace_back(new fold1_reduction(global_status.n));
 	if (!config.disable_fold2)
 		global_status.transformations.emplace_back(new fold2_reduction(global_status.n));
-	if (!config.disable_clique)
+	if (!config.disable_simplicial_vertex)
 		global_status.transformations.emplace_back(new clique_reduction(global_status.n));
 	if (!config.disable_domination)
 		global_status.transformations.emplace_back(new domination_reduction(global_status.n));
-	if (!config.disable_basic_se)
+	if (!config.disable_single_edge)
 		global_status.transformations.emplace_back(new single_edge_reduction(global_status.n));
-	if (!config.disable_extended_se)
+	if (!config.disable_extended_single_edge)
 		global_status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
 	if (!config.disable_twin)
 		global_status.transformations.emplace_back(new twin_reduction(global_status.n));
@@ -69,9 +69,9 @@ reduce_algorithm::reduce_algorithm(graph_access &G, const ReductionConfig &confi
 
 		// if (config.reduction_style == ReductionConfig::Reduction_Style::EARLY_STRUCTION)
 		// {
-		// 	if (!config.disable_decreasing_struction)
+		// 	if (!config.disable_struction_decrease)
 		// 		global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
-		// 	if (!config.disable_plateau_struction)
+		// 	if (!config.disable_struction_plateau)
 		// 		global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
 
 		// 	global_status.num_reductions = global_status.transformations.size();
@@ -95,9 +95,9 @@ reduce_algorithm::reduce_algorithm(graph_access &G, const ReductionConfig &confi
 		// {
 			if (!config.disable_critical_set)
 				global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
-			if (!config.disable_decreasing_struction)
+			if (!config.disable_struction_decrease)
 				global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
-			if (!config.disable_plateau_struction)
+			if (!config.disable_struction_plateau)
 				global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
 
 			global_status.num_reductions = global_status.transformations.size();
@@ -117,9 +117,9 @@ reduce_algorithm::reduce_algorithm(graph_access &G, const ReductionConfig &confi
 		// }
 		// else
 		// { // FULL and tests
-		// 	if (!config.disable_decreasing_struction)
+		// 	if (!config.disable_struction_decrease)
 		// 		global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
-		// 	if (!config.disable_plateau_struction)
+		// 	if (!config.disable_struction_plateau)
 		// 		global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
 		// 	if (!config.disable_critical_set)
 		// 		global_status.transformations.emplace_back(new critical_set_reduction(global_status.n));
@@ -168,19 +168,19 @@ reduce_algorithm::reduce_algorithm(graph_access &G, const ReductionConfig &confi
 				status.transformations.emplace_back(new fold1_reduction(global_status.n));
 			if (!config.disable_fold2)
 				status.transformations.emplace_back(new fold2_reduction(global_status.n));
-			if (!config.disable_clique)
+			if (!config.disable_simplicial_vertex)
 				status.transformations.emplace_back(new clique_reduction(global_status.n));
 			if (!config.disable_domination)
 				status.transformations.emplace_back(new domination_reduction(global_status.n));
-			if (!config.disable_basic_se)
+			if (!config.disable_single_edge)
 				status.transformations.emplace_back(new single_edge_reduction(global_status.n));
-			if (!config.disable_extended_se)
+			if (!config.disable_extended_single_edge)
 				status.transformations.emplace_back(new extended_single_edge_reduction(global_status.n));
 			if (!config.disable_twin)
 				status.transformations.emplace_back(new twin_reduction(global_status.n));
 			if (!config.disable_extended_domination)
 				status.transformations.emplace_back(new extended_domination_reduction(global_status.n));
-			if (!config.disable_decreasing_struction)
+			if (!config.disable_struction_decrease)
 				status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 		// }
 		status.num_reductions = status.transformations.size();
