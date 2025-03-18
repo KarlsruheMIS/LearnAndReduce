@@ -69,7 +69,7 @@ reduce_algorithm::reduce_algorithm(graph_access &G, const ReductionConfig &confi
 
 		// if (config.reduction_style == ReductionConfig::Reduction_Style::EARLY_STRUCTION)
 		// {
-		// 	if (!config.disable_struction_decrease)
+		// 	if (!config.disable_struction_decreasing)
 		// 		global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 		// 	if (!config.disable_struction_plateau)
 		// 		global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
@@ -117,7 +117,7 @@ reduce_algorithm::reduce_algorithm(graph_access &G, const ReductionConfig &confi
 		// }
 		// else
 		// { // FULL and tests
-		// 	if (!config.disable_struction_decrease)
+		// 	if (!config.disable_struction_decreasing)
 		// 		global_status.transformations.emplace_back(make_decreasing_struction(config, global_status.n));
 		// 	if (!config.disable_struction_plateau)
 		// 		global_status.transformations.push_back(make_plateau_struction(config, global_status.n));
