@@ -1,4 +1,6 @@
-# Learn and Reduce 
+# LearnAndReduce 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 This is the project LearnAndReduce. Given a graph G=(V,E,w), the goal is to compute a maximum weight independent set which is NP-hard. This project provides an exact GNN guided preprocessing to reduce input instances for this problem.
 
@@ -29,13 +31,13 @@ reduce FILE [options]
 |`--seed=<int>` |Set seed. | 0 ||
 |`--reduction_config=<string>` |Choose reduction configuration: all_reductions, no_gnn_reductions. | all_reductions | |
 |`--gnn_filter=<string>` |Choose gnn filtering: never, initial, initial_tight, always. | initial_tight||
-|`--time_limit=<double>` |Set time limit. | 1000 s||
+|`--time_limit=<double>` |Set time limit (in seconds). | 1000 s||
 |`--cyclicFast` | Set CyclicFast configuration. | &check; ||
 |`--cyclicStrong` | Set CyclicStrong configuration. | ||
 |`--kernel=<string>` | Path to store reduced instance. | ||
 
 
-### Example usage
+### Example 
 An example to use the different options is:
 ```
 ./deploy/reduce [instance] --gnn_filter=always --cyclicStrong --time_limit=3000
@@ -45,7 +47,7 @@ An example to use the different options is:
 
 The output of the program without the **-verbose** option is a single line on the format
 ```
-instance_name,struction_config,reduction_config,seed,gnn_filter,#vertices,#edges, #reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time
+instance_name,struction_config,reduction_config,seed,gnn_filter,#vertices,#edges,#reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time
 ```
 
 
@@ -67,14 +69,14 @@ You can use the provided graphchecker tool to check if the format of your file i
 ./graphchecker FILE
 ```   
 
-## Usage generate training data 
+## Usage Generate Training Data 
 ```
 ./generate_training_data FILE
 ``` 
 
 The program reads a metis file, generated the training data for the full graph and the reduced instance with training data on the reduced instace stored in training_data/csv.
 
-# Reproducing our Paper Results
+# Reproducing Results of the Paper
 
 An archive version of the paper is available on arXiv combined with the new local search [CHILS](https://github.com/KennethLangedal/CHILS). The LearnAndReduce part of this combined paper was accepted at ACDA 2025 and will be published in the conference proceedings later in 2025.
 ```
