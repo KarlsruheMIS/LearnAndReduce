@@ -20,7 +20,6 @@ reduce FILE [options]
 ```
 
 ### Options 
-This is a brief overview of the most important options. For a full overview, use the ```--help``` option.
 
 | Option | Decription | Default | Mandatory
 |-|-|-|-
@@ -46,7 +45,7 @@ An example to use the different options is:
 
 The output of the program without the **-verbose** option is a single line on the format
 ```
-instance_name,struction_config,reduction_config,time_limit,seed,gnn_filter,#vertices,#edges, #reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time
+instance_name,struction_config,reduction_config,seed,gnn_filter,#vertices,#edges, #reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time
 ```
 
 

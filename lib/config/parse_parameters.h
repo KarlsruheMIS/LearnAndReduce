@@ -23,10 +23,7 @@ public:
         help = arg_lit0(NULL, "help", "Print help.");
         filename = arg_strn(NULL, NULL, "FILE", 1, 1, "Path to graph file.");
         user_seed = arg_int0(NULL, "seed", NULL, "Seed to use for the PRNG.");
-        // output = arg_str0(NULL, "output", NULL, "Path to store resulting independent set.");
         time_limit = arg_dbl0(NULL, "time_limit", NULL, "Total time limit in s. Default 1000s.");
-        console_log = arg_lit0(NULL, "console_log", "Stream the log into the console");
-        disable_checks = arg_lit0(NULL, "disable_checks", "Disable sortedness check during I/O.");
         weight_source = arg_str0(NULL, "weight_source", NULL, "Choose how the weights are assigned. Can be either: file (default), hybrid, uniform, geometric, unit.");
         verbose = arg_lit0(NULL, "verbose", "Print detailed information.");
         end = arg_end(100);
@@ -60,14 +57,11 @@ protected:
     int argc;
     char **argv;
     const char *progname;
+    struct arg_str *filename;
     struct arg_lit *help;
     struct arg_int *user_seed;
-    struct arg_str *filename;
-    // struct arg_str *output;
     struct arg_dbl *time_limit;
-    struct arg_lit *console_log;
     struct arg_lit *verbose;
-    struct arg_lit *disable_checks;
     struct arg_str *weight_source;
     struct arg_end *end;
 };
@@ -87,49 +81,33 @@ public:
         cyclicStrong = arg_lit0(NULL, "cyclicStrong", "Set struction configuration cyclicStrong.");
 
         // single reduction parameters
-        disable_neighborhood = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
-        disable_degree_1 = arg_lit0(NULL, "disable_degree_1", "Disable degree_1 reduction.");
-        disable_degree_2 = arg_lit0(NULL, "disable_degree_2", "Disable degree_2 reduction.");
-        disable_triangle_min = arg_lit0(NULL, "disable_triangle_min", "Disable triangle min reduction.");
-        disable_triangle_mid = arg_lit0(NULL, "disable_triangle_mid", "Disable triangle mid reduction.");
-        disable_v_shape_min = arg_lit0(NULL, "disable_v_shape_min", "Disable v_shape_min reduction.");
-        disable_v_shape_max = arg_lit0(NULL, "disable_v_shape_max", "Disable v_shape_max reduction.");
-        disable_v_shape_mid = arg_lit0(NULL, "disable_v_shape_mid", "Disable v_shape_mid reduction.");
-        disable_domination = arg_lit0(NULL, "disable_domination", "Disable domination reduction.");
-        disable_extended_domination = arg_lit0(NULL, "disable_extended_domination", "Disable extended domination reduction.");
-        disable_extended_domination_reverse = arg_lit0(NULL, "disable_extended_domination_reverse", "Disable extended domination reverse reduction.");
-        disable_extended_twin = arg_lit0(NULL, "disable_extended_twin", "Disable extended twin reduction.");
-        disable_single_edge = arg_lit0(NULL, "disable_single_edge", "Disable basic single edge reduction.");
-        disable_extended_single_edge = arg_lit0(NULL, "disable_extended_single_edge", "Disable extended single edge reduction.");
-        disable_clique_neighborhood = arg_lit0(NULL, "disable_clique_neighborhood", "Disable neighborhood clique reduction.");
-        disable_clique_neighborhood_fast = arg_lit0(NULL, "disable_clique_neighborhood_fast", "Disable neighborhood clique fast reduction.");
-        disable_generalized_fold = arg_lit0(NULL, "disable_generalized_fold", "Disable generalized fold reduction.");
-        disable_critical_set = arg_lit0(NULL, "disable_critical_set", "Disable critical set reduction.");
-        disable_simplicial_vertex = arg_lit0(NULL, "disable_simplicial_vertex", "Disable clique reduction.");
-        disable_twin = arg_lit0(NULL, "disable_twin", "Disable twin reduction.");
-        disable_heavy_set = arg_lit0(NULL, "disable_heavy_set", "Disable heavy set reduction.");
-        disable_heavy_set3 = arg_lit0(NULL, "disable_heavy_set3", "Disable heavy set3 reduction.");
-        disable_cut_vertex = arg_lit0(NULL, "disable_cut_vertex", "Disable cut vertex reduction.");
-        disable_unconfined = arg_lit0(NULL, "disable_unconfined", "Disable unconfined reduction.");
-        disable_funnel = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
-        disable_funnel_fold = arg_lit0(NULL, "disable_funnel_fold", "Disable funnel fold reduction.");
-        disable_struction_decrease = arg_lit0(NULL, "disable_struction_decrease", "Disable decreasing struction.");
-        disable_struction_plateau = arg_lit0(NULL, "disable_struction_plateau", "Disable plateau struction.");
-        // subgraph_node_limit = arg_int0(NULL, "subgraph_node_limit", NULL, "Choose maximum number of nodes in subgraph.");
-
-        // for struction and branch_and_reduce
-        // set_limit = arg_int0(NULL, "set_limit", NULL, "Choose maximum number of new vertices allowed to be created during struction application");
-        // struction_degree = arg_int0(NULL, "struction_degree", NULL, "Choose maximum degree of vertex to perform struction on it.");
-        // struction_type = arg_str0(NULL, "struction_type", NULL, "Choose used struction type. Can be either: original, modified, extended (default), extended_reduced or none");
-        // key_type = arg_str0(NULL, "key_type", NULL, "Choose used vertex selection strategy. Can be either: random, degree, increase (default), approximate_increase");
-        // key_reinsert_factor = arg_dbl0(NULL, "key_reinsert_factor", NULL, "Choose reinsert factor beta for approximate increase selection. default 2");
-        // global_blow_up_percent = arg_dbl0(NULL, "global_blow_up_factor", NULL, "Choose global blow up factor alpha.");
-        // phase_blow_up_factor = arg_dbl0(NULL, "phase_blow_up_factor", NULL, "Choose percentual phase blow up factor gamma.");
-        // phase_blow_ups = arg_int0(NULL, "phase_blow_ups", NULL, "Choose fixed blow ups per phase Z.");
-        // max_unimproving_phases = arg_int0(NULL, "max_unimproving_phases", NULL, "Choose maximum unimproving blow up phases X.");
-        // backtrack_style = arg_str0(NULL, "backtrack_style", NULL, "Choose backtrack strategy. Can be either: immediate_tie_breaking, immediate_exclude (default), end_min_kernel or no_backtrack");
-        // disable_blow_up = arg_lit0(NULL, "disable_blow_up", "Disable cyclic blow up algorithm.");
-        // plain_struction = arg_lit0(NULL, "plain_struction", "Only use struction to reduce graph.");
+        // disable_neighborhood = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
+        // disable_degree_1 = arg_lit0(NULL, "disable_degree_1", "Disable degree_1 reduction.");
+        // disable_degree_2 = arg_lit0(NULL, "disable_degree_2", "Disable degree_2 reduction.");
+        // disable_triangle_min = arg_lit0(NULL, "disable_triangle_min", "Disable triangle min reduction.");
+        // disable_triangle_mid = arg_lit0(NULL, "disable_triangle_mid", "Disable triangle mid reduction.");
+        // disable_v_shape_min = arg_lit0(NULL, "disable_v_shape_min", "Disable v_shape_min reduction.");
+        // disable_v_shape_max = arg_lit0(NULL, "disable_v_shape_max", "Disable v_shape_max reduction.");
+        // disable_v_shape_mid = arg_lit0(NULL, "disable_v_shape_mid", "Disable v_shape_mid reduction.");
+        // disable_domination = arg_lit0(NULL, "disable_domination", "Disable domination reduction.");
+        // disable_extended_domination = arg_lit0(NULL, "disable_extended_domination", "Disable extended domination reduction.");
+        // disable_extended_domination_reverse = arg_lit0(NULL, "disable_extended_domination_reverse", "Disable extended domination reverse reduction.");
+        // disable_extended_twin = arg_lit0(NULL, "disable_extended_twin", "Disable extended twin reduction.");
+        // disable_single_edge = arg_lit0(NULL, "disable_single_edge", "Disable basic single edge reduction.");
+        // disable_extended_single_edge = arg_lit0(NULL, "disable_extended_single_edge", "Disable extended single edge reduction.");
+        // disable_clique_neighborhood = arg_lit0(NULL, "disable_clique_neighborhood", "Disable neighborhood clique reduction.");
+        // disable_clique_neighborhood_fast = arg_lit0(NULL, "disable_clique_neighborhood_fast", "Disable neighborhood clique fast reduction.");
+        // disable_generalized_fold = arg_lit0(NULL, "disable_generalized_fold", "Disable generalized fold reduction.");
+        // disable_critical_set = arg_lit0(NULL, "disable_critical_set", "Disable critical set reduction.");
+        // disable_simplicial_vertex = arg_lit0(NULL, "disable_simplicial_vertex", "Disable clique reduction.");
+        // disable_twin = arg_lit0(NULL, "disable_twin", "Disable twin reduction.");
+        // disable_heavy_set = arg_lit0(NULL, "disable_heavy_set", "Disable heavy set reduction.");
+        // disable_heavy_set3 = arg_lit0(NULL, "disable_heavy_set3", "Disable heavy set3 reduction.");
+        // disable_cut_vertex = arg_lit0(NULL, "disable_cut_vertex", "Disable cut vertex reduction.");
+        // disable_unconfined = arg_lit0(NULL, "disable_unconfined", "Disable unconfined reduction.");
+        // disable_funnel = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
+        // disable_struction_decrease = arg_lit0(NULL, "disable_struction_decrease", "Disable decreasing struction.");
+        // disable_struction_plateau = arg_lit0(NULL, "disable_struction_plateau", "Disable plateau struction.");
     }
 
     int setConfig(ReductionConfig &config);
@@ -142,47 +120,33 @@ protected:
     struct arg_str *reduction_config;
     struct arg_str *kernel_filename;
     struct arg_lit *print_reduction_info;
-    struct arg_lit *disable_neighborhood;
-    struct arg_lit *disable_degree_1;
-    struct arg_lit *disable_degree_2;
-    struct arg_lit *disable_triangle_min;
-    struct arg_lit *disable_triangle_mid;
-    struct arg_lit *disable_v_shape_min;
-    struct arg_lit *disable_v_shape_max;
-    struct arg_lit *disable_v_shape_mid;
-    struct arg_lit *disable_domination;
-    struct arg_lit *disable_extended_domination;
-    struct arg_lit *disable_extended_domination_reverse;
-    struct arg_lit *disable_extended_twin;
-    struct arg_lit *disable_single_edge;
-    struct arg_lit *disable_extended_single_edge;
-    struct arg_lit *disable_clique_neighborhood;
-    struct arg_lit *disable_clique_neighborhood_fast;
-    struct arg_lit *disable_generalized_fold;
-    struct arg_lit *disable_critical_set;
-    struct arg_lit *disable_simplicial_vertex;
-    struct arg_lit *disable_twin;
-    struct arg_lit *disable_heavy_set;
-    struct arg_lit *disable_heavy_set3;
-    struct arg_lit *disable_cut_vertex;
-    struct arg_lit *disable_unconfined;
-    struct arg_lit *disable_funnel;
-    struct arg_lit *disable_funnel_fold;
-    struct arg_lit *disable_struction_decrease;
-    struct arg_lit *disable_struction_plateau;
-    // struct arg_int *subgraph_node_limit;
-    struct arg_int *struction_degree;
-    struct arg_int *set_limit;
-    struct arg_str *struction_type;
-    struct arg_str *key_type;
-    struct arg_dbl *key_reinsert_factor;
-    struct arg_dbl *global_blow_up_percent;
-    struct arg_dbl *phase_blow_up_factor;
-    struct arg_int *phase_blow_ups;
-    struct arg_int *max_unimproving_phases;
-    struct arg_str *backtrack_style;
-    struct arg_lit *plain_struction;
-    struct arg_lit *disable_blow_up;
+    // struct arg_lit *disable_neighborhood;
+    // struct arg_lit *disable_degree_1;
+    // struct arg_lit *disable_degree_2;
+    // struct arg_lit *disable_triangle_min;
+    // struct arg_lit *disable_triangle_mid;
+    // struct arg_lit *disable_v_shape_min;
+    // struct arg_lit *disable_v_shape_max;
+    // struct arg_lit *disable_v_shape_mid;
+    // struct arg_lit *disable_domination;
+    // struct arg_lit *disable_extended_domination;
+    // struct arg_lit *disable_extended_domination_reverse;
+    // struct arg_lit *disable_extended_twin;
+    // struct arg_lit *disable_single_edge;
+    // struct arg_lit *disable_extended_single_edge;
+    // struct arg_lit *disable_clique_neighborhood;
+    // struct arg_lit *disable_clique_neighborhood_fast;
+    // struct arg_lit *disable_generalized_fold;
+    // struct arg_lit *disable_critical_set;
+    // struct arg_lit *disable_simplicial_vertex;
+    // struct arg_lit *disable_twin;
+    // struct arg_lit *disable_heavy_set;
+    // struct arg_lit *disable_heavy_set3;
+    // struct arg_lit *disable_cut_vertex;
+    // struct arg_lit *disable_unconfined;
+    // struct arg_lit *disable_funnel;
+    // struct arg_lit *disable_struction_decrease;
+    // struct arg_lit *disable_struction_plateau;
 };
 
 int BaseArguments::setConfig(Config &config)
@@ -190,12 +154,9 @@ int BaseArguments::setConfig(Config &config)
     // Common argtable
     void *argtable[] = {
         help,
-        user_seed,
         filename,
-        // output,
+        user_seed,
         time_limit,
-        console_log,
-        disable_checks,
         weight_source,
         nullptr};
 
@@ -227,24 +188,9 @@ void BaseArguments::parseParameters(Config &config)
         config.graph_filename = filename->sval[0];
     }
 
-    // if (output->count > 0)
-    // {
-    //     config.output_filename = output->sval[0];
-    // }
-
     if (time_limit->count > 0)
     {
         config.time_limit = time_limit->dval[0];
-    }
-
-    if (console_log->count > 0)
-    {
-        config.console_log = true;
-        config.print_log = false;
-    }
-    else
-    {
-        config.print_log = true;
     }
 
     if (verbose->count > 0)
@@ -258,11 +204,6 @@ void BaseArguments::parseParameters(Config &config)
         config.print_log = false;
     }
 
-    if (disable_checks->count > 0)
-    {
-        config.check_sorted = false;
-    }
-
     if (weight_source->count > 0)
     {
         config.setWeightSource(weight_source->sval[0]);
@@ -274,61 +215,44 @@ int ReductionArguments::setConfig(ReductionConfig &config)
     // Common argtable
     void *argtable[] = {
         help,
-        user_seed,
         filename,
-        // output,
+        user_seed,
         time_limit,
-        console_log,
         verbose,
         cyclicFast,
         cyclicStrong,
-        disable_checks,
         weight_source,
         print_reduction_info,
         gnn_filter,
         kernel_filename,
         reduction_config,
-        disable_neighborhood,
-        disable_degree_1,
-        disable_degree_2,
-        disable_triangle_min,
-        disable_triangle_mid,
-        disable_v_shape_min,
-        disable_v_shape_max,
-        disable_v_shape_mid,
-        disable_domination,
-        disable_extended_domination,
-        disable_extended_domination_reverse,
-        disable_extended_twin,
-        disable_single_edge,
-        disable_extended_single_edge,
-        disable_clique_neighborhood,
-        disable_clique_neighborhood_fast,
-        disable_generalized_fold,
-        disable_critical_set,
-        disable_simplicial_vertex,
-        disable_twin,
-        disable_heavy_set,
-        disable_heavy_set3,
-        disable_cut_vertex,
-        disable_unconfined,
-        disable_funnel,
-        disable_funnel_fold,
-        disable_struction_decrease,
-        disable_struction_plateau,
-        // subgraph_node_limit,
-        // struction_degree,
-        // set_limit,
-        // struction_type,
-        // key_type,
-        // key_reinsert_factor,
-        // global_blow_up_percent,
-        // phase_blow_up_factor,
-        // phase_blow_ups,
-        // max_unimproving_phases,
-        // backtrack_style,
-        // plain_struction,
-        // disable_blow_up,
+        // disable_neighborhood,
+        // disable_degree_1,
+        // disable_degree_2,
+        // disable_triangle_min,
+        // disable_triangle_mid,
+        // disable_v_shape_min,
+        // disable_v_shape_max,
+        // disable_v_shape_mid,
+        // disable_domination,
+        // disable_extended_domination,
+        // disable_extended_domination_reverse,
+        // disable_extended_twin,
+        // disable_single_edge,
+        // disable_extended_single_edge,
+        // disable_clique_neighborhood,
+        // disable_clique_neighborhood_fast,
+        // disable_generalized_fold,
+        // disable_critical_set,
+        // disable_simplicial_vertex,
+        // disable_twin,
+        // disable_heavy_set,
+        // disable_heavy_set3,
+        // disable_cut_vertex,
+        // disable_unconfined,
+        // disable_funnel,
+        // disable_struction_decrease,
+        // disable_struction_plateau,
         end};
 
     // Parse the arguments
@@ -367,15 +291,15 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
             cfg.no_gnn_reductions(config);
             config.reduction_config_name = "no_gnn_reductions";
         }
-        else if (!strcmp(reduction_config->sval[0], "full"))
+        else if (!strcmp(reduction_config->sval[0], "all_reductions"))
         {
             cfg.all_reductions(config);
-            config.reduction_config_name = "full";
+            config.reduction_config_name = "all_reductions";
         }
         else
         {
             cfg.all_reductions(config);
-            config.reduction_config_name = "full";
+            config.reduction_config_name = "all_reductions";
         }
     }
 
@@ -387,115 +311,116 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
     }
     if (print_reduction_info->count > 0)
     {
+        config.verbose = true;
         config.print_reduction_info = true;
     }
-    if (disable_neighborhood->count > 0)
-    {
-        config.disable_neighborhood = true;
-    }
-    if (disable_degree_1->count > 0)
-    {
-        config.disable_fold1 = true;
-    }
-    if (disable_degree_2->count > 0)
-    {
-        config.disable_fold2 = true;
-    }
-    if (disable_triangle_min->count > 0)
-    {
-        config.disable_triangle_min = true;
-    }
-    if (disable_triangle_mid->count > 0)
-    {
-        config.disable_triangle_mid = true;
-    }
-    if (disable_v_shape_min->count > 0)
-    {
-        config.disable_v_shape_min = true;
-    }
-    if (disable_v_shape_max->count > 0)
-    {
-        config.disable_v_shape_max = true;
-    }
-    if (disable_v_shape_mid->count > 0)
-    {
-        config.disable_v_shape_mid = true;
-    }
-    if (disable_domination->count > 0)
-    {
-        config.disable_domination = true;
-    }
-    if (disable_extended_domination->count > 0)
-    {
-        config.disable_extended_domination = true;
-    }
-    if (disable_extended_domination_reverse->count > 0)
-    {
-        config.disable_extended_domination_reverse = true;
-    }
-    if (disable_extended_twin->count > 0)
-    {
-        config.disable_extended_twin = true;
-    }
-    if (disable_single_edge->count > 0)
-    {
-        config.disable_single_edge = true;
-    }
-    if (disable_extended_single_edge->count > 0)
-    {
-        config.disable_extended_single_edge = true;
-    }
-    if (disable_clique_neighborhood->count > 0)
-    {
-        config.disable_clique_neighborhood = true;
-    }
-    if (disable_clique_neighborhood_fast->count > 0)
-    {
-        config.disable_clique_neighborhood_fast = true;
-    }
-    if (disable_generalized_fold->count > 0)
-    {
-        config.disable_generalized_fold = true;
-    }
-    if (disable_critical_set->count > 0)
-    {
-        config.disable_critical_set = true;
-    }
-    if (disable_simplicial_vertex->count > 0)
-    {
-        config.disable_simplicial_vertex = true;
-    }
-    if (disable_twin->count > 0)
-    {
-        config.disable_twin = true;
-    }
-    if (disable_heavy_set->count > 0)
-    {
-        config.disable_heavy_set = true;
-    }
-    if (disable_heavy_set3->count > 0)
-    {
-        config.disable_heavy_set3 = true;
-    }
-    if (disable_cut_vertex->count > 0)
-    {
-        config.disable_cut_vertex = true;
-    }
-    if (disable_unconfined->count > 0)
-    {
-        config.disable_unconfined = true;
-    }
-    if (disable_funnel_fold->count > 0)
-    {
-        config.disable_funnel_fold = true;
-    }
-    if (disable_funnel->count > 0)
-    {
-        config.disable_funnel = true;
-    }
-    // if (subgraph_node_limit->count > 0)
+    // if (disable_neighborhood->count > 0)
     // {
-    //     config.subgraph_node_limit = subgraph_node_limit->ival[0];
+    //     config.disable_neighborhood = true;
+    // }
+    // if (disable_degree_1->count > 0)
+    // {
+    //     config.disable_fold1 = true;
+    // }
+    // if (disable_degree_2->count > 0)
+    // {
+    //     config.disable_fold2 = true;
+    // }
+    // if (disable_triangle_min->count > 0)
+    // {
+    //     config.disable_triangle_min = true;
+    // }
+    // if (disable_triangle_mid->count > 0)
+    // {
+    //     config.disable_triangle_mid = true;
+    // }
+    // if (disable_v_shape_min->count > 0)
+    // {
+    //     config.disable_v_shape_min = true;
+    // }
+    // if (disable_v_shape_max->count > 0)
+    // {
+    //     config.disable_v_shape_max = true;
+    // }
+    // if (disable_v_shape_mid->count > 0)
+    // {
+    //     config.disable_v_shape_mid = true;
+    // }
+    // if (disable_domination->count > 0)
+    // {
+    //     config.disable_domination = true;
+    // }
+    // if (disable_extended_domination->count > 0)
+    // {
+    //     config.disable_extended_domination = true;
+    // }
+    // if (disable_extended_domination_reverse->count > 0)
+    // {
+    //     config.disable_extended_domination_reverse = true;
+    // }
+    // if (disable_extended_twin->count > 0)
+    // {
+    //     config.disable_extended_twin = true;
+    // }
+    // if (disable_single_edge->count > 0)
+    // {
+    //     config.disable_single_edge = true;
+    // }
+    // if (disable_extended_single_edge->count > 0)
+    // {
+    //     config.disable_extended_single_edge = true;
+    // }
+    // if (disable_clique_neighborhood->count > 0)
+    // {
+    //     config.disable_clique_neighborhood = true;
+    // }
+    // if (disable_clique_neighborhood_fast->count > 0)
+    // {
+    //     config.disable_clique_neighborhood_fast = true;
+    // }
+    // if (disable_generalized_fold->count > 0)
+    // {
+    //     config.disable_generalized_fold = true;
+    // }
+    // if (disable_critical_set->count > 0)
+    // {
+    //     config.disable_critical_set = true;
+    // }
+    // if (disable_simplicial_vertex->count > 0)
+    // {
+    //     config.disable_simplicial_vertex = true;
+    // }
+    // if (disable_twin->count > 0)
+    // {
+    //     config.disable_twin = true;
+    // }
+    // if (disable_heavy_set->count > 0)
+    // {
+    //     config.disable_heavy_set = true;
+    // }
+    // if (disable_heavy_set3->count > 0)
+    // {
+    //     config.disable_heavy_set3 = true;
+    // }
+    // if (disable_cut_vertex->count > 0)
+    // {
+    //     config.disable_cut_vertex = true;
+    // }
+    // if (disable_unconfined->count > 0)
+    // {
+    //     config.disable_unconfined = true;
+    // }
+    // if (disable_funnel->count > 0)
+    // {
+    //     config.disable_funnel = true;
+    // }
+    // if (disable_struction_decrease->count > 0)
+    // {
+    //     config.disable_struction_decrease = true;
+    // }
+    // if (disable_struction_plateau->count > 0)
+    // {
+    //     config.disable_struction_plateau = true;
     // }
 
     if (kernel_filename->count > 0)
@@ -508,60 +433,4 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
         config.write_kernel = false;
     }
 
-    if (disable_struction_decrease->count > 0)
-    {
-        config.disable_struction_decrease = true;
-    }
-    if (disable_struction_plateau->count > 0)
-    {
-        config.disable_struction_plateau = true;
-    }
-    // if (struction_degree->count > 0)
-    // {
-    //     config.struction_degree = struction_degree->ival[0];
-    // }
-    // if (set_limit->count > 0)
-    // {
-    //     config.set_limit = set_limit->ival[0];
-    // }
-    // if (struction_type->count > 0)
-    // {
-    //     config.setStructionType(struction_type->sval[0]);
-    // }
-    // if (key_type->count > 0)
-    // {
-    //     config.setKeyType(key_type->sval[0]);
-    // }
-    // if (key_reinsert_factor->count > 0)
-    // {
-    //     config.key_reinsert_factor = key_reinsert_factor->dval[0];
-    // }
-    // if (global_blow_up_percent->count > 0)
-    // {
-    //     config.global_blow_up_factor = global_blow_up_percent->dval[0];
-    // }
-    // if (phase_blow_up_factor->count > 0)
-    // {
-    //     config.phase_blow_up_factor = phase_blow_up_factor->dval[0];
-    // }
-    // if (phase_blow_ups->count > 0)
-    // {
-    //     config.phase_blow_ups = phase_blow_ups->ival[0];
-    // }
-    // if (max_unimproving_phases->count > 0)
-    // {
-    //     config.max_unimproving_phases = max_unimproving_phases->ival[0];
-    // }
-    // if (backtrack_style->count > 0)
-    // {
-    //     config.setBacktrackType(backtrack_style->sval[0]);
-    // }
-    // if (plain_struction->count)
-    // {
-    //     config.plain_struction = true;
-    // }
-    // if (disable_blow_up->count > 0)
-    // {
-    //     config.disable_blow_up = true;
-    // }
 }

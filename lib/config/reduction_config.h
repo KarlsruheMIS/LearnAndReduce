@@ -67,7 +67,7 @@ struct ReductionConfig : public Config {
 	// Perform reduction
 	bool perform_reductions;
     // Choose reduction order and amount for given graph type
-    std::string reduction_config_name = "full";
+    std::string reduction_config_name = "all_reductions";
     std::string struction_config_name = "cyclicFast";
     double subgraph_time_limit=1;
 
