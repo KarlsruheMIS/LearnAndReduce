@@ -14,8 +14,6 @@ The binaries can then be found in the folder **deploy**. To compile the programs
 The framework contains a graph checking tool to make life a little bit easier:
 * graphchecker -- check if your graph file is in the correct format
 
-The instances used for our evaluation can be downloaded from Dropbox at this [link](https://www.dropbox.com/scl/fi/kbpttzi2woiqfhwvgjadi/LearnAndReduceInstances.zip?rlkey=ijl6uz9indkihxc7luv92mzyd&st=bkyu8vea&dl=0).
-
 ## Usage LearnAndReduce 
 ```
 reduce FILE [options]
@@ -70,6 +68,7 @@ You can use the provided graphchecker tool to check if the format of your file i
 ```   
 
 ## Usage Generate Training Data 
+The data used for training our GNN models is availiable [here](https://zenodo.org/records/15210077). You can also create your own training data with our tool.
 ```
 ./generate_training_data FILE
 ``` 
