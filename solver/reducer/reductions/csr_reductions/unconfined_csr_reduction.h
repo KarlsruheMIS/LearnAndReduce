@@ -29,7 +29,7 @@ struct unconfined_csr_reduction : public general_reduction
 
     virtual reduction_type get_reduction_type() const final { return reduction_type::unconfined_csr; }
     virtual std::string get_reduction_name() final { return "unconfined"; }
-    virtual std::string get_model_path() final { return "models/unconfined_csr.lr_gcn"; }
+    virtual std::string get_model_path() final { return "models/unconfined.lr_gcn"; }
     virtual bool reduce(reduce_algorithm *br_alg) final;
     bool reduce_vertex(reduce_algorithm *br_alg, NodeID v, csr_graph &g, int *A, void *R);
     void generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index);

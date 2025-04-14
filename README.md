@@ -1,51 +1,81 @@
-# Learn and Reduce #
+# Learn and Reduce 
 
-This is the project LearnAndReduce. Given a graph G=(V,E,w), the goal is to compute a maximum weight independent set which is NP-hard. This project provides a GNN guided preprocessing to reduce input instances for this problem.
+This is the project LearnAndReduce. Given a graph G=(V,E,w), the goal is to compute a maximum weight independent set which is NP-hard. This project provides an exact GNN guided preprocessing to reduce input instances for this problem.
 
-## Installation ##
-As a first step, compile the source by running `compile_all.sh`. The binaries can then be found in the folder **deploy**. To compile the programs you need **g++** and **cmake** installed.
+## Installation 
+As a first step, compile the source by running 
+```
+compile_all.sh
+```
+The binaries can then be found in the folder **deploy**. To compile the programs you need **g++** and **cmake** installed.
 
 The framework contains a graph checking tool to make life a little bit easier:
-* graphchecker -- check if the graph file you gave to algorithm is in the correct format
+* graphchecker -- check if your graph file is in the correct format
 
 The instances used for our evaluation can be downloaded from Dropbox at this [link](https://www.dropbox.com/scl/fi/kbpttzi2woiqfhwvgjadi/LearnAndReduceInstances.zip?rlkey=ijl6uz9indkihxc7luv92mzyd&st=bkyu8vea&dl=0).
 
-## Usage LearnAndReduce ##
-`reduce FILE [options]`.
+## Usage LearnAndReduce 
+```
+reduce FILE [options]
+```
 
-### Options ###
+### Options 
 This is a brief overview of the most important options. For a full overview, use the ```--help``` option.
 
-`FILE`
-Path to graph file that you want the reduce.
+| Option | Decription | Default | Mandatory
+|-|-|-|-
+|`FILE`| Path to graph file that you want the reduce. || &check;
+|`--help`| Print help. ||
+|`--verbose`|Print detailed information. ||
+|`--seed=<int>` |Set seed. | 0 ||
+|`--reduction_config=<string>` |Choose reduction configuration: all_reductions, no_gnn_reductions. | all_reductions | |
+|`--gnn_filter=<string>` |Choose gnn filtering: never, initial, initial_tight, always. | initial_tight||
+|`--time_limit=<double>` |Set time limit. | 1000 s||
+|`--cyclicFast` | Set CyclclicFast configuration. |||
+|`--cyclicStrong` | Set CyclclicStrong configuration. | ||
+|`--kernel=<string>` | Path to store reduced instance. | ||
 
-`--help`
-Print help.
 
-`--verbose`
-Print detailed information.
+### Example usage
+The default setting gives the results in Table 5 of the paper:
+```
+./deploy/reduce [instance] 
+```
+An example to use the different options is:
+```
+./deploy/reduce [instance] --gnn_filter=always --cyclicStrong --time_limit=3000
+```
 
-`--seed=<int>`
-Seed to use for the random number generator.
+### Output
 
-`--reduction_config=<string>`
-Config to use for the reduction configuration [all_reductions (default) | no_gnn_reductions ].
+The output of the program without the **-verbose** option is a single line on the format
+```
+instance_name,struction_config,reduction_config,time_limit,seed,gnn_filter,#vertices,#edges, #reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time
+```
 
-`--gnn_filter=<string>`
-Config to use for the gnn filtering [never | initial | initial_tight (default) | always].
 
-`--time_limit=<double>`
-Time limit until the algorithm terminates.
+### Input Format
 
-The exact command used for the results in Table 5 of the paper is: \
-`./deploy/reduce [instance] --reduction_config=all_reductions --gnn_filter=initial_tight --cylcicFast`
+LearnAndReduce expects graphs on the METIS graph format. A graph with **N** vertices is stored using **N + 1** lines. The first line lists the number of vertices, the number of edges, and the weight type. For weighted instances, the first line should use 10 as the weight type to indicate vertex weights. Each subsequent line first gives the weight and then lists the neighbors of that node in **sorted** order.
 
-## Usage generate training data ##
-`generate_training_data FILE`.    
+Here is an example of a graph with 3 vertices of weight 15, 15, and 20, where the weight 20 vertex is connected to the two 15-weight vertices.
 
-The program reads a Metis file, generated the training data for the full graph and the reduced instance with training data on the reduced instace stored in training_data/csv.
+```
+3 2 10
+15 3
+15 3
+20 1 2
+```
+Notice that vertices are 1-indexed, and edges appear in the neighborhoods of both endpoints.
+You can use the provided graphchecker tool to check if the format of your file is correct.
+```
+graphchecker FILE
+```   
 
-## Usage Graph Checker ##
-`graphchecker FILE`.    
+## Usage generate training data 
+```
+generate_training_data FILE
+``` 
 
-The program reads a Metis file and checks the file for correctness.
+The program reads a metis file, generated the training data for the full graph and the reduced instance with training data on the reduced instace stored in training_data/csv.
+

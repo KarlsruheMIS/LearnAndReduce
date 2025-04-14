@@ -40,28 +40,28 @@ void log::write_log() {
 
 
 void log::print_data_generation_title() {
-    filebuffer_string << "=========================================="                           << std::endl;
+    filebuffer_string << "=============================================="                       << std::endl;
     filebuffer_string << "\t Generate Reduction Data "                                          << std::endl;
-    filebuffer_string << "=========================================="                           << std::endl;
+    filebuffer_string << "=============================================="                       << std::endl;
 
-    std::cout << "=========================================="                                   << std::endl;
+    std::cout << "=============================================="                               << std::endl;
     std::cout << "\t Generate Reduction Data"                                                   << std::endl;
-    std::cout << "=========================================="                                   << std::endl;
+    std::cout << "=============================================="                               << std::endl;
 }
 
 void log::print_reduction_title() {
-    filebuffer_string << "=========================================="                           << std::endl;
-    filebuffer_string << "\t WeightedMIS Reductions"                                            << std::endl;
-    filebuffer_string << "=========================================="                           << std::endl;
+    filebuffer_string << "=============================================="                      << std::endl;
+    filebuffer_string << "\t\t LearnAndReduce MWIS"                                            << std::endl;
+    filebuffer_string << "=============================================="                      << std::endl;
 
-    std::cout << "=========================================="                                   << std::endl;
-    std::cout << "\t WeightedMIS Reductions"                                                    << std::endl;
-    std::cout << "=========================================="                                   << std::endl;
+    std::cout << "=============================================="                              << std::endl;
+    std::cout << "\t\t LearnAndReduce MWIS"                                                    << std::endl;
+    std::cout << "=============================================="                              << std::endl;
 }
 
 void log::print_graph() {
     filebuffer_string << "\t\tGraph"                                                            << std::endl;
-    filebuffer_string << "=========================================="                           << std::endl;
+    filebuffer_string << "=============================================="                       << std::endl;
     filebuffer_string << "IO time:\t\t\t\t"         << total_timer.elapsed()                    << std::endl;
     filebuffer_string << "Filename:\t\t\t\t"        << log_config.graph_filename                << std::endl;
     filebuffer_string << "|-Nodes:\t\t\t\t"         << number_of_nodes                          << std::endl;
@@ -69,7 +69,7 @@ void log::print_graph() {
     filebuffer_string << std::endl;
 
     std::cout << "\t\tGraph"                                                                    << std::endl;
-    std::cout << "=========================================="                                   << std::endl;
+    std::cout << "=============================================="                               << std::endl;
     std::cout << "IO time:\t\t\t"           << total_timer.elapsed()                            << std::endl;
     std::cout << "Filename:\t\t\t"          << log_config.graph_filename                        << std::endl;
     std::cout << "|-Nodes:\t\t\t"           << number_of_nodes                                  << std::endl;
@@ -109,7 +109,7 @@ void log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, 
 
  void log::print_config() {
     filebuffer_string << "\t\tConfiguration"                                                    << std::endl;
-    filebuffer_string << "========================================="                            << std::endl;
+    filebuffer_string << "============================================="                        << std::endl;
     filebuffer_string << "Time limit:\t\t\t"         << log_config.time_limit                   << std::endl; 
     filebuffer_string << "Seed:\t\t\t\t"             << log_config.seed                         << std::endl; 
     filebuffer_string << "Struction Config:\t\t"      << log_config.struction_config_name       << std::endl; 
@@ -118,7 +118,7 @@ void log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, 
     filebuffer_string                                                                           << std::endl;
     
     std::cout << "\t\tConfiguration"                                                            << std::endl;
-    std::cout << "=========================================="                                   << std::endl;
+    std::cout << "=============================================="                               << std::endl;
     std::cout << "Time limit:\t\t\t"         << log_config.time_limit                           << std::endl; 
     std::cout << "Seed:\t\t\t\t"             << log_config.seed                                 << std::endl; 
     std::cout << "Struction Config:\t\t"     << log_config.struction_config_name                << std::endl;
@@ -129,15 +129,15 @@ void log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, 
 
 void log::print_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, size_t max_component) {
     filebuffer_string << "\t\tReduction"                                                        << std::endl;
-    filebuffer_string << "=========================================="                           << std::endl;
+    filebuffer_string << "=============================================="                       << std::endl;
     filebuffer_string << "Offset:\t\t\t\t"       << offset                                      << std::endl;
     filebuffer_string << "Time:\t\t\t\t"         << time                                        << std::endl;
     filebuffer_string << "Kernel nodes:\t\t\t"   << kernel_size_n                               << std::endl;
     filebuffer_string << "MaxComponent:\t\t\t"   << max_component <<  "\n"                      << std::endl;
 
-    std::cout << "=========================================="                               << std::endl;
+    std::cout << "=============================================="                           << std::endl;
     std::cout << "\t\tReduction"                                                            << std::endl;
-    std::cout << "=========================================="                               << std::endl;
+    std::cout << "=============================================="                           << std::endl;
     std::cout << "Offset:\t\t\t\t"           << offset                                      << std::endl;
     std::cout << "Time:\t\t\t\t"             << time                                        << std::endl;
     std::cout << "Kernel nodes:\t\t\t"       << kernel_size_n                               << std::endl;
@@ -148,7 +148,7 @@ void log::print_reduction(ReductionConfig & mis_config, double time, NodeWeight 
 // void log::print_full_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m, size_t component_count, size_t max_component) {
 void log::print_full_reduction(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m) {
     filebuffer_string << "\t\tReduction"                                                        << std::endl;
-    filebuffer_string << "=========================================="                           << std::endl;
+    filebuffer_string << "=============================================="                       << std::endl;
     filebuffer_string << "Offset:\t\t\t\t"       << offset                                      << std::endl;
     filebuffer_string << "Time:\t\t\t\t"         << time                                        << std::endl;
     filebuffer_string << "Kernel nodes:\t\t\t"   << kernel_size_n                               << std::endl;
@@ -156,9 +156,9 @@ void log::print_full_reduction(ReductionConfig & mis_config, double time, NodeWe
     // filebuffer_string << "Components:\t\t\t"     << component_count                             << std::endl;
     // filebuffer_string << "MaxComponent:\t\t\t"   << max_component <<  "\n"                      << std::endl;
 
-    std::cout << "=========================================="                               << std::endl;
+    std::cout << "=============================================="                           << std::endl;
     std::cout << "\t\tReduction"                                                            << std::endl;
-    std::cout << "=========================================="                               << std::endl;
+    std::cout << "=============================================="                           << std::endl;
     std::cout << "Offset:\t\t\t\t"           << offset                                      << std::endl;
     std::cout << "Time:\t\t\t\t"             << time                                        << std::endl;
     std::cout << "Kernel nodes:\t\t\t"       << kernel_size_n                               << std::endl;
@@ -170,14 +170,14 @@ void log::print_full_reduction(ReductionConfig & mis_config, double time, NodeWe
 void log::print_results(bool optimal) {
     filebuffer_string                                                                           << std::endl;
     filebuffer_string << "\t\tStatistics"                                                       << std::endl;
-    filebuffer_string << "=========================================="                           << std::endl;
+    filebuffer_string << "=============================================="                       << std::endl;
     filebuffer_string << "Final Weight:\t\t\t"  << optimum_size                                 << std::endl;
     filebuffer_string << "Total time:\t\t\t\t"  << time_taken_best                              << std::endl;
     filebuffer_string << "Is optimal:\t\t\t"    << optimal                                      << std::endl;
     filebuffer_string << "Total time taken:\t\t"<< total_timer.elapsed()                        << std::endl;
     std::cout                                                                                   << std::endl;
     std::cout << "\t\tBest"                                                                     << std::endl;
-    std::cout << "=========================================="                                   << std::endl;
+    std::cout << "=============================================="                               << std::endl;
     std::cout << "Final Weight:\t\t\t"          << optimum_size                                 << std::endl;
     std::cout << "Time found:\t\t\t"            << time_taken_best                              << std::endl;
     std::cout << "Is optimal:\t\t\t"            << optimal                                      << std::endl;
