@@ -7,7 +7,7 @@ This is the project LearnAndReduce. Given a graph G=(V,E,w), the goal is to comp
 ## Installation 
 As a first step, compile the source by running 
 ```
-compile_all.sh
+./compile_all.sh
 ```
 The binaries can then be found in the folder **deploy**. To compile the programs you need **g++** and **cmake** installed.
 
@@ -16,7 +16,7 @@ The framework contains a graph checking tool to make life a little bit easier:
 
 ## Usage LearnAndReduce 
 ```
-reduce FILE [options]
+./reduce FILE [options]
 ```
 
 ### Options 
