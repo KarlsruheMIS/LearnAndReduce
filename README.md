@@ -21,18 +21,17 @@ The framework contains a graph checking tool to make life a little bit easier:
 
 ### Options 
 
-| Option | Decription | Default | Mandatory
-|-|-|-|-
-|`FILE`| Path to graph file that you want the reduce. || &check;
-|`--help`| Print help. ||
-|`--verbose`|Print detailed information. ||
-|`--seed=<int>` |Set seed. | 0 ||
-|`--reduction_config=<string>` |Choose reduction configuration: all_reductions, no_gnn_reductions. | all_reductions | |
-|`--gnn_filter=<string>` |Choose gnn filtering: never, initial, initial_tight, always. | initial_tight||
-|`--time_limit=<double>` |Set time limit (in seconds). | 1000 s||
-|`--cyclicFast` | Set CyclicFast configuration. | &check; ||
-|`--cyclicStrong` | Set CyclicStrong configuration. | ||
-|`--kernel=<string>` | Path to store reduced instance. | ||
+| Option | Decription | Default
+|-|-|-
+|`--help`| Print help. |
+|`--verbose`|Print detailed information. |
+|`--seed=<int>` |Set seed. | 0 |
+|`--reduction_config=<string>` |Choose reduction configuration: all_reductions, no_gnn_reductions. | all_reductions |
+|`--gnn_filter=<string>` |Choose gnn filtering: never, initial, initial_tight, always. | initial_tight|
+|`--time_limit=<double>` |Set time limit (in seconds). | 1000 s|
+|`--cyclicFast` | Set CyclicFast configuration. | &check; |
+|`--cyclicStrong` | Set CyclicStrong configuration. | |
+|`--kernel=<string>` | Path to store reduced instance. | |
 
 
 ### Example 
@@ -43,7 +42,7 @@ An example to use the different options is:
 
 ### Output
 
-The output of the program without the **-verbose** option is a single line on the format
+The output of the program without the **--verbose** option is a single line on the format
 ```
 instance_name,struction_config,reduction_config,seed,gnn_filter,#vertices,#edges,#reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time
 ```
@@ -73,7 +72,7 @@ The data used for training our GNN models is availiable [here](https://zenodo.or
 ./generate_training_data FILE
 ``` 
 
-The program reads a metis file, generated the training data for the full graph and the reduced instance with training data on the reduced instace stored in training_data/csv.
+The program reads a metis file and then generates the training data for the full and reduced graphs. The training data is stored in training_data/csv.
 
 # Reproducing Results of the Paper
 

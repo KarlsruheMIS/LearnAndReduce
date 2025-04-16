@@ -73,10 +73,10 @@ public:
     {
 
         // Unique parameters
-        print_reduction_info = arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction");
+        print_reduction_info = arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction.");
         reduction_config = arg_str0(NULL, "reduction_config", NULL, "What Reductions to use [no_gnn_reductions, all_reductions (default)].");
         kernel_filename = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
-        gnn_filter = arg_str0(NULL, "gnn_filter", NULL, "Choose gnn filter strategy. Can be either: never , initial, initial_tight (default), always");
+        gnn_filter = arg_str0(NULL, "gnn_filter", NULL, "Choose gnn filter strategy. Can be either: never, initial, initial_tight (default), always.");
         cyclicFast = arg_lit0(NULL, "cyclicFast", "Set struction configuration cyclicFast.");
         cyclicStrong = arg_lit0(NULL, "cyclicStrong", "Set struction configuration cyclicStrong.");
 
