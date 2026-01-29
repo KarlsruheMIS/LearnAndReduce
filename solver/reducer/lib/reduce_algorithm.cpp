@@ -240,8 +240,8 @@ void reduce_algorithm::init_transformation_step(reduction_ptr &reduction)
 			if (pred[u] > 0.5f)
 				reduction->marker.current.push_back(rm[u]);
 		}
-		// if (config.verbose)
-		// 	printf("%s added %ld vertices from %ld\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
+		if (config.verbose)
+			printf("%s added %ld vertices from %ld\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
 
 		reduction->has_run = true;
 	}

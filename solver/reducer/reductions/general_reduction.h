@@ -72,6 +72,14 @@ struct general_reduction
     double reduction_time = 0.0;
     vertex_marker marker;
 
+    std::string get_models_folder_path()
+    {
+        std::string current_file = __FILE__;
+        size_t last_slash = current_file.find_last_of("/\\");
+        std::string current_dir = current_file.substr(0, last_slash);
+        return current_dir + "/../../../models/";
+    }
+
     NodeWeight get_neighborhood_weight(NodeID v, reduce_algorithm *br_alg);
     NodeID get_max_weight_neighbor(NodeID v, reduce_algorithm *br_alg);
     void get_neighborhood_set(NodeID v, reduce_algorithm *br_alg, fast_set &neighborhood_set);
