@@ -40,7 +40,7 @@ class graph_io {
                 static void writeVector(std::vector<vectortype> & vec, const std::string & filename);
 
                 template<typename vectortype>
-                static void readVector(std::vector<vectortype> & vec, const std::string & filename);
+                static bool readVector(std::vector<vectortype> & vec, const std::string & filename);
 
 
 };
@@ -56,15 +56,15 @@ void graph_io::writeVector(std::vector<vectortype> & vec, const std::string & fi
 }
 
 template<typename vectortype>
-void graph_io::readVector(std::vector<vectortype> & vec, const std::string & filename) {
+bool graph_io::readVector(std::vector<vectortype> & vec, const std::string & filename) {
 
         std::string line;
 
         // open file for reading
         std::ifstream in(filename.c_str());
         if (!in) {
-                std::cerr << "Error opening vectorfile" << filename << std::endl;
-                return;
+                std::cerr << "Error opening file " << filename << std::endl;
+                return false;
         }
 
         unsigned pos = 0;
@@ -80,6 +80,7 @@ void graph_io::readVector(std::vector<vectortype> & vec, const std::string & fil
         }
 
         in.close();
+        return true;
 }
 
 #endif /*GRAPHIO_H_*/

@@ -42,7 +42,6 @@ extern "C" {
 #include "extended_domination_reduction.h"
 #include "extended_domination_reverse_reduction.h"
 #include "funnel_reduction.h"
-// #include "funnel_fold_reduction.h"
 #include "single_edge_reduction.h"
 #include "extended_single_edge_reduction.h"
 #include "clique_neighborhood_reduction.h"
@@ -92,7 +91,6 @@ private:
 	friend heavy_set3_reduction;
 	friend clique_reduction;
 	friend funnel_reduction;
-	// friend funnel_fold_reduction;
 	friend single_edge_reduction;
 	friend extended_single_edge_reduction;
 	friend domination_reduction;
@@ -300,6 +298,7 @@ public:
 	void reduce_graph();
 	bool run_branch_reduce(NodeWeight weight_bound);
 	bool run_branch_reduce();
+	NodeWeight lift_solution(std::vector<bool> & reduced_solution, std::vector<bool> & full_solution);
 
 	static size_t run_ils(const ReductionConfig &config, graph_access &G, std::vector<NodeID> &tmp_buffer, size_t max_swaps);
 	static void greedy_initial_is(graph_access &G, std::vector<NodeID> &tmp_buffer);

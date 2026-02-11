@@ -33,6 +33,7 @@ cd ..
 
 mkdir -p deploy
 cp -f ./build/reduce                                  deploy/reduce
+cp -f ./build/reduce_and_lift                         deploy/reduce_and_lift
 cp -f ./build/generate_full_graph_training_data       deploy/generate_training_data
 cp -f ./build/graphchecker                            deploy/graphchecker
 

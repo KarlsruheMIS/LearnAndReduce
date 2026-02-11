@@ -23,20 +23,17 @@ bool neighborhood_reduction::reduce(reduce_algorithm *br_alg)
                                         return;
                                     }
                                 }
-                                br_alg->set(v, IS_status::included);
-                            });
+                                br_alg->set(v, IS_status::included); });
 
 #ifdef REDUCTION_INFO
     reduced_nodes += (oldn - br_alg->status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
 #endif
-	// if (oldn != status.remaining_nodes) std::cout << "neighbor redu -> " << (oldn - status.remaining_nodes) << std::endl;
     return oldn != br_alg->status.remaining_nodes;
 }
 
 inline bool neighborhood_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
 {
-    // if (br_alg->config.disable_neighborhood) return false;
     auto &status = br_alg->status;
     size_t oldn = status.remaining_nodes;
 
@@ -56,10 +53,9 @@ bool neighborhood_reduction::is_suited(NodeID v, reduce_algorithm *br_alg)
 			else return sum; })));
 }
 
-inline int neighborhood_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
+inline int neighborhood_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID> &label)
 {
     auto &status = br_alg->status;
-    size_t oldn = status.remaining_nodes;
 
     NodeWeight neighbor_weights = get_neighborhood_weight(v, br_alg);
     if (status.weights[v] >= neighbor_weights)

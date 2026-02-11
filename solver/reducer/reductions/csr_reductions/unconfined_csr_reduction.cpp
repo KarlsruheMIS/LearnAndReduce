@@ -50,7 +50,6 @@ inline bool unconfined_csr_reduction::reduce_vertex(reduce_algorithm *r_alg, Nod
 {
     auto &status = r_alg->status;
     auto &map = r_alg->buffers[1];
-    size_t oldn = status.remaining_nodes;
     assert(status.node_status[v] == IS_status::not_set);
     if (reduction_unconfined_csr(R, g.N, g.V, g.E, g.W, A, map[v]))
     {

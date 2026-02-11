@@ -17,7 +17,7 @@ LRConv::LRConv(int N)
 {
     W = (float **)malloc(sizeof(float *) * 6);
     B = (float **)malloc(sizeof(float *) * 6);
-    param = (float *)aligned_alloc(32, sizeof(float) * total_params);
+    param = (float *)aligned_alloc(32, sizeof(float) * (total_params+31));
 
     for (int i = 0; i < 6; i++)
     {

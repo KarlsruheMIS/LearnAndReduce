@@ -6,7 +6,6 @@
 typedef reduce_algorithm::IS_status IS_status;
 bool twin_reduction::reduce(reduce_algorithm *br_alg)
 {
-    // if (br_alg->config.disable_twin) return false;
     size_t oldn = br_alg->status.remaining_nodes;
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
@@ -19,12 +18,10 @@ bool twin_reduction::reduce(reduce_algorithm *br_alg)
         reduced_nodes += (oldn - br_alg->status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
 #endif
-	// if (oldn != br_alg->status.remaining_nodes) std::cout << "twin redu -> " << (oldn - br_alg->status.remaining_nodes) << std::endl;
 	return oldn != br_alg->status.remaining_nodes;
 }
 inline bool twin_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
 {
-    // if (br_alg->config.disable_twin) return false;
     auto &status = br_alg->status;
     auto &neighbors = br_alg->buffers[0];
     auto &twin_candidates_set = br_alg->set_1;
@@ -139,7 +136,6 @@ inline int twin_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, std
     auto &twin_candidates_set = br_alg->set_1;
     auto &tmp_set = br_alg->set_2;
 
-    size_t oldn = status.remaining_nodes;
     NodeID twin;
     NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
     get_neighborhood_vector(v, br_alg, neighbors);

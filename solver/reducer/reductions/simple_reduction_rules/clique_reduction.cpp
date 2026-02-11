@@ -109,7 +109,6 @@ bool clique_reduction::reduce(reduce_algorithm *br_alg)
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
 #endif
-	// if (oldn != status.remaining_nodes) std::cout << "clique redu -> " << (oldn - status.remaining_nodes) << std::endl;
     return oldn != status.remaining_nodes;
 }
 
@@ -127,7 +126,6 @@ inline bool clique_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
     set_1.add(v);
 
     // check if clique
-    // non_isolated.clear();
     isolated.clear();
     isolated.push_back(v);
 
@@ -271,7 +269,6 @@ int clique_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, std::vec
     auto &set_1 = br_alg->set_1;
     auto &neighbors = br_alg->buffers[0];
     auto &isolated = br_alg->buffers[1];
-    size_t oldn = status.remaining_nodes;
 
     get_neighborhood_set(v, br_alg, set_1);
     get_neighborhood_vector(v, br_alg, neighbors);

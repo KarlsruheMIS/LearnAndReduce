@@ -22,6 +22,7 @@ public:
         // Common parameters
         help = arg_lit0(NULL, "help", "Print help.");
         filename = arg_strn(NULL, NULL, "FILE", 1, 1, "Path to graph file.");
+        output = arg_str0(NULL, "output", NULL, "Path to solution file.");
         user_seed = arg_int0(NULL, "seed", NULL, "Seed to use for the PRNG.");
         time_limit = arg_dbl0(NULL, "time_limit", NULL, "Total time limit in s. Default 1000s.");
         weight_source = arg_str0(NULL, "weight_source", NULL, "Choose how the weights are assigned. Can be either: file (default), hybrid, uniform, geometric, unit.");
@@ -63,6 +64,7 @@ protected:
     struct arg_dbl *time_limit;
     struct arg_lit *verbose;
     struct arg_str *weight_source;
+    struct arg_str *output;
     struct arg_end *end;
 };
 
@@ -76,9 +78,12 @@ public:
         print_reduction_info = arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction.");
         reduction_config = arg_str0(NULL, "reduction_config", NULL, "What Reductions to use [no_gnn_reductions, all_reductions (default)].");
         kernel_filename = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
+        solution_from_file = arg_lit0(NULL, "solution_from_file", "Read the solution from file instead of using CHILS.");
         gnn_filter = arg_str0(NULL, "gnn_filter", NULL, "Choose gnn filter strategy. Can be either: never, initial, initial_tight (default), always.");
         cyclicFast = arg_lit0(NULL, "cyclicFast", "Set struction configuration cyclicFast.");
         cyclicStrong = arg_lit0(NULL, "cyclicStrong", "Set struction configuration cyclicStrong.");
+        chils_n_solutions = arg_int0(NULL, "chils_n_solutions", NULL, "Number of solutions to be used for CHILS (default 16).");
+        chils_time_limit = arg_dbl0(NULL, "chils_time_limit", NULL, "CHILS total time limit in seconds (default 600).");
 
         // single reduction parameters
         // disable_neighborhood = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -108,6 +113,7 @@ public:
         // disable_funnel = arg_lit0(NULL, "disable_funnel", "Disable funnel reduction.");
         // disable_struction_decrease = arg_lit0(NULL, "disable_struction_decrease", "Disable decreasing struction.");
         // disable_struction_plateau = arg_lit0(NULL, "disable_struction_plateau", "Disable plateau struction.");
+        // disable_blow_up = arg_lit0(NULL, "disable_blow_up", "Disable struction blow up.");
     }
 
     int setConfig(ReductionConfig &config);
@@ -119,7 +125,10 @@ protected:
     struct arg_str *gnn_filter;
     struct arg_str *reduction_config;
     struct arg_str *kernel_filename;
+    struct arg_lit *solution_from_file;
     struct arg_lit *print_reduction_info;
+    struct arg_int *chils_n_solutions;
+    struct arg_dbl *chils_time_limit;
     // struct arg_lit *disable_neighborhood;
     // struct arg_lit *disable_degree_1;
     // struct arg_lit *disable_degree_2;
@@ -147,6 +156,7 @@ protected:
     // struct arg_lit *disable_funnel;
     // struct arg_lit *disable_struction_decrease;
     // struct arg_lit *disable_struction_plateau;
+    // struct arg_lit *disable_blow_up;
 };
 
 int BaseArguments::setConfig(Config &config)
@@ -158,6 +168,7 @@ int BaseArguments::setConfig(Config &config)
         user_seed,
         time_limit,
         weight_source,
+        output,
         nullptr};
 
     // Parse the arguments
@@ -188,6 +199,11 @@ void BaseArguments::parseParameters(Config &config)
         config.graph_filename = filename->sval[0];
     }
 
+    if (output->count > 0)
+    {
+        config.output_filename = output->sval[0];
+    }
+
     if (time_limit->count > 0)
     {
         config.time_limit = time_limit->dval[0];
@@ -216,16 +232,19 @@ int ReductionArguments::setConfig(ReductionConfig &config)
     void *argtable[] = {
         help,
         filename,
+        kernel_filename,
+        solution_from_file,
         user_seed,
         time_limit,
         verbose,
         cyclicFast,
         cyclicStrong,
         weight_source,
-        print_reduction_info,
         gnn_filter,
-        kernel_filename,
         reduction_config,
+        print_reduction_info,
+        chils_time_limit,
+        chils_n_solutions,
         // disable_neighborhood,
         // disable_degree_1,
         // disable_degree_2,
@@ -253,6 +272,7 @@ int ReductionArguments::setConfig(ReductionConfig &config)
         // disable_funnel,
         // disable_struction_decrease,
         // disable_struction_plateau,
+        // disable_blow_up,
         end};
 
     // Parse the arguments
@@ -313,6 +333,18 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
     {
         config.verbose = true;
         config.print_reduction_info = true;
+    }
+    if (solution_from_file->count > 0)
+    {
+        config.solution_from_file = true;
+    }
+    if (chils_time_limit->count > 0)
+    {
+        config.chils_time_limit = chils_time_limit->dval[0];
+    }
+    if (chils_n_solutions->count > 0)
+    {
+        config.chils_n_solutions = chils_n_solutions->ival[0];
     }
     // if (disable_neighborhood->count > 0)
     // {
@@ -421,6 +453,10 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
     // if (disable_struction_plateau->count > 0)
     // {
     //     config.disable_struction_plateau = true;
+    // }
+    // if (disable_blow_up->count > 0)
+    // {
+    //     config.disable_blow_up = true;
     // }
 
     if (kernel_filename->count > 0)

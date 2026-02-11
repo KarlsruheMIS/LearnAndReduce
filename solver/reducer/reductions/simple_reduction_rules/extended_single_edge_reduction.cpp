@@ -77,7 +77,6 @@ inline int extended_single_edge_reduction::generate_data(reduce_algorithm *br_al
         return 0;
     auto &status = br_alg->status;
     auto &weights = status.weights;
-    size_t oldn = status.remaining_nodes;
     auto &neighbors = br_alg->set_1;
     auto &neighbors_vec = br_alg->buffers[0];
 

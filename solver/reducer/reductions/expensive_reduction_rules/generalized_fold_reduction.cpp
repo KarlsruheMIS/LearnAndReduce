@@ -305,7 +305,6 @@ inline int generalized_fold_reduction::generate_data(reduce_algorithm *br_alg, N
     auto &neighbors_set = br_alg->set_1;
     auto &MWIS_set = br_alg->set_2;
     auto solver = br_alg->subgraph_solver;
-    size_t oldn = status.remaining_nodes;
 
     graph_access neighborhood_graph;
 

@@ -129,7 +129,6 @@ void extended_domination_reduction::apply(reduce_algorithm* br_alg) {
 int extended_domination_reduction::generate_data(reduce_algorithm* br_alg, NodeID v, std::vector<NodeID>& label) {
 	auto& status = br_alg->status;
 	auto& neighbors = br_alg->set_1;
-	size_t oldn = status.remaining_nodes;
 
     size_t neighbors_count = status.graph[v].size();
     bool is_subset;

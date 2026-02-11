@@ -5,7 +5,6 @@
 typedef reduce_algorithm::IS_status IS_status;
 bool fold1_reduction::reduce(reduce_algorithm *br_alg)
 {
-    // if (br_alg->config.disable_fold1) return false;
     auto &status = br_alg->status;
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
@@ -23,7 +22,6 @@ bool fold1_reduction::reduce(reduce_algorithm *br_alg)
 }
 inline bool fold1_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
 {
-    // if (br_alg->config.disable_fold1) return false;
     auto &status = br_alg->status;
     size_t oldn = status.remaining_nodes;
     assert(status.node_status[v] == IS_status::not_set);
@@ -100,9 +98,7 @@ bool fold1_reduction::is_suited(NodeID v, reduce_algorithm *br_alg)
 }
 inline int fold1_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, std::vector<NodeID>& label)
 {
-    // if (br_alg->config.disable_fold1) return false;
     auto &status = br_alg->status;
-    size_t oldn = status.remaining_nodes;
     assert(status.node_status[v] == IS_status::not_set);
 
     if (status.weights[v] == 0 || br_alg->deg(v) == 0 || br_alg->deg(v) == 1)

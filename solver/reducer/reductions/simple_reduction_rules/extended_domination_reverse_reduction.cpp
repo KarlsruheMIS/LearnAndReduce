@@ -127,8 +127,7 @@ int extended_domination_reverse_reduction::generate_data(reduce_algorithm *br_al
     get_neighborhood_vector(v, br_alg, neighbors);
     get_neighborhood_set(v, br_alg, neighbors_set);
 
-std:
-    sort(neighbors.begin(), neighbors.end(), [&](NodeID a, NodeID b)
+    std::sort(neighbors.begin(), neighbors.end(), [&](NodeID a, NodeID b)
          { return br_alg->deg(a) < br_alg->deg(b); });
 
     for (NodeID cand : status.graph[neighbors[0]])

@@ -145,7 +145,6 @@ set(GENERAL
     lib/algorithms/push_relabel.cpp
     lib/data_structure/operation_log.cpp
     lib/data_structure/priority_queues/bucket_array.cpp
-    lib/data_structure/csr_graph.c
     lib/tools/random_functions.cpp
     lib/tools/log.cpp
     # lib/config/mis_log.cpp
@@ -192,11 +191,16 @@ target_link_libraries(lib PRIVATE OpenMP::OpenMP_C)
 add_executable(graphchecker app/graphchecker.cpp)
 target_link_libraries(graphchecker ${OpenMP_CXX_LIBRARIES})
 
-# add_executable(metis_to_cosmo "app/metis_to_cosmo.cpp")
-# target_link_libraries(metis_to_cosmo PRIVATE lib)
-
 add_executable(generate_full_graph_training_data "app/generate_full_graph_training_data.cpp")
 target_link_libraries(generate_full_graph_training_data PRIVATE lib)
 
 add_executable(reduce "app/reduce.cpp")
 target_link_libraries(reduce PRIVATE lib)
+
+
+add_library(CHILS STATIC IMPORTED)
+set_target_properties(CHILS PROPERTIES IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/extern/CHILS/libCHILS.a")
+target_include_directories(CHILS INTERFACE "${CMAKE_SOURCE_DIR}/extern/CHILS")
+
+add_executable(reduce_and_lift "app/reduce_and_lift.cpp")
+target_link_libraries(reduce_and_lift PRIVATE lib CHILS)

@@ -6,7 +6,6 @@
 typedef reduce_algorithm::IS_status IS_status;
 bool single_edge_reduction::reduce(reduce_algorithm *br_alg)
 {
-// if (br_alg->config.disable_single_edge) return false;
 #ifdef REDUCTION_INFO
     br_alg->reduction_timer.restart();
 #endif
@@ -25,7 +24,6 @@ bool single_edge_reduction::reduce(reduce_algorithm *br_alg)
 }
 inline bool single_edge_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
 {
-    // if (br_alg->config.disable_single_edge) return false;
     if (br_alg->deg(v) == 0)
     {
         br_alg->set(v, IS_status::included);
@@ -75,8 +73,6 @@ inline int single_edge_reduction::generate_data(reduce_algorithm *br_alg, NodeID
     auto &graph = br_alg->status.graph;
     auto &weights = br_alg->status.weights;
     auto &neighbors = br_alg->set_1;
-    size_t oldn = status.remaining_nodes;
-
     get_neighborhood_set(v, br_alg, neighbors);
 
     for (NodeID neighbor : graph[v])

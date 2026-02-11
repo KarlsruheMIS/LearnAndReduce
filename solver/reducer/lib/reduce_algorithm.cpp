@@ -554,6 +554,69 @@ void reduce_algorithm::restore_best_global_solution()
 	}
 }
 
+NodeWeight reduce_algorithm::lift_solution(std::vector<bool> & reduced_solution, std::vector<bool>& full_solution) {
+
+	std::swap(status, global_status);
+	assert(reduced_solution.size() == status.remaining_nodes && "reduced solution size and status.remaining_nodes mismatch");
+	for (size_t red_node = 0; red_node < status.remaining_nodes; red_node++)
+	{
+		NodeID node = global_mapping[red_node];
+		assert(status.node_status[node] == IS_status::not_set && "Mapping maps to a vertex for the reduced solution that is already reduced.");
+		if (reduced_solution[red_node])
+		{
+			status.node_status[node] = IS_status::included;
+		}
+		else
+		{
+			status.node_status[node] = IS_status::excluded;
+		}
+	}
+
+	status.modified_stack.pop_back();
+
+	while (status.modified_stack.size() > 0)
+	{
+		assert(status.modified_stack.back() != BRANCHING_TOKEN);
+		NodeID node = status.modified_stack.back();
+		status.modified_stack.pop_back();
+
+		if (node == BRANCHING_TOKEN)
+		{
+			status.graph.restore_node(status.branching_stack.back().node);
+			status.branching_stack.pop_back();
+			continue;
+		}
+
+		if (node == MODIFIED_TOKEN)
+		{ // for reductions that do not reduce but only modify the graph
+			auto type = status.folded_stack.back();
+			status.folded_stack.pop_back();
+			status.transformations[global_transformation_map[type]]->apply(this);
+		}
+		else if (status.node_status[node] == IS_status::folded)
+		{
+			auto type = status.folded_stack.back();
+			status.folded_stack.pop_back();
+			status.transformations[global_transformation_map[type]]->apply(this);
+		}
+		else
+		{
+			status.graph.restore_node(node);
+		}
+	}
+
+	NodeWeight result = 0;
+	for (NodeID node = 0; node < status.n; node++) {
+		if (status.node_status[node] == IS_status::included)
+		{
+			full_solution[node] = 1;
+			result += status.weights[node];
+		}
+	}
+	std::swap(status, global_status);
+	return result;
+}
+
 NodeWeight reduce_algorithm::get_current_is_weight() const
 {
 	return global_status.is_weight + global_status.reduction_offset;

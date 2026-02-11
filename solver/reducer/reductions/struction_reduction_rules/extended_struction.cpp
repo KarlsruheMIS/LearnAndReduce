@@ -153,6 +153,7 @@ void extended_struction<reduced_version>::apply(reduce_algorithm* r_alg) {
     for (NodeID n = status.n - data.set_nodes; n < status.n; ++n) {
         if (status.node_status[n] == IS_status::included) {
             NodeWeight set_weight = status.weights[n] + status.weights[main];
+            status.is_weight -= status.weights[n];
             restore(r_alg);
             includable_neighbors.clear();
 
@@ -170,15 +171,13 @@ void extended_struction<reduced_version>::apply(reduce_algorithm* r_alg) {
             finder.findAllMWIS(r_alg, includable_neighbors, set_weight - 1, 1);
 
             status.node_status[main] = IS_status::excluded;
-            for (NodeID n : neighbors)
-                status.node_status[n] = IS_status::excluded;
-            for (NodeID n : finder.get_sets().back().nodes) {
-                status.is_weight += status.weights[n];
-                status.node_status[n] = IS_status::included;
+            for (NodeID node : neighbors)
+                status.node_status[node] = IS_status::excluded;
+            for (NodeID node : finder.get_sets().back().nodes) {
+                status.is_weight += status.weights[node];
+                status.node_status[node] = IS_status::included;
             }
 
-
-            status.is_weight -= status.weights[n];
             return;
         }
     }

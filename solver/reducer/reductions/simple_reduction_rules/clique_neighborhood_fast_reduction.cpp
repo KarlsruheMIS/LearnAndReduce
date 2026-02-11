@@ -8,19 +8,16 @@ typedef reduce_algorithm::IS_status IS_status;
 
 bool clique_neighborhood_reduction_fast::reduce(reduce_algorithm *r_alg)
 {
-    // if (r_alg->config.disable_clique_neighborhood_fast) return false;
     auto &status = r_alg->status;
     size_t oldn = status.remaining_nodes;
 
     for_each_changed_vertex(r_alg, [&](NodeID v)
                             { reduce_vertex(r_alg, v); });
 
-	// if (oldn != status.remaining_nodes) std::cout << "clique_neighborhood fast redu -> " << (oldn - status.remaining_nodes) << std::endl;
 	return oldn != status.remaining_nodes;
 }
 inline bool clique_neighborhood_reduction_fast::reduce_vertex(reduce_algorithm *r_alg, NodeID v)
 {
-// if (r_alg->config.disable_clique_neighborhood_fast) return false;
 #ifdef REDUCTION_INFO
     r_alg->reduction_timer.restart();
 #endif
@@ -82,7 +79,6 @@ inline bool clique_neighborhood_reduction_fast::reduce_vertex(reduce_algorithm *
 inline int clique_neighborhood_reduction_fast::generate_data(reduce_algorithm *r_alg, NodeID v, std::vector<NodeID>& label)
 {
     auto &status = r_alg->status;
-    size_t oldn = status.remaining_nodes;
     auto &neighbors = r_alg->buffers[0];
     auto &neighborhood = r_alg->set_1;
 

@@ -79,7 +79,7 @@ bool clique_neighborhood_reduction::expand_clique(NodeID max_neighbor, std::vect
 
     size_t local_max = status.n;
     NodeWeight local_max_weight = 0;
-    bool intersection_empty = true;
+    bool intersection_empty;
 
     while (true)
     {

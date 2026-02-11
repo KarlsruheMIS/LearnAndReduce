@@ -61,6 +61,7 @@ struct ReductionConfig : public Config {
     NodeID subgraph_node_limit = 10;
     // Write the kernel into a file
     bool write_kernel;
+    bool solution_from_file = false;
     bool print_reduction_info = false;
     // Apply all reductions to reduce the graph size
     bool all_reductions;
@@ -95,6 +96,10 @@ struct ReductionConfig : public Config {
     bool reduce_and_peel;
     bool plain_struction;
     bool disable_blow_up;
+
+    // CHILS parameters
+    unsigned int chils_n_solutions = 16;
+    double chils_time_limit = 600;
     
     void setKeyType(const std::string & k_type) {
         if (strCompare(k_type, "random")) {

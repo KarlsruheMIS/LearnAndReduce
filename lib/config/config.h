@@ -37,7 +37,7 @@ struct Config {
     // Write the log into a file
     bool print_log;
     // Write the inpendent set into a file
-    bool write_graph;
+    bool write_solution;
     // Write the log into the console
     bool console_log;
     // Number of iterations for the ILS.

@@ -4,9 +4,13 @@
 
 
 This is the project LearnAndReduce. Given a graph G=(V,E,w), the goal is to compute a maximum weight independent set which is NP-hard. This project provides an exact GNN guided preprocessing to reduce input instances for this problem.
-
+## Dependencies
+For the local search CHILS, the get_dep.sh script clones and builds the necessary library.
+```
+./get_dep.sh
+```
 ## Installation 
-As a first step, compile the source by running 
+Once the CHILS library is build, compile the project by running 
 ```
 ./compile_all.sh
 ```
@@ -33,6 +37,9 @@ The framework contains a graph checking tool to make life a little bit easier:
 |`--cyclicFast` | Set CyclicFast configuration. | &check; |
 |`--cyclicStrong` | Set CyclicStrong configuration. | |
 |`--kernel=<string>` | Path to store reduced instance. | |
+|`--solution_from_file` | Option to lift your own solution on the reduced instance. After the reduction, you are asked to provide a path to that solution. | |
+|`--chils_time_limit=<double>` | Set time limit (in seconds) for running the local search CHILS to compute a solution on the reduced instance. | 600 s|
+|`--chils_n_solutions=<int>` | Set number of solutions used for running the local search CHILS to compute a solution on the reduced instance. | 16 |
 
 
 ### Example 
@@ -67,6 +74,10 @@ You can use the provided graphchecker tool to check if the format of your file i
 ./graphchecker FILE
 ```   
 
+### Solution Format
+The solution file for a graph with $n$ vertices contains $n$ lines, one for each vertex. If a vertex is in the solution, the line contains a 1; if it is not, it contains a 0.
+
+
 ## Usage Generate Training Data 
 The data used for training our GNN models is availiable [here](https://zenodo.org/records/15210077). You can also create your own training data with our tool.
 ```
@@ -77,14 +88,18 @@ The program reads a metis file and then generates the training data for the full
 
 # Reproducing Results of the Paper
 
-An archive version of the paper is available on arXiv combined with the new local search [CHILS](https://github.com/KennethLangedal/CHILS). The LearnAndReduce part of this combined paper was accepted at ACDA 2025 and will be published in the conference proceedings later in 2025.
+When using or comparing against this method, please cite the following paper.
 ```
-@article{grossmann2024accelerating,
-  title    = {Accelerating Reductions Using Graph Neural Networks and a New Concurrent Local Search for the Maximum Weight Independent Set Problem},
-  author   = {Gro{\ss}mann, Ernestine and Langedal, Kenneth and Schulz, Christian},
-  journal  = {arXiv preprint arXiv:2412.14198},
-  year     = {2024}
+@inproceedings{grossmann2025accelerating,
+  title={Accelerating Reductions Using Graph Neural Networks for the Maximum Weight Independent Set Problem},
+  author={Gro{\ss}mann, Ernestine and Langedal, Kenneth and Schulz, Christian},
+  booktitle={2025 Proceedings of the Conference on Applied and Computational Discrete Algorithms (ACDA)},
+  pages={155--168},
+  year={2025},
+  doi={https://doi.org/10.1137/1.9781611978759.12},
+  organization={SIAM}
 }
+
 ```
 
 The default setting gives the results in Table 5 of the paper:

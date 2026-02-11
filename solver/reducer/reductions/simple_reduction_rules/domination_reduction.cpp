@@ -22,7 +22,6 @@ bool domination_reduction::reduce(reduce_algorithm *br_alg)
         reduced_nodes += (oldn - status.remaining_nodes);
         reduction_time += br_alg->reduction_timer.elapsed();
     #endif
-	// if (oldn != br_alg->status.remaining_nodes) std::cout << "domination redu -> " << (oldn - br_alg->status.remaining_nodes) << std::endl;
 	return oldn != status.remaining_nodes;
 }
 inline bool domination_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
@@ -82,7 +81,6 @@ inline int domination_reduction::generate_data(reduce_algorithm *br_alg, NodeID 
 {
     auto &status = br_alg->status;
     auto &neighbors = br_alg->set_1;
-    size_t oldn = status.remaining_nodes;
     size_t neighbors_count = 0;
     bool is_subset;
 

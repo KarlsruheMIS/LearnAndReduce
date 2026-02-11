@@ -136,14 +136,11 @@ bool critical_set_reduction::reduce(reduce_algorithm *br_alg)
     reduced_nodes += (oldn - status.remaining_nodes);
     reduction_time += br_alg->reduction_timer.elapsed();
 #endif
-    // if (oldn != status.remaining_nodes) std::cout << "critical redu -> " << (oldn - status.remaining_nodes) << std::endl;
     return oldn != status.remaining_nodes;
 }
 void critical_set_reduction::generate_global_data(reduce_algorithm *br_alg, std::vector<std::vector<int>> &reduction_data, int reduction_index)
 {
     auto &status = br_alg->status;
-    size_t oldn = status.remaining_nodes;
-
     auto &mapping = br_alg->buffers[0];
     auto &inverse_mapping = br_alg->buffers[1];
     mapping.resize(status.n);

@@ -34,6 +34,7 @@ inline bool extended_twin_reduction::reduce_vertex(reduce_algorithm *br_alg, Nod
     auto &neighbors = br_alg->buffers[0];
     auto &candidate_neighbors = br_alg->buffers[1];
     auto &neighbors_set = br_alg->set_2;
+    if (br_alg->deg(v) <= 2 ) return false;
 
     size_t oldn = status.remaining_nodes;
     get_neighborhood_vector(v, br_alg, neighbors);
@@ -80,7 +81,6 @@ int extended_twin_reduction::generate_data(reduce_algorithm *br_alg, NodeID v, s
     auto &candidate_neighbors = br_alg->buffers[1];
     auto &neighbors_set = br_alg->set_2;
 
-    size_t oldn = status.remaining_nodes;
     NodeWeight neighbors_weight = get_neighborhood_weight(v, br_alg);
     get_neighborhood_vector(v, br_alg, neighbors);
     get_neighborhood_set(v, br_alg, neighbors_set);

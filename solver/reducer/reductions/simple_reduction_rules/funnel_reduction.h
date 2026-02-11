@@ -41,9 +41,9 @@ private:
         bool node_is_max_weight;
     };
 
-    bool is_funnel(NodeID v, NodeID &funnel_neighbor, reduce_algorithm *br_alg, fast_set &funnel_set, std::vector<NodeID> &funnel_nodes);
+    bool is_funnel(NodeID v, NodeID &funnel_neighbor, reduce_algorithm *br_alg);
     bool is_clique(reduce_algorithm *br_alg, fast_set &clique_set, std::vector<NodeID> &clique_nodes);
-    void fold(const fold_data &data, fast_set &funnel_set, reduce_algorithm *br_alg);
+    void fold(const fold_data &data, reduce_algorithm *br_alg);
 
     std::vector<restore_data> restore_vec;
 };
