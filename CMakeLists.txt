@@ -197,10 +197,14 @@ target_link_libraries(generate_full_graph_training_data PRIVATE lib)
 add_executable(reduce "app/reduce.cpp")
 target_link_libraries(reduce PRIVATE lib)
 
+add_executable(reduce_and_lift "app/reduce_and_lift.cpp")
+target_link_libraries(reduce_and_lift PRIVATE lib)
+
 
 add_library(CHILS STATIC IMPORTED)
 set_target_properties(CHILS PROPERTIES IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/extern/CHILS/libCHILS.a")
 target_include_directories(CHILS INTERFACE "${CMAKE_SOURCE_DIR}/extern/CHILS")
 
-add_executable(reduce_and_lift "app/reduce_and_lift.cpp")
-target_link_libraries(reduce_and_lift PRIVATE lib CHILS)
+add_executable(reduce_and_chils "app/reduce_and_chils.cpp")
+target_link_libraries(reduce_and_chils PRIVATE lib CHILS)
+

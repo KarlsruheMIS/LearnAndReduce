@@ -20,26 +20,34 @@ The framework contains a graph checking tool to make life a little bit easier:
 * graphchecker -- check if your graph file is in the correct format
 
 ## Usage LearnAndReduce 
+We provide three executables to use our LearnAndReduce framework. The first one is to reduce the input graph and write the resulting instance to disk.
 ```
 ./reduce FILE [options]
+```
+The second one can be used to run LearnAndReduce and, afterwards, provide a solution to the reduced instance, which is then lifted to a solution to the original instance.
+```
+./reduce_and_lift FILE [options]
+```
+Finally, we also provide an executable that runs LearnAndReduce, then computes a solution on the reduced instance to be lifted using the local search method CHILS.
+```
+./reduce_and_chils FILE [options]
 ```
 
 ### Options 
 
-| Option | Decription | Default
-|-|-|-
-|`--help`| Print help. |
-|`--verbose`|Print detailed information. |
-|`--seed=<int>` |Set seed. | 0 |
-|`--reduction_config=<string>` |Choose reduction configuration: all_reductions, no_gnn_reductions. | all_reductions |
-|`--gnn_filter=<string>` |Choose gnn filtering: never, initial, initial_tight, always. | initial_tight|
-|`--time_limit=<double>` |Set time limit (in seconds). | 1000 s|
-|`--cyclicFast` | Set CyclicFast configuration. | &check; |
-|`--cyclicStrong` | Set CyclicStrong configuration. | |
-|`--kernel=<string>` | Path to store reduced instance. | |
-|`--solution_from_file` | Option to lift your own solution on the reduced instance. After the reduction, you are asked to provide a path to that solution. | |
-|`--chils_time_limit=<double>` | Set time limit (in seconds) for running the local search CHILS to compute a solution on the reduced instance. | 600 s|
-|`--chils_n_solutions=<int>` | Set number of solutions used for running the local search CHILS to compute a solution on the reduced instance. | 16 |
+| Option | Decription | Default | Applies to |
+|-|-|-|-|
+|`--help`| Print help. ||| 
+|`--verbose`|Print detailed information. |||
+|`--seed=<int>` |Set seed. | 0 |||
+|`--reduction_config=<string>` |Choose reduction configuration: all_reductions, no_gnn_reductions. | all_reductions |||
+|`--gnn_filter=<string>` |Choose gnn filtering: never, initial, initial_tight, always. | initial_tight||
+|`--time_limit=<double>` |Set time limit (in seconds). | 1000 s||
+|`--cyclicFast` | Set CyclicFast configuration. | &check; ||
+|`--cyclicStrong` | Set CyclicStrong configuration. | ||
+|`--kernel=<string>` | Path to store reduced instance. | ||
+|`--chils_time_limit=<double>` | Set time limit (in seconds) for running the local search CHILS to compute a solution on the reduced instance. | 600 s|`reduce_and_chils`|
+|`--chils_n_solutions=<int>` | Set number of solutions used for running the local search CHILS to compute a solution on the reduced instance. | 16 |`reduce_and_chils`|
 
 
 ### Example 
@@ -53,6 +61,10 @@ An example to use the different options is:
 The output of the program without the **--verbose** option is a single line on the format
 ```
 instance_name,struction_config,reduction_config,seed,gnn_filter,#vertices,#edges,#reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time
+```
+For reduce_and_lift or reduce_and_chils, the output line also contains the overall time and overall solution quality found
+```
+instance_name,struction_config,reduction_config,seed,gnn_filter,#vertices,#edges,#reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time,solution_quality,full_time
 ```
 
 

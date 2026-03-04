@@ -105,6 +105,38 @@ void log::print_one_line_kernel_data(ReductionConfig & mis_config, double time, 
                       << std::endl;
 }
 
+void log::print_one_line_solution_data(ReductionConfig & mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m, NodeWeight solution, double full_time) {
+    filebuffer_string << log_config.graph_filename << ","
+                      << log_config.struction_config_name << ","
+                      << log_config.reduction_config_name << ","
+                      << log_config.seed << ","
+                      << log_config.gnn_filter_name << ","
+                      << number_of_nodes << ","
+                      << number_of_edges/2 << ","
+                      << kernel_size_n << ","
+                      << kernel_size_m << ","
+                      << offset << ","
+                      << time << ","
+                      << solution << ","
+                      << full_time 
+                      << std::endl;
+
+    std::cout         << log_config.graph_filename << ","
+                      << log_config.struction_config_name << ","
+                      << log_config.reduction_config_name << ","
+                      << log_config.seed << ","
+                      << log_config.gnn_filter_name << ","
+                      << number_of_nodes << ","
+                      << number_of_edges/2 << ","
+                      << kernel_size_n << ","
+                      << kernel_size_m << ","
+                      << offset << ","
+                      << time << ","
+                      << solution << ","
+                      << full_time 
+                      << std::endl;
+}
+
  void log::print_config() {
     filebuffer_string << "\t\tConfiguration"                                                    << std::endl;
     filebuffer_string << "============================================="                        << std::endl;

@@ -78,12 +78,11 @@ public:
         print_reduction_info = arg_lit0(NULL, "print_reduction_info", "Print detailed information about each reduction.");
         reduction_config = arg_str0(NULL, "reduction_config", NULL, "What Reductions to use [no_gnn_reductions, all_reductions (default)].");
         kernel_filename = arg_str0(NULL, "kernel", NULL, "Path to store resulting kernel.");
-        solution_from_file = arg_lit0(NULL, "solution_from_file", "Read the solution from file instead of using CHILS.");
         gnn_filter = arg_str0(NULL, "gnn_filter", NULL, "Choose gnn filter strategy. Can be either: never, initial, initial_tight (default), always.");
         cyclicFast = arg_lit0(NULL, "cyclicFast", "Set struction configuration cyclicFast.");
         cyclicStrong = arg_lit0(NULL, "cyclicStrong", "Set struction configuration cyclicStrong.");
-        chils_n_solutions = arg_int0(NULL, "chils_n_solutions", NULL, "Number of solutions to be used for CHILS (default 16).");
-        chils_time_limit = arg_dbl0(NULL, "chils_time_limit", NULL, "CHILS total time limit in seconds (default 600).");
+        chils_n_solutions = arg_int0(NULL, "chils_n_solutions", NULL, "Only for reduce_and_chils: Number of solutions to be used for CHILS (default 16).");
+        chils_time_limit = arg_dbl0(NULL, "chils_time_limit", NULL, "Only for reduce_and_chils: CHILS total time limit in seconds (default 600).");
 
         // single reduction parameters
         // disable_neighborhood = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");
@@ -125,7 +124,6 @@ protected:
     struct arg_str *gnn_filter;
     struct arg_str *reduction_config;
     struct arg_str *kernel_filename;
-    struct arg_lit *solution_from_file;
     struct arg_lit *print_reduction_info;
     struct arg_int *chils_n_solutions;
     struct arg_dbl *chils_time_limit;
@@ -233,7 +231,6 @@ int ReductionArguments::setConfig(ReductionConfig &config)
         help,
         filename,
         kernel_filename,
-        solution_from_file,
         user_seed,
         time_limit,
         verbose,
@@ -333,10 +330,6 @@ void ReductionArguments::parseParameters(ReductionConfig &config)
     {
         config.verbose = true;
         config.print_reduction_info = true;
-    }
-    if (solution_from_file->count > 0)
-    {
-        config.solution_from_file = true;
     }
     if (chils_time_limit->count > 0)
     {

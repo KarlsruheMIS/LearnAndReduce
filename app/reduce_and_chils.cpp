@@ -20,6 +20,8 @@
 #include "solution_check.h"
 #include "graph_operations.h"
 
+#include "chils.h"
+
 int main(int argn, char **argv)
 {
     log::instance()->restart_total_timer();
@@ -39,7 +41,6 @@ int main(int argn, char **argv)
     config.graph_filename = name;
     std::string path_and_file = graph_filepath.substr(0, graph_filepath.find_last_of('-'));
     log::instance()->set_config(config);
-    config.solution_from_file = true;
 
     graph_access G;
     graph_operations go;
@@ -68,7 +69,7 @@ int main(int argn, char **argv)
         log::instance()->print_full_reduction(config, time, reducer.get_current_is_weight(), g.number_of_nodes(), g.number_of_edges() / 2);
     }
 
-    if (g.number_of_nodes() > 0) // always write reduced instance
+    if (config.write_kernel && g.number_of_nodes() > 0)
     {
         go.writeGraphWeighted(g, config.kernel_filename + ".kernel_graph");
         // go.writeGraphWeighted_to_csv(g, config.kernel_filename + ".csv");
@@ -79,10 +80,44 @@ int main(int argn, char **argv)
     bool computed_reduced_solution = false;
     if (g.number_of_nodes() > 0)
     {
-        std::cout << "Please give the path to a solution for the reduced graph "<< config.kernel_filename <<".kernel_graph... " << std::endl;
-        std::cin >> solution_filepath;
+        void *solver = chils_initialize();
 
-        computed_reduced_solution = graph_io::readVector<bool>(reduced_solution, solution_filepath);
+        // Creating reduced graph
+        for (NodeID n = 0; n < g.number_of_nodes(); n++)
+        {
+            chils_add_vertex(solver, g.getNodeWeight(n));
+        }
+        for (NodeID n = 0; n < g.number_of_nodes(); n++)
+        {
+            forall_out_edges(g, e, n)
+            {
+                NodeID target = g.getEdgeTarget(e);
+                chils_add_edge(solver, n, target);
+            }
+            endfor
+        }
+
+        chils_run_full(solver, config.chils_time_limit, config.chils_n_solutions, config.seed);
+
+        int *solution_array = chils_solution_get_independent_set(solver);
+        NodeID solution_size = chils_solution_get_size(solver);
+
+        for (NodeID n = 0; n < solution_size; n++)
+            reduced_solution[solution_array[n]] = true;
+
+        if (config.verbose)
+        {
+            std::cout << "Offset + CHILS solution on reduced graph: \t" << reducer.get_current_is_weight() + chils_solution_get_weight(solver) << std::endl;
+            std::cout << "CHILS solution time: \t" << chils_solution_get_time(solver) << std::endl;
+        }
+        else
+        {
+            log::instance()->print_one_line_solution_data(config, time, reducer.get_current_is_weight(), g.number_of_nodes(), g.number_of_edges() / 2,  reducer.get_current_is_weight() + chils_solution_get_weight(solver) , chils_solution_get_time(solver) + time);
+        }
+
+        free(solution_array);
+        computed_reduced_solution = true;
+        chils_release(solver);
     }
 
     if (g.number_of_nodes() == 0 || computed_reduced_solution)
@@ -95,8 +130,6 @@ int main(int argn, char **argv)
 
         if (config.verbose)
             std::cout << "final solution weight is \t\t\t" << solution_weight << std::endl;
-        else
-            log::instance()->print_one_line_solution_data(config, time, reducer.get_current_is_weight(), g.number_of_nodes(), g.number_of_edges() / 2,  solution_weight, time);
     }
     return 0;
 }

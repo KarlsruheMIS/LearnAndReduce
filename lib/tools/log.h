@@ -68,6 +68,11 @@ class log {
         void print_one_line_kernel_data(ReductionConfig &mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m);
 
         /**
+         * Print information in one line for experiments.
+         */
+        void print_one_line_solution_data(ReductionConfig &mis_config, double time, NodeWeight offset, NodeID kernel_size_n, EdgeID kernel_size_m, NodeWeight solution, double full_time);
+
+        /**
          * Print the current config.
          */
         void print_config();
