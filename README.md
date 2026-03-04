@@ -62,7 +62,7 @@ The output of the program without the **--verbose** option is a single line on t
 ```
 instance_name,struction_config,reduction_config,seed,gnn_filter,#vertices,#edges,#reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time
 ```
-For reduce_and_lift or reduce_and_chils, the output line also contains the overall time and overall solution quality found
+For reduce_and_lift and reduce_and_chils, the output line additionally contains the time until the best solution was found and the corresponding solution quality.
 ```
 instance_name,struction_config,reduction_config,seed,gnn_filter,#vertices,#edges,#reduced_instance_vertices,#reduced_instance_edges,offset,reduction_time,solution_quality,full_time
 ```
