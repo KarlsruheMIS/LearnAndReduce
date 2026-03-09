@@ -46,6 +46,7 @@ Finally, we also provide an executable that runs LearnAndReduce, then computes a
 |`--cyclicFast` | Set CyclicFast configuration. | &check; ||
 |`--cyclicStrong` | Set CyclicStrong configuration. | ||
 |`--kernel=<string>` | Path to store reduced instance. | ||
+|`--output=<string>` | Path to store solution. | ||
 |`--chils_time_limit=<double>` | Set time limit (in seconds) for running the local search CHILS to compute a solution on the reduced instance. | 600 s|`reduce_and_chils`|
 |`--chils_n_solutions=<int>` | Set number of solutions used for running the local search CHILS to compute a solution on the reduced instance. | 16 |`reduce_and_chils`|
 

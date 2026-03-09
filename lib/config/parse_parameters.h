@@ -237,6 +237,7 @@ int ReductionArguments::setConfig(ReductionConfig &config)
         cyclicFast,
         cyclicStrong,
         weight_source,
+        output,
         gnn_filter,
         reduction_config,
         print_reduction_info,

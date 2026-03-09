@@ -1,9 +1,9 @@
 #!/bin/bash
 
-git clone https://github.com/KennethLangedal/CHILS.git
+git clone https://github.com/KarlsruheMIS/CHILS.git
 cd CHILS 
 
-git checkout b3f3dbeb38efe44ca7bedbd736df56a94d5e3a36 
+git checkout e2391453739b5977c46fc6915109345b6b5eacd4 
 
 make libCHILS.a 
 
