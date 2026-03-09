@@ -7,6 +7,7 @@ git checkout b3f3dbeb38efe44ca7bedbd736df56a94d5e3a36
 
 make libCHILS.a 
 
+mkdir -p ../extern/CHILS
 mv -f libCHILS.a ../extern/CHILS
 cp -f include/chils.h ../extern/CHILS
 
