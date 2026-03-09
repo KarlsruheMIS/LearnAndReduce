@@ -241,7 +241,7 @@ void reduce_algorithm::init_transformation_step(reduction_ptr &reduction)
 				reduction->marker.current.push_back(rm[u]);
 		}
 		if (config.verbose)
-			printf("%s added %ld vertices from %ld\n", reduction->get_model_path().c_str(), reduction->marker.current.size(), status.remaining_nodes);
+			printf("GNN-filter %17s: %7ld /%7ld\n", reduction->get_reduction_name().c_str(), reduction->marker.current.size(), status.remaining_nodes);
 
 		reduction->has_run = true;
 	}
