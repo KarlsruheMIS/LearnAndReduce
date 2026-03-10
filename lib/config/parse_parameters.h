@@ -82,7 +82,7 @@ public:
         cyclicFast = arg_lit0(NULL, "cyclicFast", "Set struction configuration cyclicFast.");
         cyclicStrong = arg_lit0(NULL, "cyclicStrong", "Set struction configuration cyclicStrong.");
         chils_n_solutions = arg_int0(NULL, "chils_n_solutions", NULL, "Only for reduce_and_chils: Number of solutions to be used for CHILS (default 16).");
-        chils_time_limit = arg_dbl0(NULL, "chils_time_limit", NULL, "Only for reduce_and_chils: CHILS total time limit in seconds (default 600).");
+        chils_time_limit = arg_dbl0(NULL, "chils_time_limit", NULL, "Only for reduce_and_chils: CHILS total time limit in seconds (default 100).");
 
         // single reduction parameters
         // disable_neighborhood = arg_lit0(NULL, "disable_neighborhood", "Disable neighborhood reduction.");

@@ -99,7 +99,7 @@ struct ReductionConfig : public Config {
 
     // CHILS parameters
     unsigned int chils_n_solutions = 16;
-    double chils_time_limit = 600;
+    double chils_time_limit = 100;
     
     void setKeyType(const std::string & k_type) {
         if (strCompare(k_type, "random")) {
