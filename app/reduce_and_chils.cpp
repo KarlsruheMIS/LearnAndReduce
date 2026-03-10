@@ -78,6 +78,7 @@ int main(int argn, char **argv)
 
     std::vector<bool> reduced_solution(g.number_of_nodes(), false);
     bool computed_reduced_solution = false;
+    double chils_time = 0;
     if (g.number_of_nodes() > 0)
     {
         void *solver = chils_initialize();
@@ -97,22 +98,22 @@ int main(int argn, char **argv)
             endfor
         }
 
+        if (config.verbose)
+            std::cout << "Running CHILS for " << config.chils_time_limit << " seconds..." << std::endl;
+
         chils_run_full(solver, config.chils_time_limit, config.chils_n_solutions, config.seed);
 
         int *solution_array = chils_solution_get_independent_set(solver);
         NodeID solution_size = chils_solution_get_size(solver);
+        chils_time = chils_solution_get_time(solver);
 
         for (NodeID n = 0; n < solution_size; n++)
             reduced_solution[solution_array[n]] = true;
 
         if (config.verbose)
         {
-            std::cout << "Offset + CHILS solution on reduced graph: \t" << reducer.get_current_is_weight() + chils_solution_get_weight(solver) << std::endl;
-            std::cout << "CHILS solution time: \t" << chils_solution_get_time(solver) << std::endl;
-        }
-        else
-        {
-            log::instance()->print_one_line_solution_data(config, time, reducer.get_current_is_weight(), g.number_of_nodes(), g.number_of_edges() / 2,  reducer.get_current_is_weight() + chils_solution_get_weight(solver) , chils_solution_get_time(solver) + time);
+            std::cout << "Offset + CHILS sol: \t\t" << reducer.get_current_is_weight() + chils_solution_get_weight(solver) << std::endl;
+            std::cout << "CHILS solution time: \t\t" << chils_time << std::endl;
         }
 
         free(solution_array);
@@ -120,16 +121,15 @@ int main(int argn, char **argv)
         chils_release(solver);
     }
 
-    if (g.number_of_nodes() == 0 || computed_reduced_solution)
-    {
-        std::vector<bool> full_solution(G.number_of_nodes(), false);
-        NodeWeight solution_weight = reducer.lift_solution(reduced_solution, full_solution);
+    std::vector<bool> full_solution(G.number_of_nodes(), false);
+    NodeWeight solution_weight = reducer.lift_solution(reduced_solution, full_solution);
 
-        if (config.write_solution)
-            graph_io::writeVector(full_solution, config.output_filename);
+    if (config.write_solution)
+        graph_io::writeVector(full_solution, config.output_filename);
 
-        if (config.verbose)
-            std::cout << "final solution weight is \t\t\t" << solution_weight << std::endl;
-    }
+    if (config.verbose)
+        std::cout << "final solution weight is \t" << solution_weight << std::endl;
+
+    log::instance()->print_one_line_solution_data(config, time, reducer.get_current_is_weight(), g.number_of_nodes(), g.number_of_edges() / 2, solution_weight, chils_time + time);
     return 0;
 }

@@ -112,8 +112,7 @@ void extended_domination_reduction::apply(reduce_algorithm* br_alg) {
 	auto neighbor = restore_vec.back().neighbor;
 	auto neighbor_status = status.node_status[neighbor];
 	auto v_status = status.node_status[v];
-    if (v_status == IS_status::included ) 
-        assert(neighbor_status == IS_status::included && "ERROR: domination_reduction::apply: v included neighbor not included");
+    assert(v_status != IS_status::included || neighbor_status == IS_status::included && "ERROR: domination_reduction::apply: v included neighbor not included");
 	restore(br_alg);
 
     status.node_status[neighbor] = neighbor_status;

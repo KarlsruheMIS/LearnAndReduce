@@ -40,6 +40,12 @@ int main(int argn, char **argv)
     std::string path_and_file = graph_filepath.substr(0, graph_filepath.find_last_of('-'));
     log::instance()->set_config(config);
     config.solution_from_file = true;
+    if (config.kernel_filename.empty())
+    {
+        std::cout <<  "Please provide a reduced instance file name using --kernel=<file_name> and run again." << std::endl;
+        exit(-1);
+    }
+        
 
     graph_access G;
     graph_operations go;
@@ -94,9 +100,9 @@ int main(int argn, char **argv)
             graph_io::writeVector(full_solution, config.output_filename);
 
         if (config.verbose)
-            std::cout << "final solution weight is \t\t\t" << solution_weight << std::endl;
-        else
-            log::instance()->print_one_line_solution_data(config, time, reducer.get_current_is_weight(), g.number_of_nodes(), g.number_of_edges() / 2,  solution_weight, time);
+            std::cout << "final solution weight is \t\t" << solution_weight << std::endl;
+
+        log::instance()->print_one_line_solution_data(config, time, reducer.get_current_is_weight(), g.number_of_nodes(), g.number_of_edges() / 2,  solution_weight, time);
     }
     return 0;
 }

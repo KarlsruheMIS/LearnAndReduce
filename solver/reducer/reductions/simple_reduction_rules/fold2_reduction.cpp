@@ -93,7 +93,6 @@ inline bool fold2_reduction::reduce_vertex(reduce_algorithm *br_alg, NodeID v)
         assert(status.weights[v] < status.weights[smaller] && "v is not the smallest");
         if (br_alg->config.disable_v_shape_min)
             return false;
-        // if (br_alg->blowing_up) return;
         this->fold_v_shape_min_weight(br_alg, {v, {bigger, smaller}});
     }
 

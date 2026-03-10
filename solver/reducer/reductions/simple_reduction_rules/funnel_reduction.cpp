@@ -218,7 +218,7 @@ void funnel_reduction::fold(const fold_data &data, reduce_algorithm *br_alg)
             weights[n] += weights[u];
             weights[n] -= weights[node];
         }
-        br_alg->set(u, IS_status::folded);
+        br_alg->set(u, IS_status::folded, false);
     }
 
     br_alg->set(node, IS_status::folded, true);

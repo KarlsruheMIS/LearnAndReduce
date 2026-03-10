@@ -161,9 +161,10 @@ public:
     }
 
     bool adjacent(NodeID u, NodeID v) const {
-        NodeID min_deg_node = std::min(u, v, [&](NodeID u, NodeID v) { return graph[u].size() < graph[v].size(); });
-        NodeID search_node = min_deg_node == u ? v : u;
-        return std::find(graph[min_deg_node].begin(), graph[min_deg_node].end(), search_node) != graph[min_deg_node].end();
+        return are_connected(u,v);
+        // NodeID min_deg_node = std::min(u, v, [&](NodeID u, NodeID v) { return graph[u].size() < graph[v].size(); });
+        // NodeID search_node = min_deg_node == u ? v : u;
+        // return std::find(graph[min_deg_node].begin(), graph[min_deg_node].end(), search_node) != graph[min_deg_node].end();
     }
 
     size_t size() const noexcept { return graph.size(); }
