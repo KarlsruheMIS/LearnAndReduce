@@ -4,6 +4,8 @@
 
 Part of the [KarlsruheMIS](https://github.com/KarlsruheMIS) organization.
 
+> **Python Interface:** An easy-to-use Python interface for this software is available in [CHSZLabLib](https://github.com/CHSZLab/CHSZLabLib).
+
 This is the project LearnAndReduce. Given a graph G=(V,E,w), the goal is to compute a maximum weight independent set which is NP-hard. This project provides an exact GNN guided preprocessing to reduce input instances for this problem.
 ## Dependencies
 For the local search CHILS, the get_dep.sh script clones and builds the necessary library.
